@@ -11,7 +11,13 @@ export const PLAYER_RADIUS = 0.35
 export const PLAYER_HEIGHT = 1.6
 export const PLAYER_SPEED = 6
 export const PLAYER_RUN_SPEED = 13
-export const PLAYER_SPAWN: [number, number, number] = [5, PLAYER_HEIGHT / 2 + 0.05, 6]
+// Spawn just inside the hallway's south doorway (centerX = HALLWAY_SOUTH_DOOR.centerX,
+// close to the south wall at Z = ROOM_DEPTH/2 + HALLWAY.depth = 20).
+export const PLAYER_SPAWN: [number, number, number] = [-7.5, PLAYER_HEIGHT / 2 + 0.05, 19.5]
+
+// Initial facing (radians around Y). 0 = +Z (south, out the door);
+// Math.PI = -Z (north, into the office).
+export const PLAYER_SPAWN_FACING = Math.PI
 
 // Multiplier on top of the auto-fit that sizes the player GLB to PLAYER_HEIGHT.
 // 1.0 = human-height; adjust 0.8–1.2 to taste.

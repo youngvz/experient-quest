@@ -12,6 +12,7 @@ import {
   PLAYER_RADIUS,
   PLAYER_RUN_SPEED,
   PLAYER_SPAWN,
+  PLAYER_SPAWN_FACING,
   PLAYER_SPEED,
   SIT_ACTIVATION_RADIUS,
   SIT_FORWARD_OFFSET,
@@ -148,6 +149,12 @@ export function Player({ controlsDisabled }: PlayerProps) {
       console.info('[Player] GLB animation clips:', names)
     }
   }, [names])
+
+  // Initial facing — useFrame only rewrites rotation.y while the player is
+  // moving, so without this the mesh starts at the model's default heading.
+  useEffect(() => {
+    if (meshRef.current) meshRef.current.rotation.y = PLAYER_SPAWN_FACING
+  }, [])
 
   useEffect(() => {
     const { idleName, walkName, runName, jumpName, clapName, sitName } = clipRefs
