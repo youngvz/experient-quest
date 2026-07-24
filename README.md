@@ -1,11 +1,12 @@
 # Experient Quest — Office RPG Prototype (3D)
 
-A browser-based office RPG prototype rendered in 3D. It's the seed of an
-interactive technology status meeting: walk around a small office, approach a
-television, and see meeting content in a React overlay.
+A browser-based office RPG prototype. Walk around a small office, approach
+interactive objects like the wall TV, and see meeting content in a React
+overlay. Seed of an interactive technology status meeting.
 
-Stack: **React + TypeScript + Vite** for the UI shell, **react-three-fiber**
-(three.js) for the 3D scene, and **@react-three/rapier** for physics.
+Stack: **React + TypeScript + Vite**, **@react-three/fiber** (three.js) for
+the 3D scene, **@react-three/rapier** for physics, **drei** for GLB/animation
+helpers.
 
 ## Setup
 
@@ -14,125 +15,95 @@ npm install
 npm run dev
 ```
 
-Open the printed local URL. No binary assets are required — the office is
-built from primitive meshes.
-
 ## Commands
 
 ```bash
-npm run dev          # start Vite dev server
-npm run build        # type-check + production build
-npm run preview      # preview the production build
-npm run test         # run vitest once
-npm run test:watch   # run vitest in watch mode
-npm run lint         # run oxlint
-npm run format       # run prettier
+npm run dev             # start Vite dev server
+npm run build           # type-check + production build
+npm run preview         # preview the production build
+npm run test            # vitest once
+npm run test:watch      # vitest in watch mode
+npm run test:e2e        # playwright smoke (dev server auto-started)
+npm run test:e2e:install  # first-time: install Playwright browsers
+npm run lint            # oxlint
+npm run format          # prettier --write .
 ```
 
 ## Controls
 
 ```text
-Move:          WASD or Arrow Keys
-Interact:      E
-Close overlay: Escape (or Close button)
+Move            WASD / Arrow keys
+Run (toggle)    R
+Jump            Space          — plays Man_RunningJump, carries velocity
+Clap            C
+Sit             X              — near a chair; press again to stand
+Interact        E              — opens overlay in range of a stop
+Close overlay   Escape / Close button
 ```
 
-The camera is a fixed-offset third-person follow. Movement is relative to the
-world (not to the camera), so W always moves the player in the same direction —
-easy to reason about for a prototype.
+The camera is a fixed-offset third-person follow. Movement is world-relative
+(W always moves the same direction). Movement is locked during jump / clap /
+sit. The player can't leave the office — exterior doorways are sealed by
+invisible `DoorBlocker` colliders (interior doorways stay open).
 
-## Architecture
+## Architecture at a glance
 
-React owns the app shell, the interaction prompt, and the content overlay.
-react-three-fiber owns the 3D scene (meshes, lighting, camera, player, physics).
-They communicate through a small typed event bus
+React owns the app shell, prompt, and overlay. R3F owns the 3D scene, physics,
+and camera. They communicate through a typed event bus
 (`src/game/events/GameEventBus.ts`) so neither side imports the other's
 components.
 
 ```
 React (HTML)                        R3F (canvas)
 ─ App shell                         ─ OfficeScene
-─ GameCanvas (hosts <Canvas>)       ─ Floor / Walls / Desk / Television
-─ InteractionPrompt                 ─ Player (kinematic + camera follow)
-─ ContentOverlay                    ─ InteractionManager (XZ-plane zone check)
+─ GameCanvas (hosts <Canvas>)       ─ Floor / Walls / Hallway / …
+─ InteractionPrompt                 ─ Player (Rapier capsule + GLB + camera)
+─ ContentOverlay                    ─ InteractionManager (XZ-plane zones)
         ▲                                   │
-        │       typed event bus             │
-        └───────────────────────────────────┘
+        └───── typed event bus ─────────────┘
 ```
 
-Key events on the bus:
+Events on the bus: `interaction:available` / `interaction:unavailable` /
+`interaction:triggered` (R3F → React), `overlay:closed` (React → R3F).
 
-- `interaction:available` — R3F → React: show the prompt
-- `interaction:unavailable` — R3F → React: hide the prompt
-- `interaction:triggered` — R3F → React: open the overlay
-- `overlay:closed` — React → R3F: resume player + interactions
+## Docs
 
-## Current Prototype
+The `docs/` folder is the reference for detailed implementation, conventions,
+and design notes:
 
-- 20×14 metre office built from primitive meshes (floor, four walls, desk, TV).
-- Ambient + directional + hemisphere lighting; the TV screen self-illuminates.
-- Third-person camera with a fixed offset that lerps toward the player.
-- WASD + arrow-key movement, normalized diagonals; player rotates to face motion.
-- Rapier physics: dynamic capsule player collides with static walls, desk, and TV.
-- Invisible interaction zone in front of the television (2D rect on the XZ plane).
-- HTML prompt when the player is in range.
-- React modal overlay (ESC + close-button dismiss) showing placeholder
-  Technology Status Meeting content.
-- Movement pauses while the overlay is open; `E` must be released and pressed
-  again before opening the same overlay a second time.
-- One unit test (`tests/InteractionManager.test.ts`) covers the interaction
-  logic — the manager stays engine-agnostic (2D rect + XZ point), so the same
-  tests worked on the Phaser 2D prototype and still work in 3D.
+| Task | Read first |
+| --- | --- |
+| Overall structure, new modules, refactors | [architecture.md](docs/architecture.md) |
+| Player movement, camera, interactions, animations, NPCs | [gameplay-systems.md](docs/gameplay-systems.md) |
+| Office layout, GLB imports, sprites, asset pipeline | [assets-and-content.md](docs/assets-and-content.md) |
+| FPS, draw calls, mobile devices, quality profiles | [performance.md](docs/performance.md) |
+| Unit + E2E testing, acceptance criteria | [testing.md](docs/testing.md) |
+| Hosting, CDN, headers, CSP, releases | [deployment-and-security.md](docs/deployment-and-security.md) |
+| Planning a feature, deciding what belongs in the MVP | [delivery-plan.md](docs/delivery-plan.md) |
+| Accessibility: focus, keyboard, reduced motion, captions | [accessibility.md](docs/accessibility.md) |
+| File naming, folder rules, import order, commit style | [conventions.md](docs/conventions.md) |
 
-## Asset Replacement
+Working with an AI coding assistant? Start from
+[CLAUDE.md](CLAUDE.md) — it's the routing document that points at the right
+doc per task.
 
-### Player mesh → glTF character
+## What's in the box today
 
-Drop a `.glb` (T-pose or animated) into `public/assets/characters/`, load it
-with drei's `useGLTF`, and swap the capsule mesh in `src/game/scene/Player.tsx`:
+- Multi-room layout: 20×14 m conference room + south hallway with desk
+  clusters, kitchen counter with sink, and a two-office NE alcove.
+- Rigged GLB player with `Man_Idle` / `Man_Walk` / `Man_Run` blending, plus
+  one-shot `Man_RunningJump` / `Man_Clapping` and toggleable `Man_Sitting`.
+- Rapier physics: dynamic capsule player, static geometry, sealed exterior
+  doorways.
+- Fixed-offset third-person camera that lerps toward the player.
+- One interaction zone in front of the east-wall TV; React modal overlay
+  (ESC + close-button dismiss) with placeholder content.
+- Unit tests for `InteractionManager` + Playwright smoke test.
 
-```tsx
-const { scene, animations } = useGLTF('/assets/characters/employee.glb')
-```
+## Future
 
-For animated walk cycles use `useAnimations` from drei and play a clip when the
-player's velocity is non-zero.
-
-### Room primitives → authored 3D model
-
-For a single authored office, export the whole room as a `.glb` and drop it
-into the scene alongside a set of invisible collider meshes (`<CuboidCollider>`
-inside `<RigidBody type="fixed" />`). If you want a grid-based level editor,
-drive the wall/desk/TV placement from a JSON layout file instead of the
-hard-coded constants in `gameConstants.ts`.
-
-### Interaction content
-
-Content lives in `src/game/interactions/interactionTypes.ts` in a plain object
-keyed by `InteractionId`. Add new IDs, update the union type, and add the
-matching zone in the scene.
-
-Future content-block model (documented but not yet wired):
-
-```ts
-type ContentBlock =
-  | { type: 'text'; value: string }
-  | { type: 'image'; src: string; alt: string }
-  | { type: 'list'; items: string[] }
-  | { type: 'video'; src: string }
-  | { type: 'action'; label: string; actionId: string }
-```
-
-## Future Enhancements
-
-- Custom employee glTF characters + walk animations.
-- Authored office room model with lighting and materials.
-- Camera modes: over-the-shoulder, first-person (`PointerLockControls`).
-- Additional interactables (new-hire billboard, joke NPC, project-update rooms).
-- NPC dialogue system.
-- Scripted presentation sequence for the events television (playing a texture
-  video on the TV plane).
-- Ambient audio and interaction sound effects.
-- Touch controls and mobile scaling.
-- Save state (localStorage).
-- Small minigames.
+- Level transitions on doorway exit (swap `DoorBlocker` for a sensor collider).
+- Employee NPCs (billboards + optional rigged presenters).
+- Camera modes: over-the-shoulder, first-person.
+- Additional interactables (new-hires, jokes, project rooms).
+- Audio + captions, touch controls, localStorage save state.
