@@ -1,48 +1,43 @@
-import { useEffect, useRef, useState } from 'react'
-import type Phaser from 'phaser'
-import { createGame } from '../../game/createGame'
+import { Canvas } from '@react-three/fiber'
+import { useCallback, useState } from 'react'
+import { OfficeScene } from '../../game/scene/OfficeScene'
+import { CAMERA_OFFSET, PLAYER_SPAWN } from '../../game/constants/gameConstants'
+import { useGameEvent } from '../../hooks/useGameEvents'
 import './GameCanvas.css'
 
 export function GameCanvas() {
-  const containerRef = useRef<HTMLDivElement | null>(null)
-  const gameRef = useRef<Phaser.Game | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [overlayOpen, setOverlayOpen] = useState(false)
 
-  useEffect(() => {
-    const container = containerRef.current
-    if (!container) return
-    // StrictMode double-invokes effects; ref guard prevents a second Phaser instance.
-    if (gameRef.current) return
-
-    try {
-      gameRef.current = createGame(container)
-    } catch (err) {
-      console.error('Failed to initialize Phaser game', err)
-      setError('Failed to initialize the game. See the developer console for details.')
-      return
-    }
-
-    return () => {
-      gameRef.current?.destroy(true)
-      gameRef.current = null
-    }
-  }, [])
+  useGameEvent(
+    'interaction:triggered',
+    useCallback(() => setOverlayOpen(true), []),
+  )
+  useGameEvent(
+    'overlay:closed',
+    useCallback(() => setOverlayOpen(false), []),
+  )
 
   return (
     <div className="game-canvas">
-      <div
-        ref={containerRef}
-        id="game-container"
-        className="game-canvas__container"
-        role="application"
-        aria-label="Office RPG game canvas"
-        tabIndex={0}
-      />
-      {error && (
-        <div className="game-canvas__error" role="alert">
-          {error}
-        </div>
-      )}
+      <Canvas
+        shadows
+        dpr={[1, 2]}
+        camera={{
+          position: [
+            PLAYER_SPAWN[0] + CAMERA_OFFSET[0],
+            CAMERA_OFFSET[1],
+            PLAYER_SPAWN[2] + CAMERA_OFFSET[2],
+          ],
+          fov: 55,
+          near: 0.1,
+          far: 100,
+        }}
+        gl={{ antialias: true }}
+      >
+        <color attach="background" args={['#0f1216']} />
+        <fog attach="fog" args={['#0f1216', 25, 45]} />
+        <OfficeScene controlsDisabled={overlayOpen} />
+      </Canvas>
     </div>
   )
 }

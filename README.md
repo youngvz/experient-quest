@@ -1,12 +1,11 @@
-# Experient Quest — Office RPG Prototype
+# Experient Quest — Office RPG Prototype (3D)
 
-A browser-based top-down office RPG prototype. It's the seed of an interactive
-technology status meeting: walk around a small office, interact with a
+A browser-based office RPG prototype rendered in 3D. It's the seed of an
+interactive technology status meeting: walk around a small office, approach a
 television, and see meeting content in a React overlay.
 
-The prototype uses **React + TypeScript + Vite** for the UI shell and **Phaser
-4** (the successor to Phaser 3, with compatible APIs for the surface used here)
-for the game world.
+Stack: **React + TypeScript + Vite** for the UI shell, **react-three-fiber**
+(three.js) for the 3D scene, and **@react-three/rapier** for physics.
 
 ## Setup
 
@@ -15,8 +14,8 @@ npm install
 npm run dev
 ```
 
-Open the printed local URL. No binary assets are required — all placeholder art
-is generated in the boot scene.
+Open the printed local URL. No binary assets are required — the office is
+built from primitive meshes.
 
 ## Commands
 
@@ -38,70 +37,74 @@ Interact:      E
 Close overlay: Escape (or Close button)
 ```
 
+The camera is a fixed-offset third-person follow. Movement is relative to the
+world (not to the camera), so W always moves the player in the same direction —
+easy to reason about for a prototype.
+
 ## Architecture
 
 React owns the app shell, the interaction prompt, and the content overlay.
-Phaser owns the game world (map, player, physics, camera, interaction detection).
-They communicate through a small typed event bus (`src/game/events/GameEventBus.ts`)
-so neither side imports the other's components.
+react-three-fiber owns the 3D scene (meshes, lighting, camera, player, physics).
+They communicate through a small typed event bus
+(`src/game/events/GameEventBus.ts`) so neither side imports the other's
+components.
 
 ```
-React (HTML)                       Phaser (canvas)
-─ App shell                        ─ Scenes (Boot, Office)
-─ GameCanvas (mounts Phaser once)  ─ Player entity
-─ InteractionPrompt                ─ Placeholder textures + map
-─ ContentOverlay                   ─ InteractionManager
-        ▲                                  │
-        │      typed event bus             │
-        └──────────────────────────────────┘
+React (HTML)                        R3F (canvas)
+─ App shell                         ─ OfficeScene
+─ GameCanvas (hosts <Canvas>)       ─ Floor / Walls / Desk / Television
+─ InteractionPrompt                 ─ Player (kinematic + camera follow)
+─ ContentOverlay                    ─ InteractionManager (XZ-plane zone check)
+        ▲                                   │
+        │       typed event bus             │
+        └───────────────────────────────────┘
 ```
 
 Key events on the bus:
 
-- `interaction:available` — Phaser → React: show the prompt
-- `interaction:unavailable` — Phaser → React: hide the prompt
-- `interaction:triggered` — Phaser → React: open the overlay
-- `overlay:closed` — React → Phaser: resume player + interactions
+- `interaction:available` — R3F → React: show the prompt
+- `interaction:unavailable` — R3F → React: hide the prompt
+- `interaction:triggered` — R3F → React: open the overlay
+- `overlay:closed` — React → R3F: resume player + interactions
 
 ## Current Prototype
 
-- Placeholder 20×14 tile office room, generated in code (no Tiled required).
-- Placeholder player rectangle with a facing marker.
-- WASD + arrow-key movement, normalized diagonals.
-- Arcade-physics collisions with walls, desk, and television.
-- Invisible interaction zone in front of the television.
+- 20×14 metre office built from primitive meshes (floor, four walls, desk, TV).
+- Ambient + directional + hemisphere lighting; the TV screen self-illuminates.
+- Third-person camera with a fixed offset that lerps toward the player.
+- WASD + arrow-key movement, normalized diagonals; player rotates to face motion.
+- Rapier physics: dynamic capsule player collides with static walls, desk, and TV.
+- Invisible interaction zone in front of the television (2D rect on the XZ plane).
 - HTML prompt when the player is in range.
-- React modal overlay (with ESC + close-button dismiss) showing placeholder
+- React modal overlay (ESC + close-button dismiss) showing placeholder
   Technology Status Meeting content.
 - Movement pauses while the overlay is open; `E` must be released and pressed
   again before opening the same overlay a second time.
 - One unit test (`tests/InteractionManager.test.ts`) covers the interaction
-  logic without needing a Phaser renderer.
+  logic — the manager stays engine-agnostic (2D rect + XZ point), so the same
+  tests worked on the Phaser 2D prototype and still work in 3D.
 
 ## Asset Replacement
 
-### Player sprite sheet
+### Player mesh → glTF character
 
-Add a `public/assets/characters/player.png` (32×48 frames, four directional rows
-of walk animation) and update `BootScene.preload` to load it:
+Drop a `.glb` (T-pose or animated) into `public/assets/characters/`, load it
+with drei's `useGLTF`, and swap the capsule mesh in `src/game/scene/Player.tsx`:
 
-```ts
-this.load.spritesheet('player', '/assets/characters/player.png', {
-  frameWidth: 32,
-  frameHeight: 48,
-})
+```tsx
+const { scene, animations } = useGLTF('/assets/characters/employee.glb')
 ```
 
-Then move animation definitions and `sprite.anims.play(...)` calls into `Player`
-in place of the current facing-marker logic.
+For animated walk cycles use `useAnimations` from drei and play a clip when the
+player's velocity is non-zero.
 
-### Room → Tiled map
+### Room primitives → authored 3D model
 
-Replace `OfficeScene.createFloor` / `createWalls` / `createDesk` / `createTv`
-with `this.make.tilemap(...)`. Interactions and spawn points should come from
-Tiled object layers whose objects carry `interactionId` and `prompt` properties;
-map them into `InteractionManager.registerZone` the same way the placeholder
-does today.
+For a single authored office, export the whole room as a `.glb` and drop it
+into the scene alongside a set of invisible collider meshes (`<CuboidCollider>`
+inside `<RigidBody type="fixed" />`). If you want a grid-based level editor,
+drive the wall/desk/TV placement from a JSON layout file instead of the
+hard-coded constants in `gameConstants.ts`.
 
 ### Interaction content
 
@@ -122,12 +125,14 @@ type ContentBlock =
 
 ## Future Enhancements
 
-- Custom employee sprite sheets and animations.
-- Tiled-authored office map with foreground layers and lighting.
-- New-hire billboard interaction with dynamic content.
-- NPC dialogue system (joke-of-the-week character, project-update rooms).
-- Scripted presentation sequence for the events television.
+- Custom employee glTF characters + walk animations.
+- Authored office room model with lighting and materials.
+- Camera modes: over-the-shoulder, first-person (`PointerLockControls`).
+- Additional interactables (new-hire billboard, joke NPC, project-update rooms).
+- NPC dialogue system.
+- Scripted presentation sequence for the events television (playing a texture
+  video on the TV plane).
 - Ambient audio and interaction sound effects.
 - Touch controls and mobile scaling.
 - Save state (localStorage).
-- Small minigames (e.g., coffee-round path puzzle).
+- Small minigames.

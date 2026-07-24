@@ -6,11 +6,12 @@ html,
 body,
 #root {
   height: 100%;
+  margin: 0;
+  overflow: hidden;
 }
 
 body {
-  margin: 0;
-  background: radial-gradient(circle at top, #1c2028 0%, #0b0d12 60%, #05070a 100%);
+  background: #05070a;
   color: #e6ebf3;
   font-family:
     system-ui,
@@ -21,66 +22,9 @@ body {
 }
 
 .app {
-  min-height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 24px 16px 48px;
-  gap: 20px;
-}
-
-.app__header {
-  text-align: center;
-}
-
-.app__title {
-  margin: 0;
-  font-size: 28px;
-  letter-spacing: 0.03em;
-}
-
-.app__subtitle {
-  margin: 4px 0 0;
-  color: #9aa3b3;
-  font-size: 14px;
-}
-
-.app__stage {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-}
-
-.app__game-wrapper {
-  position: relative;
-  width: min(100%, 960px);
-}
-
-.app__controls {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 6px;
-  padding: 12px 20px;
-  max-width: 480px;
-  width: 100%;
-}
-
-.app__controls-title {
-  margin: 0 0 6px;
-  font-size: 14px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #9aa3b3;
-}
-
-.app__controls-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 14px;
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
 }
 
 kbd {
@@ -90,7 +34,12 @@ kbd {
   border-bottom-width: 2px;
   border-radius: 4px;
   background: rgba(255, 255, 255, 0.04);
-  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  font-family:
+    ui-monospace,
+    'SF Mono',
+    Menlo,
+    Consolas,
+    monospace;
   font-size: 12px;
   color: #f2f5fb;
 }
