@@ -16,6 +16,70 @@ Use the cheapest asset type that communicates the idea well.
 
 Do not turn every employee into a rigged 3D model.
 
+## Current layout (data-driven primitives)
+
+The office is not authored as a single GLB yet — it's built from primitive
+meshes placed by data. Dimensions, doorway positions, and prop placements
+live as exported constants in `src/game/constants/gameConstants.ts`, and each
+scene component reads from those constants.
+
+Coordinate system: world units are metres. `+X` is east, `+Z` is south, `+Y`
+is up. The conference room is centered on the origin; the hallway runs
+south.
+
+Building blocks (all in `src/game/scene/`):
+
+- `<WallPanel>` — opaque or transmissive glass segment (`Walls.tsx`).
+- `<DoorHeader>` — lintel spanning a doorway; no collider.
+- `<DoorBlocker>` — invisible full-height collider for exterior doorways the
+  player can't cross yet (swap for a sensor collider when adding level
+  transitions).
+- `<Desk>`, `<Chair>`, `<Cabinets>`, `<Laptop>`, `<Monitor>`, `<Paper>`,
+  `<Television>`, `<Whiteboard>`, `<ConferenceTable>` — reusable props.
+- `<Floor>`, `<Hallway>`, `<Exterior>` — room-level containers that assemble
+  the primitives.
+
+Recipe — add a new room:
+
+1. Add its geometry as a constants object in `gameConstants.ts` (walls,
+   doorway centre + width, prop positions).
+2. Write a component under `src/game/scene/` that reads those constants and
+   emits `<WallPanel>` / `<DoorHeader>` / prop calls.
+3. Mount the component inside `<Physics>` in
+   `src/game/scene/OfficeScene.tsx`.
+
+Doorway rule: an opening in a wall is two `<WallPanel>`s with a gap between
+them and a `<DoorHeader>` for the lintel. If it's exterior and the player
+must not pass through, add a `<DoorBlocker>` centred on the opening too.
+
+When a single authored office GLB replaces this, treat it as a shell plus a
+set of invisible collider meshes (`<CuboidCollider>` inside `<RigidBody
+type="fixed" />`) — and drop the constants that the shell now embeds. Until
+then, the data-driven approach makes it cheap to iterate on layout.
+
+## Prop conventions (Laptop as reference)
+
+`src/game/scene/Laptop.tsx` is the reference prop: `[x, z]` position +
+`deskTopY`, everything else built in a local `<group>` at
+`[x, deskTopY, z]` so inner meshes stay origin-relative.
+
+- Accept `position: [x, z]` + `deskTopY` (not full `[x, y, z]`) when the prop
+  sits on a surface — the caller shouldn't know your mesh's internal offsets.
+- Rotate the group, not individual meshes.
+- Use `meshStandardMaterial` with `roughness`; add `metalness` only for
+  something that reads as metal. `MeshPhysicalMaterial` (transmission) only
+  when needed for glass.
+- `castShadow` on visible props; `receiveShadow` on floors/desks. Emissive
+  screens shouldn't cast shadows — they render as opaque black.
+- Props that block the player go inside `<RigidBody type="fixed"
+  colliders="cuboid">` (see `Desk.tsx`). Decorative items on a desk (papers,
+  laptops, mugs) don't need colliders — the desk itself blocks.
+- Emissive screens: dark bezel mesh + inner emissive plane offset by ~1 mm
+  along the screen's normal, e.g. `emissive="#3fa4ff" emissiveIntensity={0.35}`.
+- Expose an optional `scale?: number` if the same prop appears at different
+  sizes on different desks — cleaner than wrapping every call in a `<group
+  scale={…}>`.
+
 ## Canonical formats
 
 Shipping formats:

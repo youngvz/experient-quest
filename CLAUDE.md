@@ -55,14 +55,40 @@ before proposing a large migration.
 
 - `src/app/` (`App.tsx`, `App.css`) — app shell
 - `src/components/{GameCanvas,InteractionPrompt,ContentOverlay}/` — HTML/DOM UI
-- `src/game/constants/gameConstants.ts` — tuning constants
+- `src/game/constants/gameConstants.ts` — tuning constants, room dimensions,
+  doorway positions, spawn point, sit spots
 - `src/game/events/{GameEventBus,gameEvents}.ts` — typed R3F ↔ React bus
-- `src/game/interactions/{InteractionManager,interactionTypes}.ts` — `PresentationStop` schema + 2D-rect zone manager
-- `src/game/scene/*` — R3F primitives (`Floor`, `Walls`, `Desk`, `Television`, `Player`, `OfficeScene`)
+- `src/game/interactions/{InteractionManager,interactionTypes}.ts` —
+  `PresentationStop` schema + 2D-rect XZ-plane zone manager
+- `src/game/scene/` — R3F primitives. Environment: `Floor`, `Walls`
+  (`WallPanel`, `DoorHeader`, `DoorBlocker`), `Hallway`, `Exterior`,
+  `Cabinets`, `Whiteboard`, `Television`. Furniture: `Desk`, `Chairs`,
+  `ConferenceTable`, `ConferenceLaptops`. Decor: `Laptop`, `Monitor`,
+  `Paper`. Player: `Player` (dynamic Rapier RigidBody + rigged GLB from
+  `public/assets/player/character.glb`). Wiring: `OfficeScene`,
+  `interactionZones`.
 - `src/game/state/gameStore.ts` — Zustand starter store (`activeStopId`, `completedStopIds`)
-- `src/hooks/{useKeyboard,useGameEvents}.ts`
+- `src/hooks/{useKeyboard,useGameEvents}.ts` — `useKeyboard` exposes a
+  mutable ref for held keys (WASD/arrows, `R` for run toggle) plus edge
+  consumers (`consumeInteract` for `E`, `consumeJump` for `Space`,
+  `consumeClap` for `C`, `consumeSitToggle` for `X`).
 - `tests/InteractionManager.test.ts` — Vitest unit
 - `tests/e2e/smoke.spec.ts` — Playwright smoke (canvas renders, no console errors)
+
+Player controller notes: it's a **dynamic** RigidBody with Y-translation and
+all rotations **locked** and `gravityScale=0` — driven with
+`body.setLinvel(...)`, not a kinematic character controller. Animation clips
+(`Man_Idle` / `Man_Walk` / `Man_Run` / `Man_RunningJump` / `Man_Clapping` /
+`Man_Sitting`) are all `.play()`'d once and crossfaded by weight in
+`useFrame`; the base locomotion is muted while an action clip is active. Sit
+snaps the RigidBody to the nearest `SIT_SPOTS` entry within
+`SIT_ACTIVATION_RADIUS`, with `SIT_FORWARD_OFFSET` (so the torso clears the
+chair back) and `SIT_VERTICAL_OFFSET` (so the legs sit on the seat).
+
+Exterior doorways are sealed by `<DoorBlocker>` (invisible full-height
+collider); the interior conference-room doorway stays open. When adding
+level transitions, swap `DoorBlocker` for a sensor collider that emits a
+`gameEvents` message.
 
 **Targets, not required yet** (do not migrate wholesale):
 
@@ -70,6 +96,9 @@ before proposing a large migration.
 - Quality profile module, route-level error boundary, loading screen.
 - Content for `new-hires` / `projects` / `joke` stops (schema exists in `interactionTypes.ts`; only `events-tv` is populated).
 - Full Playwright coverage list in `docs/testing.md` — one smoke spec is the current baseline; add checks incrementally.
+- Device-agnostic input (pointer / touch / gamepad adapters producing named
+  actions). Keyboard is the only source today.
+- Authored office GLB replacing the primitives-plus-constants scene.
 
 ## Non-negotiable architecture rules
 
