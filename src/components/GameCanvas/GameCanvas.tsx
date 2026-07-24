@@ -30,12 +30,12 @@ export function GameCanvas() {
           ],
           fov: 55,
           near: 0.1,
-          far: 100,
+          far: 200,
         }}
         gl={{ antialias: true }}
       >
-        <color attach="background" args={['#0f1216']} />
-        <fog attach="fog" args={['#0f1216', 25, 45]} />
+        <color attach="background" args={['#c78e5f']} />
+        <fog attach="fog" args={['#c78e5f', 55, 140]} />
         <OfficeScene controlsDisabled={overlayOpen} />
       </Canvas>
     </div>

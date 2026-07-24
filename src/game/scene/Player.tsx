@@ -198,6 +198,8 @@ export function Player({ controlsDisabled }: PlayerProps) {
       type="dynamic"
       position={PLAYER_SPAWN}
       enabledRotations={[false, false, false]}
+      enabledTranslations={[true, false, true]}
+      gravityScale={0}
       linearDamping={4}
       lockRotations
     >
