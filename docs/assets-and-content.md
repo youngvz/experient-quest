@@ -10,7 +10,7 @@ Use the cheapest asset type that communicates the idea well.
 | Desks, chairs, TVs, signs, plants, decor | Simple reusable 3D props | `src/game/scene/` |
 | Most employees | 2D transparent sprites or illustrated billboards | `public/assets/employees/` (future) |
 | Rigged NPC (e.g. Distasi) | Rigged GLB via `<Employee>` | `public/assets/employees/*.glb` |
-| Player character | Rigged GLB | `public/assets/player/youngvz_casual.glb` |
+| Player character | Rigged GLB | `public/assets/player/youngvz.glb` |
 | Important presenter | Rigged GLB or a high-quality animated billboard | `public/assets/employees/` |
 | Slides, project updates, events | React overlay or texture on an in-world screen | `src/components/ContentOverlay/` |
 | New-hire wall | Billboard cards or a UI panel anchored in 3D | future |

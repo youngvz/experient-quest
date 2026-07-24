@@ -69,7 +69,7 @@ before proposing a large migration.
   `Television`. Furniture: `Desk`, `Chairs`, `ConferenceTable`,
   `ConferenceLaptops`. Decor: `Laptop`, `Monitor`, `Paper`. Characters:
   `Player` (dynamic Rapier RigidBody + rigged GLB from
-  `public/assets/player/youngvz_casual.glb`), `Employee` (fixed collider
+  `public/assets/player/youngvz.glb`), `Employee` (fixed collider
   NPC that loads a GLB and loops a configurable animation clip; e.g.
   `distasi.glb` at `public/assets/employees/`). Wiring: `OfficeScene`,
   `interactionZones`.

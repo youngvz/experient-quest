@@ -22,6 +22,7 @@ import {
   PLAYER_SPEED,
   WEST_CORRIDOR,
 } from '../constants/gameConstants'
+import { CHARACTERS } from '../characters/characters'
 import { useKeyboard } from '../../hooks/useKeyboard'
 import { useMouseLook } from '../../hooks/useMouseLook'
 import { gameEvents } from '../events/GameEventBus'
@@ -31,7 +32,7 @@ import { getStopZoneRect } from './interactionZones'
 import { useGameStore } from '../state/gameStore'
 import { ZoneManager } from '../zones/ZoneManager'
 
-const PLAYER_MODEL_URL = '/assets/player/youngvz_casual.glb'
+const PLAYER_MODEL_URL = CHARACTERS.youngvz.glbUrl
 useGLTF.preload(PLAYER_MODEL_URL)
 
 interface PlayerProps {

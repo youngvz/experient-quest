@@ -3,9 +3,10 @@ import { CapsuleCollider, RigidBody } from '@react-three/rapier'
 import { useEffect, useMemo } from 'react'
 import * as THREE from 'three'
 import { SkeletonUtils } from 'three-stdlib'
+import { CHARACTERS } from '../characters/characters'
 import { PLAYER_HEIGHT, PLAYER_RADIUS } from '../constants/gameConstants'
 
-useGLTF.preload('/assets/employees/distasi.glb')
+useGLTF.preload(CHARACTERS.distasi.glbUrl)
 
 interface EmployeeProps {
   url: string

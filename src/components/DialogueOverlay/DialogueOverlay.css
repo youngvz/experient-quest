@@ -1,0 +1,132 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+.dialogue-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 24px;
+  pointer-events: auto;
+}
+
+.dialogue-overlay__panel {
+  display: grid;
+  grid-template-columns: 192px 1fr;
+  gap: 12px;
+  width: min(960px, 100%);
+  padding: 12px;
+  background: #e8d089;
+  color: #f4efdc;
+  border: 4px solid #2a2013;
+  border-radius: 6px;
+  box-shadow:
+    0 0 0 2px #d9b667 inset,
+    0 8px 0 rgba(0, 0, 0, 0.35);
+  font-family: 'Press Start 2P', ui-monospace, monospace;
+  image-rendering: pixelated;
+  cursor: pointer;
+  outline: none;
+}
+
+.dialogue-overlay__panel:focus-visible {
+  box-shadow:
+    0 0 0 2px #d9b667 inset,
+    0 0 0 4px #f4efdc,
+    0 8px 0 rgba(0, 0, 0, 0.35);
+}
+
+.dialogue-overlay__portrait-frame {
+  width: 192px;
+  align-self: stretch;
+  background: #1a1a1a;
+  border: 3px solid #2a2013;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dialogue-overlay__portrait {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  user-select: none;
+}
+
+.dialogue-overlay__text {
+  position: relative;
+  padding: 14px 18px;
+  background: #d9b667;
+  border: 3px solid #2a2013;
+  color: #2a2013;
+  min-height: 192px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dialogue-overlay__speaker {
+  font-size: 20px;
+  letter-spacing: 0.06em;
+  color: #f9f0c8;
+  text-shadow: 2px 2px 0 #2a2013;
+}
+
+.dialogue-overlay__body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 22px;
+  line-height: 1.6;
+  color: #2a2013;
+}
+
+.dialogue-overlay__line {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.dialogue-overlay__indicator {
+  position: absolute;
+  right: 12px;
+  bottom: 10px;
+  font-size: 18px;
+  color: #2a2013;
+}
+
+.dialogue-overlay__indicator--more {
+  animation: dialogue-blink 1s steps(2, end) infinite;
+}
+
+@keyframes dialogue-blink {
+  0%, 50% { opacity: 1; }
+  50.01%, 100% { opacity: 0.25; }
+}
+
+@media (max-width: 640px) {
+  .dialogue-overlay__panel {
+    grid-template-columns: 120px 1fr;
+  }
+  .dialogue-overlay__portrait-frame {
+    width: 120px;
+  }
+  .dialogue-overlay__text {
+    min-height: 120px;
+  }
+  .dialogue-overlay__speaker {
+    font-size: 16px;
+  }
+  .dialogue-overlay__body {
+    font-size: 17px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dialogue-overlay__indicator--more {
+    animation: none;
+  }
+}

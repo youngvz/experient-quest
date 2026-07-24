@@ -1,5 +1,6 @@
 import { RigidBody } from '@react-three/rapier'
 import { Suspense } from 'react'
+import { CHARACTERS } from '../characters/characters'
 import {
   COLORS,
   CORRIDOR_POCKET,
@@ -123,7 +124,7 @@ export function CorridorPocket() {
           east corridor. */}
       <Suspense fallback={null}>
         <Employee
-          url="/assets/employees/distasi.glb"
+          url={CHARACTERS.distasi.glbUrl}
           position={[westX + 0.5, 0, centerZ + 1]}
           rotationY={0}
           clipPatterns={[/wave/i, /greet/i, /hello/i]}

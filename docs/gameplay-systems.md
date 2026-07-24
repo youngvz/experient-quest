@@ -199,7 +199,7 @@ single armature and crossfade by weight — never by stop-and-play.
 
 Player clips are selected by regex against the loaded GLB's clip names, so
 the code doesn't hardcode any specific clip name. The current player GLB
-is `public/assets/player/youngvz_casual.glb`.
+is `public/assets/player/youngvz.glb`.
 
 How the player picks clips at load time (`Player.tsx`):
 

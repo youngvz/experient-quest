@@ -56,6 +56,8 @@ export function ContentOverlay() {
   if (!activeStopId) return null
   const stop = findStop(activeStopId)
   if (!stop) return null
+  // Dialogue stops are rendered by <DialogueOverlay> instead.
+  if (stop.content.type === 'dialogue') return null
 
   const headingId = `overlay-title-${stop.id}`
 
@@ -168,5 +170,8 @@ function StopBody({ stop }: { stop: PresentationStop }) {
           {stop.content.caption ? <p>{stop.content.caption}</p> : null}
         </>
       )
+    case 'dialogue':
+      // Handled by <DialogueOverlay>; the parent already returned null.
+      return null
   }
 }

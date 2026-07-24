@@ -21,12 +21,28 @@ export interface CompanyEvent {
   blurb?: string
 }
 
+export interface DialogueLine {
+  // Character id from src/game/characters/characters.ts. The DialogueOverlay
+  // uses this to look up the portrait + display name.
+  speakerId: string
+  // One "screen" of text. Embedded '\n' is rendered as a line break.
+  text: string
+}
+
 export type StopContent =
   | { type: 'new-hires'; people: EmployeeProfile[] }
   | { type: 'projects'; projects: ProjectUpdate[] }
   | { type: 'events'; events: CompanyEvent[] }
   | { type: 'joke'; setup: string; punchline: string }
   | { type: 'media'; assetId: string; caption?: string }
+  | {
+      type: 'dialogue'
+      script: DialogueLine[]
+      // Played on subsequent interactions after `script` has been seen once
+      // (i.e. the stop is in `completedStopIds`). If omitted, `script` plays
+      // again every time.
+      repeatScript?: DialogueLine[]
+    }
 
 export interface PresentationStop {
   id: string
@@ -58,7 +74,6 @@ export const presentationStops: PresentationStop[] = [
     label: 'Distasi',
     prompt: 'Press F to talk to Distasi',
     overlayTitle: 'Distasi',
-    intro: "Hey — welcome to the office. Great to meet you.",
     // Zone extends beyond the pocket into the west corridor and the west
     // end of the east corridor so the prompt fires as soon as the player
     // approaches, not only once fully inside the pocket.
@@ -66,7 +81,41 @@ export const presentationStops: PresentationStop[] = [
     // plus a 3 m entry apron on the west and 2 m south into the east corridor.
     position: [-8, 0, -13],
     interactionZone: { size: [10, 8] },
-    content: { type: 'events', events: [] },
+    content: {
+      type: 'dialogue',
+      script: [
+        {
+          speakerId: 'distasi',
+          text: "Youngvz!! So glad you're here,\nwe need you to run this week's\nstatus meeting ASAP!",
+        },
+        {
+          speakerId: 'youngvz',
+          text: "You got it John!",
+        },
+        {
+          speakerId: 'distasi',
+          text: "Don't forget the joke of the week!!",
+        },
+        {
+          speakerId: 'distasi',
+          text: "Your performance review\ndepends on it!",
+        },
+        {
+          speakerId: 'youngvz',
+          text: "...",
+        },
+      ],
+      repeatScript: [
+        {
+          speakerId: 'distasi',
+          text: "What are you waiting for?!",
+        },
+        {
+          speakerId: 'distasi',
+          text: "We need to leave for Hopstix\nat 12pm!!",
+        },
+      ],
+    },
   },
 ]
 
