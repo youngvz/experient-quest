@@ -37,14 +37,19 @@ Run (toggle)    R
 Jump            Space          — plays Man_RunningJump, carries velocity
 Clap            C
 Sit             X              — near a chair; press again to stand
-Interact        E              — opens overlay in range of a stop
+Interact        F              — opens overlay in range of a stop
+Orbit camera    Q / E          — rotate view left / right
+                Two-finger horizontal scroll (trackpad)
+                Right- or middle-mouse drag (external mouse)
 Close overlay   Escape / Close button
 ```
 
-The camera is a fixed-offset third-person follow. Movement is world-relative
-(W always moves the same direction). Movement is locked during jump / clap /
-sit. The player can't leave the office — exterior doorways are sealed by
-invisible `DoorBlocker` colliders (interior doorways stay open).
+The camera is a third-person follow that orbits the player when you drag with
+the right (or middle) mouse button. Movement is **camera-relative**: W always
+sends the player away from the camera, so the same key feels consistent as
+you rotate the view. Movement is locked during jump / clap / sit. The player
+can't leave the office — exterior doorways are sealed by invisible
+`DoorBlocker` colliders (interior doorways stay open).
 
 ## Architecture at a glance
 
