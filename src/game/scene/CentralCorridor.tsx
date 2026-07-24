@@ -4,6 +4,7 @@ import {
   COLORS,
   CORRIDOR_POCKET,
   EAST_CORRIDOR,
+  THE_BAKERY,
   THE_BAKERY_WEST_DOOR,
   THE_LAB,
   ROOM_DEPTH,
@@ -121,7 +122,14 @@ export function CentralCorridor() {
           exterior ring buildings north of the office don't show through
           as "huge cubes" from inside the corridor. */}
       {clipSegments(wallSegments).map(([lo, hi], i) => {
-        const isGlass = lo >= THE_LAB.northZ && hi <= THE_LAB.westSouthZ
+        // Glass along TheLab's span and along TheBakery's west-wall span
+        // so the corridor's east wall reads as a storefront where it
+        // meets a room the player can occupy.
+        const bakeryNorthZ = ROOM_DEPTH / 2
+        const bakerySouthZ = bakeryNorthZ + THE_BAKERY.depth
+        const inLab = lo >= THE_LAB.northZ && hi <= THE_LAB.westSouthZ
+        const inBakery = lo >= bakeryNorthZ && hi <= bakerySouthZ
+        const isGlass = inLab || inBakery
         return (
           <WallPanel
             key={`east-${i}`}

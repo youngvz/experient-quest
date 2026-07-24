@@ -1,12 +1,49 @@
 import { Environment, Instance, Instances } from '@react-three/drei'
 import { useMemo } from 'react'
-import { ROOM_DEPTH, ROOM_WIDTH } from '../constants/gameConstants'
+import {
+  CENTRAL_CORRIDOR,
+  EAST_CORRIDOR,
+  ROOM_DEPTH,
+  ROOM_WIDTH,
+  THE_BAKERY,
+} from '../constants/gameConstants'
 
 interface BuildingInstance {
   key: string
   position: [number, number, number]
   rotation: [number, number, number]
   scale: [number, number, number]
+}
+
+// AABB of everything the player can walk in — buildings outside must
+// stay clear of this in world XZ, plus a small margin so tall boxes
+// don't kiss the glass walls.
+const BUILDING_MARGIN = 4
+const BUILDING_AABB = (() => {
+  const minX = Math.min(CENTRAL_CORRIDOR.westX, -ROOM_WIDTH / 2)
+  const maxX = Math.max(EAST_CORRIDOR.eastX, ROOM_WIDTH / 2)
+  const minZ = Math.min(CENTRAL_CORRIDOR.northZ, -ROOM_DEPTH / 2)
+  const maxZ = Math.max(
+    THE_BAKERY.centerX + THE_BAKERY.depth,
+    ROOM_DEPTH / 2 + THE_BAKERY.depth,
+  )
+  return {
+    minX: minX - BUILDING_MARGIN,
+    maxX: maxX + BUILDING_MARGIN,
+    minZ: minZ - BUILDING_MARGIN,
+    maxZ: maxZ + BUILDING_MARGIN,
+  }
+})()
+
+function overlapsBuilding(cx: number, cz: number, w: number, d: number): boolean {
+  const halfW = w / 2
+  const halfD = d / 2
+  return (
+    cx + halfW > BUILDING_AABB.minX &&
+    cx - halfW < BUILDING_AABB.maxX &&
+    cz + halfD > BUILDING_AABB.minZ &&
+    cz - halfD < BUILDING_AABB.maxZ
+  )
 }
 
 function makeRing(
@@ -21,18 +58,24 @@ function makeRing(
   dVar: number,
   angleOffset = 0,
 ): BuildingInstance[] {
-  return Array.from({ length: count }, (_, i) => {
+  const items: BuildingInstance[] = []
+  for (let i = 0; i < count; i++) {
     const angle = (i / count) * Math.PI * 2 + angleOffset
     const height = heightBase + ((i * seed) % heightVar)
     const width = wBase + ((i * 23) % wVar)
     const depth = dBase + ((i * 17) % dVar)
-    return {
+    const cx = Math.cos(angle) * distance
+    const cz = Math.sin(angle) * distance
+    // Skip any silhouette that would clip through the interior geometry.
+    if (overlapsBuilding(cx, cz, width, depth)) continue
+    items.push({
       key: `${distance}-${i}`,
-      position: [Math.cos(angle) * distance, height / 2, Math.sin(angle) * distance],
+      position: [cx, height / 2, cz],
       rotation: [0, angle, 0],
       scale: [width, height, depth],
-    }
-  })
+    })
+  }
+  return items
 }
 
 // Scenic exterior visible through the glass walls. Silhouette buildings are
