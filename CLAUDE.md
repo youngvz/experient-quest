@@ -65,9 +65,15 @@ before proposing a large migration.
   `Cabinets`, `Whiteboard`, `Television`. Furniture: `Desk`, `Chairs`,
   `ConferenceTable`, `ConferenceLaptops`. Decor: `Laptop`, `Monitor`,
   `Paper`. Player: `Player` (dynamic Rapier RigidBody + rigged GLB from
-  `public/assets/player/character.glb`). Wiring: `OfficeScene`,
+  `public/assets/player/youngvz_casual.glb`). Wiring: `OfficeScene`,
   `interactionZones`.
-- `src/game/state/gameStore.ts` — Zustand starter store (`activeStopId`, `completedStopIds`)
+- `src/game/state/gameStore.ts` — Zustand starter store (`activeStopId`, `completedStopIds`, `activeZone`)
+- `src/game/zones/ZoneManager.ts` — engine-agnostic XZ-rect zone tracker
+  (mirrors `InteractionManager`'s pattern). Used by `Player.tsx` to update
+  `activeZone` when the player crosses into corridor/branch rects.
+- `src/game/scene/LazyBranch.tsx` — Suspense wrapper that mounts children
+  only when `activeZone` matches its `zone` prop. Pair with `React.lazy`
+  for code-split branch scenes; unmount frees GLBs/textures.
 - `src/hooks/{useKeyboard,useGameEvents}.ts` — `useKeyboard` exposes a
   mutable ref for held keys (WASD/arrows, `R` for run toggle) plus edge
   consumers (`consumeInteract` for `E`, `consumeJump` for `Space`,

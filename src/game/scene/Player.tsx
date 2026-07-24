@@ -5,9 +5,13 @@ import { useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { SkeletonUtils } from 'three-stdlib'
 import {
+  BRANCH_DOORS,
   CAMERA_DISTANCE,
   CAMERA_HEIGHT,
   CAMERA_LOOK_HEIGHT,
+  CAMERA_ZOOM_MAX,
+  CAMERA_ZOOM_MIN,
+  CAMERA_ZOOM_RATE,
   KEY_LOOK_SPEED,
   PLAYER_HEIGHT,
   PLAYER_MODEL_SCALE,
@@ -16,10 +20,7 @@ import {
   PLAYER_SPAWN,
   PLAYER_SPAWN_FACING,
   PLAYER_SPEED,
-  SIT_ACTIVATION_RADIUS,
-  SIT_FORWARD_OFFSET,
-  SIT_SPOTS,
-  SIT_VERTICAL_OFFSET,
+  WEST_CORRIDOR,
 } from '../constants/gameConstants'
 import { useKeyboard } from '../../hooks/useKeyboard'
 import { useMouseLook } from '../../hooks/useMouseLook'
@@ -27,8 +28,10 @@ import { gameEvents } from '../events/GameEventBus'
 import { InteractionManager } from '../interactions/InteractionManager'
 import { presentationStops } from '../interactions/interactionTypes'
 import { getStopZoneRect } from './interactionZones'
+import { useGameStore } from '../state/gameStore'
+import { ZoneManager } from '../zones/ZoneManager'
 
-const PLAYER_MODEL_URL = '/assets/player/character.glb'
+const PLAYER_MODEL_URL = '/assets/player/youngvz_casual.glb'
 useGLTF.preload(PLAYER_MODEL_URL)
 
 interface PlayerProps {
@@ -43,44 +46,47 @@ function pickClip(clips: THREE.AnimationClip[], patterns: RegExp[]): THREE.Anima
   return null
 }
 
-type ActionKind = 'jump' | 'clap' | 'sit'
+type ActionKind = 'roll' | 'wave'
 
-// One-shot action clips (jump/clap) hold movement for their duration.
-// Jump = RunningJump clip; horizontal velocity is preserved during the leap
-// so the character actually travels instead of playing in place.
-const ACTION_HOLD: Record<Exclude<ActionKind, 'sit'>, number> = {
-  jump: 0.9,
-  clap: 1.4,
+// One-shot action clips hold movement for their duration. Roll = the model's
+// roll clip; horizontal velocity is preserved through the roll so the
+// character actually travels instead of playing in place.
+const ACTION_HOLD: Record<ActionKind, number> = {
+  roll: 0.9,
+  wave: 1.6,
 }
 
-// Standing-jump speed floor: pressing Space from a standstill still moves the
-// player forward (in facing direction) so the running-jump clip reads right.
-const STANDING_JUMP_SPEED = 6
+// Standing-roll speed floor: pressing Space from a standstill still moves the
+// player forward (in facing direction) so the roll clip reads right.
+const STANDING_ROLL_SPEED = 6
 
 export function Player({ controlsDisabled }: PlayerProps) {
   const bodyRef = useRef<RapierRigidBody | null>(null)
   const meshRef = useRef<THREE.Group | null>(null)
   const { camera } = useThree()
-  const { state, consumeInteract, consumeJump, consumeClap, consumeSitToggle } = useKeyboard()
+  const { state, consumeInteract, consumeRoll, consumeWave } = useKeyboard()
   const { yaw } = useMouseLook()
 
   // Per-frame action state. Refs (not React state) so useFrame doesn't re-render.
-  // `jumpVel` is the horizontal velocity carried through a running jump —
-  // captured at takeoff so the leap covers ground even without held keys.
+  // rollVx/rollVz are the horizontal velocity carried through a roll —
+  // captured at takeoff so the roll covers ground even without held keys.
   const actionRef = useRef<{
     kind: ActionKind | null
     remaining: number
-    jumpVx: number
-    jumpVz: number
+    rollVx: number
+    rollVz: number
   }>({
     kind: null,
     remaining: 0,
-    jumpVx: 0,
-    jumpVz: 0,
+    rollVx: 0,
+    rollVz: 0,
   })
 
   const cameraTarget = useMemo(() => new THREE.Vector3(), [])
   const cameraDesired = useMemo(() => new THREE.Vector3(), [])
+  // Multiplicative zoom scale applied to CAMERA_DISTANCE and CAMERA_HEIGHT.
+  // Ref (not state) so useFrame mutations don't re-render.
+  const zoomRef = useRef(1)
 
   const gltf = useGLTF(PLAYER_MODEL_URL)
   const modelFit = useMemo(() => {
@@ -129,22 +135,14 @@ export function Player({ controlsDisabled }: PlayerProps) {
     const idle = pickClip(gltf.animations, [/idle/i, /stand/i, /breath/i])
     const walk = pickClip(gltf.animations, [/walk/i, /move/i])
     const run = pickClip(gltf.animations, [/run/i, /sprint/i])
-    // Prefer the running-jump variant so Space plays a full leap; fall back
-    // to any other jump clip if the model only ships a standing jump.
-    const jumpCandidates = gltf.animations.filter((c) => /jump/i.test(c.name))
-    const jump =
-      jumpCandidates.find((c) => /running.?jump|run.?jump/i.test(c.name)) ??
-      jumpCandidates[0] ??
-      null
-    const clap = pickClip(gltf.animations, [/clap/i])
-    const sit = pickClip(gltf.animations, [/sit/i])
+    const roll = pickClip(gltf.animations, [/roll/i, /dodge/i])
+    const wave = pickClip(gltf.animations, [/wave/i, /greet/i, /hello/i])
     return {
       idleName: idle?.name ?? null,
       walkName: walk?.name ?? null,
       runName: run?.name ?? null,
-      jumpName: jump?.name ?? null,
-      clapName: clap?.name ?? null,
-      sitName: sit?.name ?? null,
+      rollName: roll?.name ?? null,
+      waveName: wave?.name ?? null,
     }
   }, [gltf.animations])
 
@@ -161,27 +159,24 @@ export function Player({ controlsDisabled }: PlayerProps) {
   }, [])
 
   useEffect(() => {
-    const { idleName, walkName, runName, jumpName, clapName, sitName } = clipRefs
+    const { idleName, walkName, runName, rollName, waveName } = clipRefs
     const idle = idleName ? actions[idleName] : null
     const walk = walkName ? actions[walkName] : null
     const run = runName ? actions[runName] : null
-    const jump = jumpName ? actions[jumpName] : null
-    const clap = clapName ? actions[clapName] : null
-    const sit = sitName ? actions[sitName] : null
+    const roll = rollName ? actions[rollName] : null
+    const wave = waveName ? actions[waveName] : null
     idle?.reset().setEffectiveWeight(1).play()
     walk?.reset().setEffectiveWeight(0).play()
     run?.reset().setEffectiveWeight(0).play()
     // Action clips stay loaded at 0 weight; useFrame ramps them up on trigger.
-    jump?.reset().setEffectiveWeight(0).play()
-    clap?.reset().setEffectiveWeight(0).play()
-    sit?.reset().setEffectiveWeight(0).play()
+    roll?.reset().setEffectiveWeight(0).play()
+    wave?.reset().setEffectiveWeight(0).play()
     return () => {
       idle?.stop()
       walk?.stop()
       run?.stop()
-      jump?.stop()
-      clap?.stop()
-      sit?.stop()
+      roll?.stop()
+      wave?.stop()
     }
   }, [actions, clipRefs])
 
@@ -197,6 +192,29 @@ export function Player({ controlsDisabled }: PlayerProps) {
       m.registerZone(getStopZoneRect(stop), stop)
     }
     return m
+  }, [])
+
+  // Zone manager: fires setActiveZone on the game store whenever the player
+  // crosses into a new named region. Zones are registered in
+  // most-specific-first order so branches win over their parent corridor.
+  const zones = useMemo(() => {
+    const setActiveZone = useGameStore.getState().setActiveZone
+    const z = new ZoneManager({ fallback: 'office', onChange: setActiveZone })
+    // Branch-door zones — register first so they take priority when the
+    // player is inside the branch's activation rect.
+    for (const door of BRANCH_DOORS) {
+      z.registerZone({ id: door.id, ...door.activationRect })
+    }
+    // Corridor covers the whole west corridor floor. `office` is the
+    // fallback so anything not in the corridor or a branch defaults to it.
+    z.registerZone({
+      id: 'corridor',
+      minX: WEST_CORRIDOR.westX,
+      maxX: WEST_CORRIDOR.eastX,
+      minZ: WEST_CORRIDOR.northZ,
+      maxZ: WEST_CORRIDOR.southZ,
+    })
+    return z
   }, [])
 
   useEffect(() => {
@@ -226,90 +244,45 @@ export function Player({ controlsDisabled }: PlayerProps) {
       // direction instead.
       if (s.yawLeft) yaw.current -= KEY_LOOK_SPEED * delta
       if (s.yawRight) yaw.current += KEY_LOOK_SPEED * delta
+
+      // +/- zoom. Multiplicative so successive presses feel consistent at any
+      // current scale. "+" pulls the camera in (smaller multiplier).
+      if (s.zoomIn) zoomRef.current /= Math.pow(CAMERA_ZOOM_RATE, delta)
+      if (s.zoomOut) zoomRef.current *= Math.pow(CAMERA_ZOOM_RATE, delta)
+      if (zoomRef.current < CAMERA_ZOOM_MIN) zoomRef.current = CAMERA_ZOOM_MIN
+      if (zoomRef.current > CAMERA_ZOOM_MAX) zoomRef.current = CAMERA_ZOOM_MAX
     }
 
-    // Any movement key cancels a sit — jump/clap play through instead.
-    const movementRequested =
-      !controlsDisabled && (s.forward || s.back || s.left || s.right)
-    if (action.kind === 'sit' && movementRequested) {
-      action.kind = null
-      action.remaining = 0
-    }
-
-    // Process one-shot triggers (jump/clap take precedence over sit start).
+    // Process one-shot triggers. Roll takes precedence over wave.
     if (!controlsDisabled && action.kind === null) {
-      if (consumeJump() && clipRefs.jumpName) {
-        action.kind = 'jump'
-        action.remaining = ACTION_HOLD.jump
+      if (consumeRoll() && clipRefs.rollName) {
+        action.kind = 'roll'
+        action.remaining = ACTION_HOLD.roll
         // Capture takeoff velocity: use current linvel if moving, otherwise
-        // launch forward along the character's facing at STANDING_JUMP_SPEED.
+        // roll forward along the character's facing at STANDING_ROLL_SPEED.
         const lv = body.linvel()
         const currentSpeed = Math.hypot(lv.x, lv.z)
         if (currentSpeed > 0.5) {
-          action.jumpVx = lv.x
-          action.jumpVz = lv.z
+          action.rollVx = lv.x
+          action.rollVz = lv.z
         } else {
           // meshRef.rotation.y = atan2(vx, vz) so forward = (sin, cos)
           const facing = meshRef.current?.rotation.y ?? 0
-          action.jumpVx = Math.sin(facing) * STANDING_JUMP_SPEED
-          action.jumpVz = Math.cos(facing) * STANDING_JUMP_SPEED
+          action.rollVx = Math.sin(facing) * STANDING_ROLL_SPEED
+          action.rollVz = Math.cos(facing) * STANDING_ROLL_SPEED
         }
-        const jumpAction = actions[clipRefs.jumpName]
-        jumpAction?.reset()
-      } else if (consumeClap() && clipRefs.clapName) {
-        action.kind = 'clap'
-        action.remaining = ACTION_HOLD.clap
-        const clapAction = actions[clipRefs.clapName]
-        clapAction?.reset()
+        const rollAction = actions[clipRefs.rollName]
+        rollAction?.reset()
+      } else if (consumeWave() && clipRefs.waveName) {
+        action.kind = 'wave'
+        action.remaining = ACTION_HOLD.wave
+        const waveAction = actions[clipRefs.waveName]
+        waveAction?.reset()
       }
     }
 
-    // Sit toggle: near a desk → start sit (snapping to the sit spot);
-    // pressing again while sitting stands up. Ignored during jump/clap.
-    if (
-      !controlsDisabled &&
-      consumeSitToggle() &&
-      (action.kind === null || action.kind === 'sit') &&
-      clipRefs.sitName
-    ) {
-      if (action.kind === 'sit') {
-        action.kind = null
-      } else {
-        // Nearest sit spot within activation radius wins.
-        let nearest: (typeof SIT_SPOTS)[number] | null = null
-        let nearestDist = Infinity
-        for (const spot of SIT_SPOTS) {
-          const dx = spot[0] - pos.x
-          const dz = spot[1] - pos.z
-          const d = Math.hypot(dx, dz)
-          if (d < nearestDist) {
-            nearestDist = d
-            nearest = spot
-          }
-        }
-        if (nearest && nearestDist <= SIT_ACTIVATION_RADIUS) {
-          action.kind = 'sit'
-          action.remaining = 0
-          // Snap the rigid body to the sit spot so the seated animation lines
-          // up with the chair. Nudge slightly forward (toward the desk) so
-          // the torso doesn't clip through the chair back. Facing angle θ
-          // means forward = (sin θ, cos θ) in world XZ.
-          const facing = nearest[2]
-          const fx = Math.sin(facing) * SIT_FORWARD_OFFSET
-          const fz = Math.cos(facing) * SIT_FORWARD_OFFSET
-          body.setTranslation(
-            { x: nearest[0] + fx, y: pos.y, z: nearest[1] + fz },
-            true,
-          )
-          body.setLinvel({ x: 0, y: 0, z: 0 }, true)
-          if (meshRef.current) meshRef.current.rotation.y = facing
-          actions[clipRefs.sitName]?.reset()
-        }
-      }
-    }
-
-    // Countdown for jump/clap. Sit lasts until toggled off.
-    if (action.kind === 'jump' || action.kind === 'clap') {
+    // Countdown for roll/wave.
+    if (action.kind === 'roll' || action.kind === 'wave') {
       action.remaining -= delta
       if (action.remaining <= 0) {
         action.kind = null
@@ -347,16 +320,18 @@ export function Player({ controlsDisabled }: PlayerProps) {
         vx = ix * cy + iz * sy
         vz = -ix * sy + iz * cy
       }
-    } else if (action.kind === 'jump') {
-      // Jumps carry their takeoff velocity through the leap.
-      vx = action.jumpVx
-      vz = action.jumpVz
+    } else if (action.kind === 'roll') {
+      // Rolls carry their takeoff velocity through the animation.
+      vx = action.rollVx
+      vz = action.rollVz
     }
 
     body.setLinvel({ x: vx, y: 0, z: vz }, true)
 
     // 2D interaction is measured on the XZ plane — we pass X as "x" and Z as "y".
     manager.update({ x: pos.x, y: pos.z })
+    // Zone tracking runs off the same XZ point.
+    zones.update(pos.x, pos.z)
 
     if (!controlsDisabled && !locked && consumeInteract()) {
       manager.trigger()
@@ -367,10 +342,11 @@ export function Player({ controlsDisabled }: PlayerProps) {
     // rotates the horizontal offset CCW (viewed from above); height is fixed.
     const cy = Math.cos(yaw.current)
     const sy = Math.sin(yaw.current)
+    const zoom = zoomRef.current
     cameraDesired.set(
-      pos.x + CAMERA_DISTANCE * sy,
-      CAMERA_HEIGHT,
-      pos.z + CAMERA_DISTANCE * cy,
+      pos.x + CAMERA_DISTANCE * zoom * sy,
+      CAMERA_HEIGHT * zoom,
+      pos.z + CAMERA_DISTANCE * zoom * cy,
     )
     // Frame-rate-independent exponential smoothing: at any fps the camera
     // covers the same fraction of remaining distance per second.
@@ -386,35 +362,20 @@ export function Player({ controlsDisabled }: PlayerProps) {
       meshRef.current.rotation.y = angle
     }
 
-    // Sit lift: raise the visual mesh up onto the chair seat while seated so
-    // the legs rest on top of the chair instead of clipping through it. The
-    // RigidBody Y is locked, so we drive this on the mesh group only.
-    if (meshRef.current) {
-      const targetY = action.kind === 'sit' ? SIT_VERTICAL_OFFSET : 0
-      const liftBlend = Math.min(1, delta * 10)
-      meshRef.current.position.y = THREE.MathUtils.lerp(
-        meshRef.current.position.y,
-        targetY,
-        liftBlend,
-      )
-    }
-
-    const { idleName, walkName, runName, jumpName, clapName, sitName } = clipRefs
+    const { idleName, walkName, runName, rollName, waveName } = clipRefs
     const idle = idleName ? actions[idleName] : null
     const walk = walkName ? actions[walkName] : null
     const run = runName ? actions[runName] : null
-    const jump = jumpName ? actions[jumpName] : null
-    const clap = clapName ? actions[clapName] : null
-    const sit = sitName ? actions[sitName] : null
+    const roll = rollName ? actions[rollName] : null
+    const wave = waveName ? actions[waveName] : null
 
     const moving = speed > 0.05
     // If run clip is missing, fall back to walk while sprinting.
     const useRunClip = moving && isRunning && !!run
     const useWalkClip = moving && !useRunClip && !!walk
 
-    const jumpTarget = action.kind === 'jump' ? 1 : 0
-    const clapTarget = action.kind === 'clap' ? 1 : 0
-    const sitTarget = action.kind === 'sit' ? 1 : 0
+    const rollTarget = action.kind === 'roll' ? 1 : 0
+    const waveTarget = action.kind === 'wave' ? 1 : 0
     // Base locomotion clips are muted while an action is active so the action
     // clip drives the whole armature.
     const baseGain = locked ? 0 : 1
@@ -426,9 +387,8 @@ export function Player({ controlsDisabled }: PlayerProps) {
     if (idle) idle.setEffectiveWeight(THREE.MathUtils.lerp(idle.getEffectiveWeight(), idleTarget, blend))
     if (walk) walk.setEffectiveWeight(THREE.MathUtils.lerp(walk.getEffectiveWeight(), walkTarget, blend))
     if (run) run.setEffectiveWeight(THREE.MathUtils.lerp(run.getEffectiveWeight(), runTarget, blend))
-    if (jump) jump.setEffectiveWeight(THREE.MathUtils.lerp(jump.getEffectiveWeight(), jumpTarget, blend))
-    if (clap) clap.setEffectiveWeight(THREE.MathUtils.lerp(clap.getEffectiveWeight(), clapTarget, blend))
-    if (sit) sit.setEffectiveWeight(THREE.MathUtils.lerp(sit.getEffectiveWeight(), sitTarget, blend))
+    if (roll) roll.setEffectiveWeight(THREE.MathUtils.lerp(roll.getEffectiveWeight(), rollTarget, blend))
+    if (wave) wave.setEffectiveWeight(THREE.MathUtils.lerp(wave.getEffectiveWeight(), waveTarget, blend))
   })
 
   return (

@@ -51,6 +51,82 @@ export const HALLWAY_WEST_DOOR = {
   width: 2,
 }
 
+// Long north-running corridor west of the office. Enters from the south
+// hallway via `HALLWAY_WEST_DOOR`; runs ~20 m north; ends with a gap-only
+// doorway on its east wall near the north end that leads nowhere yet.
+//
+// The corridor's east wall sits at X = -ROOM_WIDTH/2 — coplanar with the
+// office/hallway west walls (glass). We render it as its own panels split
+// around the two doorways; the duplicate glass at the coplanar overlap is
+// invisible from either side and cheap enough for a prototype.
+export const WEST_CORRIDOR = {
+  width: 3,
+  eastX: -ROOM_WIDTH / 2, // -10
+  westX: -ROOM_WIDTH / 2 - 3, // -13
+  // Corridor runs from `southZ` (aligned with hallway south face for a clean
+  // visual seam) north to `northZ` — long enough to feel like a corridor and
+  // to place the dead-end door past the conference room's north wall so the
+  // door reads as a real opening, not a doorway pressed against glass.
+  southZ: ROOM_DEPTH / 2 + 13, // 20
+  // Long north extension — ~90 m corridor. Gives room for many future
+  // branch doorways along the east wall (see BRANCH_DOORS below).
+  northZ: -70,
+  // Dead-end doorway near (but not at) the north end, on the east side (the
+  // player's right as they walk north). "Does nothing" — sealed with a
+  // DoorBlocker. Positioned safely north of the conf-room's north face
+  // (Z=-7) so it isn't coplanar with the conference-room back glass wall.
+  deadEndDoorZ: -68,
+  deadEndDoorWidth: 1.6,
+}
+
+// East-running corridor branching off the west corridor at its north end.
+// Runs parallel to the conference room's north wall, length = ROOM_WIDTH
+// (matches the conf room's east–west extent). The south wall is coplanar
+// with the conf room's north (glass) wall and is not rendered — the conf
+// room's own wall serves as the visual boundary. The west wall is not
+// rendered either; it's covered by the west corridor's east wall with a
+// doorway cut out via the openings list in WestCorridor.tsx.
+export const EAST_CORRIDOR = {
+  width: 3, // north–south extent
+  southZ: -ROOM_DEPTH / 2, // -7 (coplanar w/ conf-room north wall)
+  northZ: -ROOM_DEPTH / 2 - 3, // -10
+  westX: -ROOM_WIDTH / 2, // -10 (coplanar w/ west corridor east wall)
+  eastX: ROOM_WIDTH / 2, // +10 (matches conf-room east wall X)
+  // Passage into the west corridor.
+  westDoorZ: -8.5,
+  westDoorWidth: 2,
+  // Sealed dead-end doorway on the east wall — mirrors WEST_CORRIDOR.deadEndDoor.
+  eastDoorZ: -8.5,
+  eastDoorWidth: 1.6,
+}
+
+// Future branch doorways along the corridor's east wall. Each entry is
+// where a scene like a meeting room, project office, or joke corner will
+// hang off the corridor. Rendered as a door-frame + invisible blocker for
+// now; when a branch scene exists, drop the blocker and mount the branch
+// contents in a <LazyBranch zone="<id>">.
+export interface BranchDoor {
+  id: string
+  centerZ: number
+  width: number
+  // Zone rect that marks the player as "inside this branch". When the
+  // player is in this rect, <LazyBranch zone={id}> mounts.
+  activationRect: { minX: number; maxX: number; minZ: number; maxZ: number }
+}
+
+export const BRANCH_DOORS: BranchDoor[] = [
+  // First branch — placeholder near the middle of the corridor. No scene
+  // built yet, but the doorway + zone trigger are wired.
+  {
+    id: 'branch-alpha',
+    centerZ: -30,
+    width: 1.6,
+    // A ~4 m x 5 m rect just east of the doorway (inside the branch space
+    // we haven't built yet). Adjust when the branch geometry lands.
+    activationRect: { minX: -10, maxX: -6, minZ: -32.5, maxZ: -27.5 },
+  },
+]
+
 // Hallway south-wall doorway (near the west/left end).
 export const HALLWAY_SOUTH_DOOR = {
   centerX: -7.5,
@@ -103,27 +179,6 @@ export const HALLWAY_DESK_CHAIRS: [number, number, number][] = [
   [-8, 14, Math.PI / 2],
   [-2, 14, -Math.PI / 2],
 ]
-
-// Sit spots — snap-to points when the player triggers sit near a desk. Each
-// entry is the chair's [x, z, facing] where facing = the angle the seated
-// character should end up rotated to (angle around Y, matching the chair).
-// Player proximity is checked in XZ; SIT_ACTIVATION_RADIUS is the distance
-// from the sit spot within which the sit action becomes available.
-export const SIT_SPOTS: [number, number, number][] = HALLWAY_DESK_CHAIRS
-export const SIT_ACTIVATION_RADIUS = 1.5
-// Forward nudge (in the sitter's facing direction, toward the desk) so the
-// character's back sits just in front of the chair back instead of clipping
-// through it. The sitting animation keeps the model's origin at hip height,
-// but the character has visible torso depth behind that origin — this offset
-// compensates.
-export const SIT_FORWARD_OFFSET = 0.18
-
-// Vertical lift applied to the character mesh when the sit animation plays.
-// The sit clip already poses the character with hips well above the mesh
-// root, so we only need a small lift to move the visible legs above the
-// seat cushion — a full seat-height lift stacks with the animation and
-// puts the character on top of the backrest.
-export const SIT_VERTICAL_OFFSET = 0.12
 
 // Long prep-style table parked west of the sink cabinets, oriented long
 // along X so it sits perpendicular to the (north-south) cabinet row with a
@@ -229,6 +284,14 @@ export const CAMERA_DISTANCE = 8
 export const CAMERA_HEIGHT = 8
 export const CAMERA_INITIAL_YAW = 0
 export const CAMERA_LOOK_HEIGHT = 0.5
+// Zoom clamps and speed. Zoom scales the radial (distance) and height
+// components of the polar camera together so the pitch angle stays fixed.
+// The scale is multiplied against CAMERA_DISTANCE / CAMERA_HEIGHT.
+export const CAMERA_ZOOM_MIN = 0.4
+export const CAMERA_ZOOM_MAX = 2.5
+// Multiplicative zoom rate per second while +/- is held. 1.6 = ~doubles or
+// halves in about 1.3 s.
+export const CAMERA_ZOOM_RATE = 1.6
 // Radians of camera yaw per pixel of horizontal mouse drag.
 // 0.005 ≈ a full 90° orbit per ~314 px — comfortable for slow inspection.
 export const MOUSE_LOOK_SENSITIVITY = 0.005

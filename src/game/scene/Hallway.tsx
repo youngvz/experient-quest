@@ -139,12 +139,7 @@ export function Hallway() {
         width={HALLWAY_WEST_DOOR.width}
         spansX={false}
       />
-      {/* seal the west doorway — later swap for a level-transition sensor */}
-      <DoorBlocker
-        position={[westX, HALLWAY_WEST_DOOR.centerZ]}
-        width={HALLWAY_WEST_DOOR.width}
-        spansX={false}
-      />
+      {/* west doorway is now the entrance to <WestCorridor /> — no blocker */}
 
       {/* east wall — opaque, full length */}
       <WallPanel

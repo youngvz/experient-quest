@@ -8,11 +8,12 @@ export interface KeyboardState {
   running: boolean
   interactPressed: boolean
   interactConsumed: boolean
-  jumpPressed: boolean
-  clapPressed: boolean
-  sitTogglePressed: boolean
+  rollPressed: boolean
+  wavePressed: boolean
   yawLeft: boolean
   yawRight: boolean
+  zoomIn: boolean
+  zoomOut: boolean
 }
 
 const FORWARD_KEYS = new Set(['KeyW', 'ArrowUp'])
@@ -21,20 +22,22 @@ const LEFT_KEYS = new Set(['KeyA', 'ArrowLeft'])
 const RIGHT_KEYS = new Set(['KeyD', 'ArrowRight'])
 const INTERACT_KEYS = new Set(['KeyF'])
 const RUN_TOGGLE_KEYS = new Set(['KeyR'])
-const JUMP_KEYS = new Set(['Space'])
-const CLAP_KEYS = new Set(['KeyC'])
-const SIT_KEYS = new Set(['KeyX'])
+const ROLL_KEYS = new Set(['Space'])
+const WAVE_KEYS = new Set(['KeyC'])
 const YAW_LEFT_KEYS = new Set(['KeyQ'])
 const YAW_RIGHT_KEYS = new Set(['KeyE'])
+// "+" is Shift+Equal on US layouts; also accept the numpad "+". "-" covers
+// both the main-row minus and the numpad minus.
+const ZOOM_IN_KEYS = new Set(['Equal', 'NumpadAdd'])
+const ZOOM_OUT_KEYS = new Set(['Minus', 'NumpadSubtract'])
 
 // Mutable state ref updated by DOM listeners; useFrame reads it every frame.
 // interactPressed is edge-triggered — consumer calls `consumeInteract()` to clear the pulse.
 export function useKeyboard(): {
   state: React.MutableRefObject<KeyboardState>
   consumeInteract: () => boolean
-  consumeJump: () => boolean
-  consumeClap: () => boolean
-  consumeSitToggle: () => boolean
+  consumeRoll: () => boolean
+  consumeWave: () => boolean
 } {
   const state = useRef<KeyboardState>({
     forward: false,
@@ -44,11 +47,12 @@ export function useKeyboard(): {
     running: false,
     interactPressed: false,
     interactConsumed: false,
-    jumpPressed: false,
-    clapPressed: false,
-    sitTogglePressed: false,
+    rollPressed: false,
+    wavePressed: false,
     yawLeft: false,
     yawRight: false,
+    zoomIn: false,
+    zoomOut: false,
   })
 
   useEffect(() => {
@@ -63,15 +67,16 @@ export function useKeyboard(): {
         if (!s.interactConsumed) s.interactPressed = true
       }
       else if (RUN_TOGGLE_KEYS.has(event.code)) s.running = !s.running
-      else if (JUMP_KEYS.has(event.code)) {
-        s.jumpPressed = true
+      else if (ROLL_KEYS.has(event.code)) {
+        s.rollPressed = true
         // Space would otherwise scroll the page.
         event.preventDefault()
       }
-      else if (CLAP_KEYS.has(event.code)) s.clapPressed = true
-      else if (SIT_KEYS.has(event.code)) s.sitTogglePressed = true
+      else if (WAVE_KEYS.has(event.code)) s.wavePressed = true
       else if (YAW_LEFT_KEYS.has(event.code)) s.yawLeft = true
       else if (YAW_RIGHT_KEYS.has(event.code)) s.yawRight = true
+      else if (ZOOM_IN_KEYS.has(event.code)) s.zoomIn = true
+      else if (ZOOM_OUT_KEYS.has(event.code)) s.zoomOut = true
     }
     const onKeyUp = (event: KeyboardEvent) => {
       const s = state.current
@@ -85,17 +90,20 @@ export function useKeyboard(): {
       }
       else if (YAW_LEFT_KEYS.has(event.code)) s.yawLeft = false
       else if (YAW_RIGHT_KEYS.has(event.code)) s.yawRight = false
+      else if (ZOOM_IN_KEYS.has(event.code)) s.zoomIn = false
+      else if (ZOOM_OUT_KEYS.has(event.code)) s.zoomOut = false
     }
     const onBlur = () => {
       const s = state.current
       s.forward = s.back = s.left = s.right = false
       s.interactPressed = false
       s.interactConsumed = false
-      s.jumpPressed = false
-      s.clapPressed = false
-      s.sitTogglePressed = false
+      s.rollPressed = false
+      s.wavePressed = false
       s.yawLeft = false
       s.yawRight = false
+      s.zoomIn = false
+      s.zoomOut = false
     }
     window.addEventListener('keydown', onKeyDown)
     window.addEventListener('keyup', onKeyUp)
@@ -115,26 +123,19 @@ export function useKeyboard(): {
     return true
   }
 
-  const consumeJump = () => {
+  const consumeRoll = () => {
     const s = state.current
-    if (!s.jumpPressed) return false
-    s.jumpPressed = false
+    if (!s.rollPressed) return false
+    s.rollPressed = false
     return true
   }
 
-  const consumeClap = () => {
+  const consumeWave = () => {
     const s = state.current
-    if (!s.clapPressed) return false
-    s.clapPressed = false
+    if (!s.wavePressed) return false
+    s.wavePressed = false
     return true
   }
 
-  const consumeSitToggle = () => {
-    const s = state.current
-    if (!s.sitTogglePressed) return false
-    s.sitTogglePressed = false
-    return true
-  }
-
-  return { state, consumeInteract, consumeJump, consumeClap, consumeSitToggle }
+  return { state, consumeInteract, consumeRoll, consumeWave }
 }

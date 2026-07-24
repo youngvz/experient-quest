@@ -153,7 +153,7 @@ For future camera work, prefer:
 Drive animation from gameplay state, not raw keys. Player clips live on a
 single armature and crossfade by weight — never by stop-and-play.
 
-Current player clip inventory (`public/assets/player/character.glb`):
+Current player clip inventory (`public/assets/player/youngvz_casual.glb`):
 
 - Locomotion — `Man_Idle`, `Man_Walk`, `Man_Run`
 - One-shots — `Man_RunningJump` (used for jump), `Man_Clapping`
