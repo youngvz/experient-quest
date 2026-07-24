@@ -1,20 +1,20 @@
 import { Physics } from '@react-three/rapier'
 import { Suspense } from 'react'
-import { Cabinets } from './Cabinets'
-import { Chairs } from './Chairs'
+import { ConferenceChairs } from './ConferenceChairs'
+import { ConferenceFloor } from './ConferenceFloor'
 import { ConferenceLaptops } from './ConferenceLaptops'
+import { ConferenceRoom } from './ConferenceRoom'
 import { ConferenceTable } from './ConferenceTable'
 import { CorridorPocket } from './CorridorPocket'
 import { EastCorridor } from './EastCorridor'
 import { Exterior } from './Exterior'
-import { Floor } from './Floor'
-import { Hallway } from './Hallway'
 import { LazyBranch } from './LazyBranch'
 import { Player } from './Player'
-import { Television } from './Television'
-import { Walls } from './Walls'
-import { WestCorridor } from './WestCorridor'
-import { Whiteboard } from './Whiteboard'
+import { CentralCorridor } from './CentralCorridor'
+import { Televisions } from './Televisions'
+import { TheBakery } from './TheBakery'
+import { TheBakeryCabinets } from './TheBakeryCabinets'
+import { Whiteboards } from './Whiteboards'
 
 interface OfficeSceneProps {
   controlsDisabled: boolean
@@ -39,18 +39,18 @@ export function OfficeScene({ controlsDisabled }: OfficeSceneProps) {
         <Exterior />
       </Suspense>
       <Physics gravity={[0, -9.81, 0]} timeStep="vary">
-        <Floor />
-        <Walls />
-        <Hallway />
-        <WestCorridor />
+        <ConferenceFloor />
+        <ConferenceRoom />
+        <TheBakery />
+        <CentralCorridor />
         <EastCorridor />
         <CorridorPocket />
-        <Cabinets />
-        <Whiteboard />
-        <Television />
+        <TheBakeryCabinets />
+        <Whiteboards />
+        <Televisions />
         <ConferenceTable />
         <ConferenceLaptops />
-        <Chairs />
+        <ConferenceChairs />
         {/* Branch slots. Each <LazyBranch> mounts its children only when
             the player is in the matching zone; the corridor stays cheap.
             When a real branch scene is built, wire it here with a lazy

@@ -4,7 +4,7 @@ import { create } from 'zustand'
 // a time (defaulting to the office). Scene branches subscribe to the active
 // zone via useActiveZone() and mount/unmount their contents accordingly —
 // this is what lets us keep one <Physics> world while lazy-loading rooms.
-export type ZoneId = 'office' | 'corridor' | (string & {})
+export type ZoneId = 'office' | 'central-corridor' | (string & {})
 
 export interface GameState {
   activeStopId: string | null

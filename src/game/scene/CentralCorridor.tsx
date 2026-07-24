@@ -4,14 +4,14 @@ import {
   COLORS,
   CORRIDOR_POCKET,
   EAST_CORRIDOR,
-  HALLWAY_WEST_DOOR,
+  THE_BAKERY_WEST_DOOR,
   ROOM_DEPTH,
   WALL_HEIGHT,
   WALL_THICKNESS,
-  WEST_CORRIDOR,
+  CENTRAL_CORRIDOR,
 } from '../constants/gameConstants'
 import { Door } from './Door'
-import { DoorBlocker, DoorHeader, WallPanel } from './Walls'
+import { DoorBlocker, DoorHeader, WallPanel } from './wallPrimitives'
 
 // Remove any part of each input segment that overlaps the conference room's
 // west wall span (Z ∈ [-ROOM_DEPTH/2, +ROOM_DEPTH/2]). A segment may split
@@ -36,11 +36,11 @@ function clipSegments(segments: [number, number][]): [number, number][] {
   return out
 }
 
-// Long north-south corridor west of the office. Reached through the south
-// hallway's west doorway. Additional openings along the east wall are
+// Long north-south corridor west of the office. Reached through The
+// Bakery's west doorway. Additional openings along the east wall are
 // declared in BRANCH_DOORS — each becomes a door frame + invisible blocker
 // until a branch scene is wired up. The far north end has a dead-end door.
-export function WestCorridor() {
+export function CentralCorridor() {
   const y = WALL_HEIGHT / 2
   const {
     eastX,
@@ -51,7 +51,7 @@ export function WestCorridor() {
     deadEndDoorZ,
     deadEndDoorWidth,
     southDoorWidth,
-  } = WEST_CORRIDOR
+  } = CENTRAL_CORRIDOR
   const centerX = (eastX + westX) / 2
   const centerZ = (northZ + southZ) / 2
   const length = southZ - northZ
@@ -61,10 +61,10 @@ export function WestCorridor() {
   // Doorway openings on the east wall — each gets a header lintel.
   const openings: { lo: number; hi: number; centerZ: number; width: number }[] = [
     {
-      lo: HALLWAY_WEST_DOOR.centerZ - HALLWAY_WEST_DOOR.width / 2,
-      hi: HALLWAY_WEST_DOOR.centerZ + HALLWAY_WEST_DOOR.width / 2,
-      centerZ: HALLWAY_WEST_DOOR.centerZ,
-      width: HALLWAY_WEST_DOOR.width,
+      lo: THE_BAKERY_WEST_DOOR.centerZ - THE_BAKERY_WEST_DOOR.width / 2,
+      hi: THE_BAKERY_WEST_DOOR.centerZ + THE_BAKERY_WEST_DOOR.width / 2,
+      centerZ: THE_BAKERY_WEST_DOOR.centerZ,
+      width: THE_BAKERY_WEST_DOOR.width,
     },
     {
       lo: deadEndDoorZ - deadEndDoorWidth / 2,

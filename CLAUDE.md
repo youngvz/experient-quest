@@ -57,17 +57,21 @@ before proposing a large migration.
 - `src/components/{GameCanvas,InteractionPrompt,ContentOverlay}/` — HTML/DOM UI
 - `src/game/constants/gameConstants.ts` — tuning constants, room dimensions,
   doorway positions, spawn point, camera + zoom clamps, corridor geometry
-  (`WEST_CORRIDOR`, `EAST_CORRIDOR`, `CORRIDOR_POCKET`)
+  (`CENTRAL_CORRIDOR`, `EAST_CORRIDOR`, `CORRIDOR_POCKET`)
 - `src/game/events/{GameEventBus,gameEvents}.ts` — typed R3F ↔ React bus
 - `src/game/interactions/{InteractionManager,interactionTypes}.ts` —
   `PresentationStop` schema + 2D-rect XZ-plane zone manager. Zones **must**
   be registered from a `useEffect` (not `useMemo`) — see the StrictMode
   note in the player controller section below.
-- `src/game/scene/` — R3F primitives. Environment: `Floor`, `Walls`
-  (`WallPanel`, `DoorHeader`, `DoorBlocker`), `Hallway`, `WestCorridor`,
-  `EastCorridor`, `CorridorPocket`, `Exterior`, `Cabinets`, `Whiteboard`,
-  `Television`. Furniture: `Desk`, `Chairs`, `ConferenceTable`,
-  `ConferenceLaptops`. Decor: `Laptop`, `Monitor`, `Paper`. Characters:
+- `src/game/scene/` — R3F primitives. Wall/door building blocks
+  (`WallPanel`, `DoorHeader`, `DoorBlocker`, `Door`) live in
+  `wallPrimitives.tsx` + `Door.tsx`. Rooms:
+  `ConferenceFloor`, `ConferenceRoom`, `TheBakery`, `CentralCorridor`,
+  `EastCorridor`, `CorridorPocket`, `Exterior`. Room-specific composites:
+  `TheBakeryCabinets`, `Whiteboards` (conference + alcove),
+  `Televisions` (main + alcove), `ConferenceChairs`, `ConferenceLaptops`,
+  `ConferenceTable`. Reusable prop primitives (singular): `Chair`, `Desk`,
+  `Laptop`, `Monitor`, `Paper`, `Whiteboard`, `Television`. Characters:
   `Player` (dynamic Rapier RigidBody + rigged GLB from
   `public/assets/player/youngvz.glb`), `Employee` (fixed collider
   NPC that loads a GLB and loops a configurable animation clip; e.g.
@@ -87,6 +91,20 @@ before proposing a large migration.
   for `C`).
 - `tests/InteractionManager.test.ts` — Vitest unit
 - `tests/e2e/smoke.spec.ts` — Playwright smoke (canvas renders, no console errors)
+
+Naming conventions in `src/game/scene/`:
+
+- **Rooms end in the space type**: `ConferenceRoom`, `TheBakery`,
+  `CentralCorridor`, `EastCorridor`, `CorridorPocket`. Walking spaces are
+  "corridors", not "hallways".
+- **Primitives are singular** (`Chair`, `Desk`, `Whiteboard`, `Television`);
+  **room-specific bundled sets are named `[Room][Plural]`**
+  (`ConferenceChairs`, `ConferenceLaptops`, `TheBakeryCabinets`,
+  `Whiteboards` and `Televisions` when the set spans multiple rooms).
+- **String IDs are kebab-case with no `kind-` prefix**. Presentation-stop
+  ids: `events-tv`, `distasi`. Zone ids: `central-corridor`, `office`
+  (fallback), `branch-alpha`. Quest ids: `weekly-status-meeting`. The
+  container each id lives in already disambiguates its type.
 
 Player controller notes: it's a **dynamic** RigidBody with Y-translation and
 all rotations **locked** and `gravityScale=0` — driven with
@@ -111,7 +129,7 @@ level transitions, swap `DoorBlocker` for a sensor collider that emits a
 `gameEvents` message.
 
 Layout beyond the conference room: the south hallway's west doorway opens
-into the long `WestCorridor` (X ∈ [−13, −10]). Near the top of that
+into the long `CentralCorridor` (X ∈ [−13, −10]). Near the top of that
 corridor a 6×6 pocket (`CORRIDOR_POCKET`) bulges east, and from that
 pocket the `EastCorridor` runs east along the top of the conference room.
 Pocket and east corridor share their boundary — the wall is carved out so

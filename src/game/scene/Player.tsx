@@ -20,7 +20,7 @@ import {
   PLAYER_SPAWN,
   PLAYER_SPAWN_FACING,
   PLAYER_SPEED,
-  WEST_CORRIDOR,
+  CENTRAL_CORRIDOR,
 } from '../constants/gameConstants'
 import { CHARACTERS } from '../characters/characters'
 import { useKeyboard } from '../../hooks/useKeyboard'
@@ -221,14 +221,14 @@ export function Player({ controlsDisabled }: PlayerProps) {
     for (const door of BRANCH_DOORS) {
       z.registerZone({ id: door.id, ...door.activationRect })
     }
-    // Corridor covers the whole west corridor floor. `office` is the
+    // Zone covers the whole central corridor floor. `office` is the
     // fallback so anything not in the corridor or a branch defaults to it.
     z.registerZone({
-      id: 'corridor',
-      minX: WEST_CORRIDOR.westX,
-      maxX: WEST_CORRIDOR.eastX,
-      minZ: WEST_CORRIDOR.northZ,
-      maxZ: WEST_CORRIDOR.southZ,
+      id: 'central-corridor',
+      minX: CENTRAL_CORRIDOR.westX,
+      maxX: CENTRAL_CORRIDOR.eastX,
+      minZ: CENTRAL_CORRIDOR.northZ,
+      maxZ: CENTRAL_CORRIDOR.southZ,
     })
     return z
   }, [])

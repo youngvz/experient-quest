@@ -9,7 +9,7 @@ import {
 } from '../constants/gameConstants'
 import { Desk } from './Desk'
 import { Employee } from './Employee'
-import { WallPanel } from './Walls'
+import { WallPanel } from './wallPrimitives'
 
 // Narrow workbench + backless stools that live in the middle of the pocket.
 // Long axis runs along Z so seating fits on the east and west sides.
@@ -56,8 +56,8 @@ function Stool({
 }
 
 // 3×3 open pocket at the T-junction between the west and east corridors.
-// The west side is open to the west corridor (that wall's cutout is
-// declared in WestCorridor.tsx). The south side is open to the east
+// The west side is open to the central corridor (that wall's cutout is
+// declared in CentralCorridor.tsx). The south side is open to the east
 // corridor (that wall's cutout is declared in EastCorridor.tsx). Only the
 // north and east perimeter walls are rendered here.
 export function CorridorPocket() {
@@ -120,7 +120,7 @@ export function CorridorPocket() {
       ))}
 
       {/* Distasi — stationed against the pocket's west wall, facing south so
-          he greets anyone coming up the west corridor or south from the
+          he greets anyone coming up the central corridor or south from the
           east corridor. */}
       <Suspense fallback={null}>
         <Employee

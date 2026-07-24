@@ -25,34 +25,42 @@ live as exported constants in `src/game/constants/gameConstants.ts`, and each
 scene component reads from those constants.
 
 Coordinate system: world units are metres. `+X` is east, `+Z` is south, `+Y`
-is up. The conference room is centered on the origin; the hallway runs
-south.
+is up. The conference room is centered on the origin; the The Bakery
+runs south of it.
 
 Building blocks (all in `src/game/scene/`):
 
-- `<WallPanel>` — opaque or transmissive glass segment (`Walls.tsx`).
-- `<DoorHeader>` — lintel spanning a doorway; no collider.
-- `<DoorBlocker>` — invisible full-height collider for exterior doorways the
-  player can't cross yet (swap for a sensor collider when adding level
-  transitions).
-- `<Desk>`, `<Chair>`, `<Cabinets>`, `<Laptop>`, `<Monitor>`, `<Paper>`,
-  `<Television>`, `<Whiteboard>`, `<ConferenceTable>` — reusable props.
+- Wall/door primitives (`wallPrimitives.tsx`, `Door.tsx`):
+  `<WallPanel>` — opaque or transmissive glass segment.
+  `<DoorHeader>` — lintel spanning a doorway; no collider.
+  `<DoorBlocker>` — invisible full-height collider for exterior doorways
+  the player can't cross yet (swap for a sensor collider when adding
+  level transitions).
+  `<Door>` — visible glass door slab with pull handle; optional collider;
+  optional open pose.
+- Reusable prop primitives (singular): `<Desk>`, `<Chair>`, `<Laptop>`,
+  `<Monitor>`, `<Paper>`, `<Television>`, `<Whiteboard>`.
+- Room-specific composites (plural or `[Room][Plural]`):
+  `<TheBakeryCabinets>`, `<Whiteboards>` (conference + alcove),
+  `<Televisions>` (main + alcove), `<ConferenceChairs>`,
+  `<ConferenceLaptops>`, `<ConferenceTable>`.
 - `<Employee>` — rigged NPC that loads a GLB, autofits height, plays one
   looping clip (regex-picked via `clipPatterns`), and stands as a fixed
   collider. Callers pass a floor-level `y` (typically `0`).
-- `<Floor>`, `<Hallway>`, `<WestCorridor>`, `<EastCorridor>`,
-  `<CorridorPocket>`, `<Exterior>` — room-level containers that assemble
-  the primitives.
+- Room-level containers: `<ConferenceFloor>`, `<ConferenceRoom>`,
+  `<TheBakery>`, `<CentralCorridor>`, `<EastCorridor>`,
+  `<CorridorPocket>`, `<Exterior>`.
 
 Layout beyond the conference room:
 
-- `<Hallway>` — south hallway (Z ≈ 7..20) with desks, kitchen, alcoves.
-- `<WestCorridor>` — long N–S corridor west of the office
-  (X ∈ [−13, −10], Z ∈ [−70, +20]) reached through the hallway's west
-  doorway. Its east wall has parametric openings for `HALLWAY_WEST_DOOR`,
-  the dead-end door, `BRANCH_DOORS`, and full-height gaps for
-  `CORRIDOR_POCKET` (no lintel).
-- `<CorridorPocket>` — 6×6 open pocket bulging east off the west corridor
+- `<TheBakery>` — The Bakery (Z ≈ 7..20) with desks, kitchen,
+  alcoves.
+- `<CentralCorridor>` — long N–S corridor west of the office
+  (X ∈ [−13, −10], Z ∈ [−70, +20]) reached through the The Bakery's
+  west doorway. Its east wall has parametric openings for
+  `THE_BAKERY_WEST_DOOR`, the dead-end door, `BRANCH_DOORS`, and
+  full-height gaps for `CORRIDOR_POCKET` (no lintel).
+- `<CorridorPocket>` — 6×6 open pocket bulging east off the central corridor
   (X ∈ [−10, −4], Z ∈ [−16, −10]); houses a workbench + stools.
 - `<EastCorridor>` — east-running corridor above the conference room
   (X ∈ [−10, +10], Z ∈ [−10, −7]) reached through the pocket. Its west

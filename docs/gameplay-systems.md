@@ -120,7 +120,7 @@ their stopping distance.
 ```ts
 // interactionTypes.ts — Distasi in the corridor pocket
 {
-  id: 'employee-distasi',
+  id: 'distasi',
   label: 'Distasi',
   prompt: 'Press F to talk to Distasi',
   overlayTitle: 'Distasi',

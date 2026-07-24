@@ -1,11 +1,11 @@
 import { RigidBody } from '@react-three/rapier'
-import { HALLWAY_EAST_CABINETS, WALL_THICKNESS } from '../constants/gameConstants'
+import { THE_BAKERY_EAST_CABINETS, WALL_THICKNESS } from '../constants/gameConstants'
 
-const C = HALLWAY_EAST_CABINETS
+const C = THE_BAKERY_EAST_CABINETS
 
 // A single base cabinet body with a simple two-door face. Positioned so its
 // east face is flush against the interior of the east wall and its front
-// (west) face points into the hallway.
+// (west) face points into the The Bakery.
 function CabinetBody({ centerZ }: { centerZ: number }) {
   const centerX = C.wallX - WALL_THICKNESS / 2 - C.depth / 2
   const centerY = C.bodyHeight / 2
@@ -149,9 +149,9 @@ function Sink({ centerZ }: { centerZ: number }) {
   )
 }
 
-// Row of white base cabinets along the east wall of the south hallway, in the
-// stretch south of the NE alcoves. The northmost cabinet holds a sink.
-export function Cabinets() {
+// Row of white base cabinets along the east wall of the The Bakery, in
+// the stretch south of the NE alcoves. The northmost cabinet holds a sink.
+export function TheBakeryCabinets() {
   const bodies: number[] = []
   for (let i = 0; i < C.count; i++) {
     bodies.push(C.startZ + i * C.unitWidth)

@@ -6,9 +6,9 @@ import {
   WALL_HEIGHT,
   WALL_THICKNESS,
 } from '../constants/gameConstants'
-import { DoorHeader, WallPanel } from './Walls'
+import { DoorHeader, WallPanel } from './wallPrimitives'
 
-// East-running corridor branching off the west corridor's north end. Runs
+// East-running corridor branching off the central corridor's north end. Runs
 // parallel to the conference room's north wall. The south boundary is the
 // conf room's north (glass) wall and the west boundary is the west
 // corridor's east wall — neither is re-rendered here.

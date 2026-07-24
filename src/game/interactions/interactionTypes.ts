@@ -73,12 +73,12 @@ export const presentationStops: PresentationStop[] = [
     content: { type: 'events', events: [] },
   },
   {
-    id: 'employee-distasi',
+    id: 'distasi',
     label: 'Distasi',
     prompt: 'Press F to talk to Distasi',
     overlayTitle: 'Distasi',
     questUnlock: 'weekly-status-meeting',
-    // Zone extends beyond the pocket into the west corridor and the west
+    // Zone extends beyond the pocket into the central corridor and the west
     // end of the east corridor so the prompt fires as soon as the player
     // approaches, not only once fully inside the pocket.
     // Zone rect: X ∈ [-13, -3], Z ∈ [-17, -9] — spans the pocket footprint

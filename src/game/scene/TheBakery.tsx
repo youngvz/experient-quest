@@ -1,29 +1,29 @@
 import { RigidBody } from '@react-three/rapier'
 import type { ReactElement } from 'react'
 import {
-  ALCOVE_DESKS,
-  ALCOVE_DESK_SIZE,
+  THE_BAKERY_ALCOVE_DESKS,
+  THE_BAKERY_ALCOVE_DESK_SIZE,
   COLORS,
-  HALLWAY,
-  HALLWAY_DESKS,
-  HALLWAY_DESK_CHAIRS,
-  HALLWAY_DESK_SIZE,
-  HALLWAY_KITCHEN_TABLE,
-  HALLWAY_SOUTH_DOOR,
-  HALLWAY_SOUTH_WINDOWS,
-  HALLWAY_WEST_DOOR,
-  NE_ALCOVE,
+  THE_BAKERY,
+  THE_BAKERY_DESKS,
+  THE_BAKERY_DESK_CHAIRS,
+  THE_BAKERY_DESK_SIZE,
+  THE_BAKERY_KITCHEN_TABLE,
+  THE_BAKERY_SOUTH_DOOR,
+  THE_BAKERY_SOUTH_WINDOWS,
+  THE_BAKERY_WEST_DOOR,
+  THE_BAKERY_NE_ALCOVE,
   ROOM_DEPTH,
   WALL_HEIGHT,
   WALL_THICKNESS,
 } from '../constants/gameConstants'
-import { Chair } from './Chairs'
+import { Chair } from './Chair'
 import { Desk } from './Desk'
 import { Door } from './Door'
 import { Laptop } from './Laptop'
 import { Monitor } from './Monitor'
 import { Paper } from './Paper'
-import { DoorHeader, WallPanel } from './Walls'
+import { DoorHeader, WallPanel } from './wallPrimitives'
 
 // Build alternating opaque + glass segments along an axis to render a wall
 // with windows cut into it. Returns an array of <WallPanel /> elements. Any
@@ -88,27 +88,27 @@ function segmentedWall({
   return panels
 }
 
-export function Hallway() {
+export function TheBakery() {
   const y = WALL_HEIGHT / 2
-  const halfW = HALLWAY.width / 2
+  const halfW = THE_BAKERY.width / 2
   const northZ = ROOM_DEPTH / 2
-  const southZ = northZ + HALLWAY.depth
+  const southZ = northZ + THE_BAKERY.depth
   const centerZ = (northZ + southZ) / 2
-  const westX = HALLWAY.centerX - halfW
-  const eastX = HALLWAY.centerX + halfW
+  const westX = THE_BAKERY.centerX - halfW
+  const eastX = THE_BAKERY.centerX + halfW
 
-  // West wall (glass), split around HALLWAY_WEST_DOOR.
-  const wDoorLo = HALLWAY_WEST_DOOR.centerZ - HALLWAY_WEST_DOOR.width / 2
-  const wDoorHi = HALLWAY_WEST_DOOR.centerZ + HALLWAY_WEST_DOOR.width / 2
+  // West wall (glass), split around THE_BAKERY_WEST_DOOR.
+  const wDoorLo = THE_BAKERY_WEST_DOOR.centerZ - THE_BAKERY_WEST_DOOR.width / 2
+  const wDoorHi = THE_BAKERY_WEST_DOOR.centerZ + THE_BAKERY_WEST_DOOR.width / 2
 
   // South wall segments (opaque with glass windows).
-  const sDoorLo = HALLWAY_SOUTH_DOOR.centerX - HALLWAY_SOUTH_DOOR.width / 2
-  const sDoorHi = HALLWAY_SOUTH_DOOR.centerX + HALLWAY_SOUTH_DOOR.width / 2
+  const sDoorLo = THE_BAKERY_SOUTH_DOOR.centerX - THE_BAKERY_SOUTH_DOOR.width / 2
+  const sDoorHi = THE_BAKERY_SOUTH_DOOR.centerX + THE_BAKERY_SOUTH_DOOR.width / 2
 
-  // NE alcove wall metrics — the alcove sits between hallway col X=NE_ALCOVE.westX
-  // and the east wall. Its west wall runs from NE_ALCOVE.upper.northZ to
-  // NE_ALCOVE.lower.southZ, with two doorways.
-  const { westX: alcoveWestX, upper, lower } = NE_ALCOVE
+  // NE alcove wall metrics — the alcove sits between The Bakery col X=THE_BAKERY_NE_ALCOVE.westX
+  // and the east wall. Its west wall runs from THE_BAKERY_NE_ALCOVE.upper.northZ to
+  // THE_BAKERY_NE_ALCOVE.lower.southZ, with two doorways.
+  const { westX: alcoveWestX, upper, lower } = THE_BAKERY_NE_ALCOVE
   const upperDoorLo = upper.doorZ - upper.doorWidth / 2
   const upperDoorHi = upper.doorZ + upper.doorWidth / 2
   const lowerDoorLo = lower.doorZ - lower.doorWidth / 2
@@ -116,10 +116,10 @@ export function Hallway() {
 
   return (
     <>
-      {/* floor — hallway + alcove (single slab) */}
+      {/* floor — The Bakery + alcove (single slab) */}
       <RigidBody type="fixed" colliders="cuboid">
-        <mesh receiveShadow position={[HALLWAY.centerX, -0.05, centerZ]}>
-          <boxGeometry args={[HALLWAY.width, 0.1, HALLWAY.depth]} />
+        <mesh receiveShadow position={[THE_BAKERY.centerX, -0.05, centerZ]}>
+          <boxGeometry args={[THE_BAKERY.width, 0.1, THE_BAKERY.depth]} />
           <meshStandardMaterial color={COLORS.floor} />
         </mesh>
       </RigidBody>
@@ -136,23 +136,23 @@ export function Hallway() {
         glass
       />
       <DoorHeader
-        position={[westX, HALLWAY_WEST_DOOR.centerZ]}
-        width={HALLWAY_WEST_DOOR.width}
+        position={[westX, THE_BAKERY_WEST_DOOR.centerZ]}
+        width={THE_BAKERY_WEST_DOOR.width}
         spansX={false}
       />
-      {/* west doorway is now the entrance to <WestCorridor /> — no blocker */}
+      {/* west doorway is now the entrance to <CentralCorridor /> — no blocker */}
 
       {/* east wall — opaque, full length */}
       <WallPanel
         position={[eastX, y, centerZ]}
-        size={[WALL_THICKNESS, WALL_HEIGHT, HALLWAY.depth]}
+        size={[WALL_THICKNESS, WALL_HEIGHT, THE_BAKERY.depth]}
       />
 
       {/* south wall — opaque with glass windows and a doorway */}
       {segmentedWall({
         min: westX,
         max: sDoorLo,
-        windows: HALLWAY_SOUTH_WINDOWS.filter(
+        windows: THE_BAKERY_SOUTH_WINDOWS.filter(
           ([c, w]) => c + w / 2 <= sDoorLo,
         ),
         y,
@@ -164,7 +164,7 @@ export function Hallway() {
       {segmentedWall({
         min: sDoorHi,
         max: eastX,
-        windows: HALLWAY_SOUTH_WINDOWS.filter(
+        windows: THE_BAKERY_SOUTH_WINDOWS.filter(
           ([c, w]) => c - w / 2 >= sDoorHi,
         ),
         y,
@@ -174,16 +174,16 @@ export function Hallway() {
         height: WALL_HEIGHT,
       })}
       <DoorHeader
-        position={[HALLWAY_SOUTH_DOOR.centerX, southZ]}
-        width={HALLWAY_SOUTH_DOOR.width}
+        position={[THE_BAKERY_SOUTH_DOOR.centerX, southZ]}
+        width={THE_BAKERY_SOUTH_DOOR.width}
         spansX
       />
       {/* Glass door — visible pane + handle. blocking=true seals the opening
           in place of the old invisible DoorBlocker; swap for a sensor
           collider when this becomes a level transition. */}
       <Door
-        position={[HALLWAY_SOUTH_DOOR.centerX, southZ]}
-        width={HALLWAY_SOUTH_DOOR.width}
+        position={[THE_BAKERY_SOUTH_DOOR.centerX, southZ]}
+        width={THE_BAKERY_SOUTH_DOOR.width}
         spansX
         blocking
       />
@@ -231,21 +231,21 @@ export function Hallway() {
         size={[eastX - alcoveWestX, WALL_HEIGHT, WALL_THICKNESS]}
       />
 
-      {/* hallway desks + chairs */}
-      {HALLWAY_DESKS.map((pos, i) => (
-        <Desk key={`h-desk-${i}`} position={pos} size={HALLWAY_DESK_SIZE} />
+      {/* The Bakery desks + chairs */}
+      {THE_BAKERY_DESKS.map((pos, i) => (
+        <Desk key={`h-desk-${i}`} position={pos} size={THE_BAKERY_DESK_SIZE} />
       ))}
-      {HALLWAY_DESK_CHAIRS.map(([x, z, r], i) => (
+      {THE_BAKERY_DESK_CHAIRS.map(([x, z, r], i) => (
         <Chair key={`h-chair-${i}`} position={[x, 0, z]} rotationY={r} />
       ))}
-      {/* Laptops + monitors on each hallway desk. Chair pairs:
+      {/* Laptops + monitors on each The Bakery desk. Chair pairs:
           cluster 0/2 → chair on west (sitter looks east),
           cluster 1/3 → chair on east (sitter looks west).
           Both screens face the sitter (180° from their gaze). Monitors sit
           on the back edge of the desk; laptops nearer the front. Each desk
           has its own position offset + rotation jitter so the four
           workstations don't read as a perfect grid. */}
-      {HALLWAY_DESKS.map((pos, i) => {
+      {THE_BAKERY_DESKS.map((pos, i) => {
         const sitOnWest = i % 2 === 0
         const facingSitter = sitOnWest ? -Math.PI / 2 : Math.PI / 2
         // "Back of the desk" (away from sitter) shifts the monitor along X.
@@ -294,12 +294,12 @@ export function Hallway() {
           <group key={`h-work-${i}`}>
             <Laptop
               position={[pos[0] + frontX + lj.dx, pos[1] + lj.dz]}
-              deskTopY={HALLWAY_DESK_SIZE[1]}
+              deskTopY={THE_BAKERY_DESK_SIZE[1]}
               rotationY={facingSitter + lj.dr}
             />
             <Monitor
               position={[pos[0] + backX, pos[1] + mj.dz]}
-              deskTopY={HALLWAY_DESK_SIZE[1]}
+              deskTopY={THE_BAKERY_DESK_SIZE[1]}
               rotationY={facingSitter + mj.dr}
             />
             {papers.map((p, k) => (
@@ -309,7 +309,7 @@ export function Hallway() {
                   pos[0] + towardSitterX * (0.7 + p.dxFromFront),
                   pos[1] + p.dz,
                 ]}
-                deskTopY={HALLWAY_DESK_SIZE[1]}
+                deskTopY={THE_BAKERY_DESK_SIZE[1]}
                 rotationY={p.rot}
                 layer={k}
                 color={p.color}
@@ -322,29 +322,29 @@ export function Hallway() {
       {/* long prep-style table west of the sink cabinets, matching the alcove
           desks' white top + light-grey legs */}
       <Desk
-        position={HALLWAY_KITCHEN_TABLE.position}
-        size={HALLWAY_KITCHEN_TABLE.size}
+        position={THE_BAKERY_KITCHEN_TABLE.position}
+        size={THE_BAKERY_KITCHEN_TABLE.size}
         topColor="#f3f1ec"
         legColor="#b8b8bc"
       />
 
-      {/* alcove desks — white top with light-grey legs to contrast the hallway
+      {/* alcove desks — white top with light-grey legs to contrast the The Bakery
           workbenches */}
-      {ALCOVE_DESKS.map((pos, i) => (
+      {THE_BAKERY_ALCOVE_DESKS.map((pos, i) => (
         <Desk
           key={`a-desk-${i}`}
           position={pos}
-          size={ALCOVE_DESK_SIZE}
+          size={THE_BAKERY_ALCOVE_DESK_SIZE}
           topColor="#f3f1ec"
           legColor="#b8b8bc"
         />
       ))}
       {/* a single paper on each alcove desk, tilted */}
-      {ALCOVE_DESKS.map((pos, i) => (
+      {THE_BAKERY_ALCOVE_DESKS.map((pos, i) => (
         <Paper
           key={`a-paper-${i}`}
           position={[pos[0] + (i === 0 ? -0.7 : 0.6), pos[1] + (i === 0 ? 0.3 : -0.2)]}
-          deskTopY={ALCOVE_DESK_SIZE[1]}
+          deskTopY={THE_BAKERY_ALCOVE_DESK_SIZE[1]}
           rotationY={i === 0 ? 0.5 : -0.6}
           color={i === 0 ? '#ede8dc' : undefined}
         />
