@@ -1,6 +1,7 @@
 import { RigidBody } from '@react-three/rapier'
 import {
   COLORS,
+  CORRIDOR_POCKET,
   EAST_CORRIDOR,
   WALL_HEIGHT,
   WALL_THICKNESS,
@@ -33,10 +34,10 @@ export function EastCorridor() {
         </mesh>
       </RigidBody>
 
-      {/* north wall — opaque, full length */}
+      {/* north wall — carved to open into CORRIDOR_POCKET at its NW corner */}
       <WallPanel
-        position={[centerX, y, northZ]}
-        size={[width, WALL_HEIGHT, WALL_THICKNESS]}
+        position={[(CORRIDOR_POCKET.eastX + eastX) / 2, y, northZ]}
+        size={[eastX - CORRIDOR_POCKET.eastX, WALL_HEIGHT, WALL_THICKNESS]}
       />
 
       {/* east wall — split around dead-end doorway */}

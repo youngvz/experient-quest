@@ -181,18 +181,33 @@ export function Player({ controlsDisabled }: PlayerProps) {
   }, [actions, clipRefs])
 
   const manager = useMemo(() => {
-    const m = new InteractionManager({
-      onAvailable: (stop) =>
-        gameEvents.emit('interaction:available', { stopId: stop.id, prompt: stop.prompt }),
-      onUnavailable: () => gameEvents.emit('interaction:unavailable', undefined),
-      onTriggered: (stop) =>
-        gameEvents.emit('interaction:triggered', { stopId: stop.id }),
+    return new InteractionManager({
+      onAvailable: (stop) => {
+        if (import.meta.env.DEV) console.info('[interaction] available:', stop.id)
+        gameEvents.emit('interaction:available', { stopId: stop.id, prompt: stop.prompt })
+      },
+      onUnavailable: () => {
+        if (import.meta.env.DEV) console.info('[interaction] unavailable')
+        gameEvents.emit('interaction:unavailable', undefined)
+      },
+      onTriggered: (stop) => {
+        if (import.meta.env.DEV) console.info('[interaction] triggered:', stop.id)
+        gameEvents.emit('interaction:triggered', { stopId: stop.id })
+      },
     })
-    for (const stop of presentationStops) {
-      m.registerZone(getStopZoneRect(stop), stop)
-    }
-    return m
   }, [])
+
+  // Register zones in an effect (not in useMemo) so StrictMode's simulated
+  // mount → cleanup → mount cycle re-registers them after the paired
+  // clearZones() cleanup. Registering inside useMemo instead permanently
+  // empties the manager on fresh load because useMemo isn't re-run after
+  // the simulated unmount.
+  useEffect(() => {
+    for (const stop of presentationStops) {
+      manager.registerZone(getStopZoneRect(stop), stop)
+    }
+    return () => manager.clearZones()
+  }, [manager])
 
   // Zone manager: fires setActiveZone on the game store whenever the player
   // crosses into a new named region. Zones are registered in
@@ -221,10 +236,6 @@ export function Player({ controlsDisabled }: PlayerProps) {
     if (controlsDisabled) manager.disable()
     else manager.enable()
   }, [controlsDisabled, manager])
-
-  useEffect(() => {
-    return () => manager.clearZones()
-  }, [manager])
 
   useFrame((_, delta) => {
     const body = bodyRef.current

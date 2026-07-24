@@ -83,21 +83,30 @@ export const WEST_CORRIDOR = {
 // Runs parallel to the conference room's north wall, length = ROOM_WIDTH
 // (matches the conf room's east–west extent). The south wall is coplanar
 // with the conf room's north (glass) wall and is not rendered — the conf
-// room's own wall serves as the visual boundary. The west wall is not
-// rendered either; it's covered by the west corridor's east wall with a
-// doorway cut out via the openings list in WestCorridor.tsx.
+// room's own wall serves as the visual boundary. The east corridor
+// connects to the west corridor through CORRIDOR_POCKET at its NW corner,
+// not through its own west doorway.
 export const EAST_CORRIDOR = {
   width: 3, // north–south extent
   southZ: -ROOM_DEPTH / 2, // -7 (coplanar w/ conf-room north wall)
   northZ: -ROOM_DEPTH / 2 - 3, // -10
   westX: -ROOM_WIDTH / 2, // -10 (coplanar w/ west corridor east wall)
   eastX: ROOM_WIDTH / 2, // +10 (matches conf-room east wall X)
-  // Passage into the west corridor.
-  westDoorZ: -8.5,
-  westDoorWidth: 2,
   // Sealed dead-end doorway on the east wall — mirrors WEST_CORRIDOR.deadEndDoor.
   eastDoorZ: -8.5,
   eastDoorWidth: 1.6,
+}
+
+// 6×6 open pocket at the T-junction between the west and east corridors.
+// Widens the west corridor eastward for 6 m along Z ∈ [northZ, southZ],
+// creating a landing that flows south into the east corridor. No doorways:
+// the pocket's west side is open into the west corridor and its south
+// side is open into the east corridor.
+export const CORRIDOR_POCKET = {
+  westX: -ROOM_WIDTH / 2, // -10 (coplanar w/ west corridor east wall)
+  eastX: -ROOM_WIDTH / 2 + 6, // -4
+  northZ: -ROOM_DEPTH / 2 - 3 - 6, // -16
+  southZ: -ROOM_DEPTH / 2 - 3, // -10 (coplanar w/ east corridor north wall)
 }
 
 // Future branch doorways along the corridor's east wall. Each entry is

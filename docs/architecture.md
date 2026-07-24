@@ -151,11 +151,17 @@ and add a matching renderer branch in
 `src/components/ContentOverlay/ContentOverlay.tsx` (`StopBody`).
 
 The scene places stations by iterating `presentationStops` and registering
-each with the `InteractionManager`; see `src/game/scene/Player.tsx`. If a
-new stop needs different geometry (e.g. a billboard rather than a TV),
-add its 3D representation as a sibling scene primitive under
-`src/game/scene/` and reference the stop's `position` from
-`interactionTypes.ts`.
+each with the `InteractionManager` from an effect in
+`src/game/scene/Player.tsx`. If a new stop needs different geometry
+(e.g. a billboard rather than a TV, or a rigged NPC — see
+`src/game/scene/Employee.tsx`), add its 3D representation as a sibling
+scene primitive under `src/game/scene/` and reference the stop's
+`position` from `interactionTypes.ts`.
+
+Register zones from a `useEffect` (not `useMemo`) — see the note in
+`docs/gameplay-systems.md` under "Interaction model". Registering in
+`useMemo` combined with a separate clear-on-unmount effect breaks under
+React StrictMode's dev-mode double-invoke.
 
 ## Dependency policy
 

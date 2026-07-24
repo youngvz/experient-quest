@@ -4,15 +4,16 @@
 
 Use the cheapest asset type that communicates the idea well.
 
-| Content | Preferred representation |
-|---|---|
-| Office shell, walls, floor, rooms | Low-poly 3D GLB |
-| Desks, chairs, TVs, signs, plants, decor | Simple reusable 3D props |
-| Most employees | 2D transparent sprites or illustrated billboards |
-| Player character | Rigged GLB when animation adds value |
-| Important presenter | Rigged GLB or a high-quality animated billboard |
-| Slides, project updates, events | React overlay or texture on an in-world screen |
-| New-hire wall | Billboard cards or a UI panel anchored in 3D |
+| Content | Preferred representation | Where |
+|---|---|---|
+| Office shell, walls, floor, rooms | Low-poly 3D GLB (aspirational; primitives today) | `src/game/scene/` |
+| Desks, chairs, TVs, signs, plants, decor | Simple reusable 3D props | `src/game/scene/` |
+| Most employees | 2D transparent sprites or illustrated billboards | `public/assets/employees/` (future) |
+| Rigged NPC (e.g. Distasi) | Rigged GLB via `<Employee>` | `public/assets/employees/*.glb` |
+| Player character | Rigged GLB | `public/assets/player/youngvz_casual.glb` |
+| Important presenter | Rigged GLB or a high-quality animated billboard | `public/assets/employees/` |
+| Slides, project updates, events | React overlay or texture on an in-world screen | `src/components/ContentOverlay/` |
+| New-hire wall | Billboard cards or a UI panel anchored in 3D | future |
 
 Do not turn every employee into a rigged 3D model.
 
@@ -36,8 +37,26 @@ Building blocks (all in `src/game/scene/`):
   transitions).
 - `<Desk>`, `<Chair>`, `<Cabinets>`, `<Laptop>`, `<Monitor>`, `<Paper>`,
   `<Television>`, `<Whiteboard>`, `<ConferenceTable>` — reusable props.
-- `<Floor>`, `<Hallway>`, `<Exterior>` — room-level containers that assemble
+- `<Employee>` — rigged NPC that loads a GLB, autofits height, plays one
+  looping clip (regex-picked via `clipPatterns`), and stands as a fixed
+  collider. Callers pass a floor-level `y` (typically `0`).
+- `<Floor>`, `<Hallway>`, `<WestCorridor>`, `<EastCorridor>`,
+  `<CorridorPocket>`, `<Exterior>` — room-level containers that assemble
   the primitives.
+
+Layout beyond the conference room:
+
+- `<Hallway>` — south hallway (Z ≈ 7..20) with desks, kitchen, alcoves.
+- `<WestCorridor>` — long N–S corridor west of the office
+  (X ∈ [−13, −10], Z ∈ [−70, +20]) reached through the hallway's west
+  doorway. Its east wall has parametric openings for `HALLWAY_WEST_DOOR`,
+  the dead-end door, `BRANCH_DOORS`, and full-height gaps for
+  `CORRIDOR_POCKET` (no lintel).
+- `<CorridorPocket>` — 6×6 open pocket bulging east off the west corridor
+  (X ∈ [−10, −4], Z ∈ [−16, −10]); houses a workbench + stools.
+- `<EastCorridor>` — east-running corridor above the conference room
+  (X ∈ [−10, +10], Z ∈ [−10, −7]) reached through the pocket. Its west
+  end and the pocket's south side are one continuous open span.
 
 Recipe — add a new room:
 

@@ -4,6 +4,7 @@ import { Cabinets } from './Cabinets'
 import { Chairs } from './Chairs'
 import { ConferenceLaptops } from './ConferenceLaptops'
 import { ConferenceTable } from './ConferenceTable'
+import { CorridorPocket } from './CorridorPocket'
 import { EastCorridor } from './EastCorridor'
 import { Exterior } from './Exterior'
 import { Floor } from './Floor'
@@ -43,6 +44,7 @@ export function OfficeScene({ controlsDisabled }: OfficeSceneProps) {
         <Hallway />
         <WestCorridor />
         <EastCorridor />
+        <CorridorPocket />
         <Cabinets />
         <Whiteboard />
         <Television />

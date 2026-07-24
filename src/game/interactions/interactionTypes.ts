@@ -53,6 +53,21 @@ export const presentationStops: PresentationStop[] = [
     interactionZone: { size: INTERACTION_ZONE.size },
     content: { type: 'events', events: [] },
   },
+  {
+    id: 'employee-distasi',
+    label: 'Distasi',
+    prompt: 'Press F to talk to Distasi',
+    overlayTitle: 'Distasi',
+    intro: "Hey — welcome to the office. Great to meet you.",
+    // Zone extends beyond the pocket into the west corridor and the west
+    // end of the east corridor so the prompt fires as soon as the player
+    // approaches, not only once fully inside the pocket.
+    // Zone rect: X ∈ [-13, -3], Z ∈ [-17, -9] — spans the pocket footprint
+    // plus a 3 m entry apron on the west and 2 m south into the east corridor.
+    position: [-8, 0, -13],
+    interactionZone: { size: [10, 8] },
+    content: { type: 'events', events: [] },
+  },
 ]
 
 export function findStop(id: string): PresentationStop | null {

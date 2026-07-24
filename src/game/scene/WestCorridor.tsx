@@ -2,6 +2,7 @@ import { RigidBody } from '@react-three/rapier'
 import {
   BRANCH_DOORS,
   COLORS,
+  CORRIDOR_POCKET,
   EAST_CORRIDOR,
   HALLWAY_WEST_DOOR,
   ROOM_DEPTH,
@@ -46,9 +47,7 @@ export function WestCorridor() {
   const centerZ = (northZ + southZ) / 2
   const length = southZ - northZ
 
-  // Every east-wall opening, gathered so we can auto-compute wall segments
-  // between them. Format: [lo, hi, centerZ, width]. Sorted north-to-south
-  // (ascending Z) below.
+  // Doorway openings on the east wall — each gets a header lintel.
   const openings: { lo: number; hi: number; centerZ: number; width: number }[] = [
     {
       lo: HALLWAY_WEST_DOOR.centerZ - HALLWAY_WEST_DOOR.width / 2,
@@ -62,27 +61,28 @@ export function WestCorridor() {
       centerZ: deadEndDoorZ,
       width: deadEndDoorWidth,
     },
-    {
-      lo: EAST_CORRIDOR.westDoorZ - EAST_CORRIDOR.westDoorWidth / 2,
-      hi: EAST_CORRIDOR.westDoorZ + EAST_CORRIDOR.westDoorWidth / 2,
-      centerZ: EAST_CORRIDOR.westDoorZ,
-      width: EAST_CORRIDOR.westDoorWidth,
-    },
     ...BRANCH_DOORS.map((door) => ({
       lo: door.centerZ - door.width / 2,
       hi: door.centerZ + door.width / 2,
       centerZ: door.centerZ,
       width: door.width,
     })),
-  ].sort((a, b) => a.lo - b.lo)
+  ]
 
-  // Wall segments: fill the gaps between successive openings, plus the
-  // northmost segment (northZ → first.lo) and southmost (last.hi → southZ).
+  // Full-height wall carve-outs (no lintel) — used for open room-to-room
+  // transitions. One combined cutout spans the pocket AND the east
+  // corridor's west end so the whole L reads as continuous space.
+  const gaps: { lo: number; hi: number }[] = [
+    { lo: CORRIDOR_POCKET.northZ, hi: EAST_CORRIDOR.southZ },
+  ]
+
+  // Wall segments: subtract the union of openings + gaps from the east wall.
+  const cutouts = [...openings, ...gaps].sort((a, b) => a.lo - b.lo)
   const wallSegments: [number, number][] = []
   let cursor = northZ
-  for (const opening of openings) {
-    if (opening.lo - cursor > 0.01) wallSegments.push([cursor, opening.lo])
-    cursor = opening.hi
+  for (const cutout of cutouts) {
+    if (cutout.lo - cursor > 0.01) wallSegments.push([cursor, cutout.lo])
+    cursor = cutout.hi
   }
   if (southZ - cursor > 0.01) wallSegments.push([cursor, southZ])
 
