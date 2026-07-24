@@ -12,6 +12,10 @@ export const PLAYER_HEIGHT = 1.6
 export const PLAYER_SPEED = 4
 export const PLAYER_SPAWN: [number, number, number] = [0, PLAYER_HEIGHT / 2 + 0.05, 2]
 
+// Multiplier on top of the auto-fit that sizes the player GLB to PLAYER_HEIGHT.
+// 1.0 = human-height; adjust 0.8–1.2 to taste.
+export const PLAYER_MODEL_SCALE = 1
+
 export const DESK = {
   center: [-4, 0, -1] as [number, number, number],
   size: [4, 0.9, 2] as [number, number, number],

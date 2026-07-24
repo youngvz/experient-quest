@@ -1,4 +1,5 @@
 import { Physics } from '@react-three/rapier'
+import { Suspense } from 'react'
 import { Desk } from './Desk'
 import { Floor } from './Floor'
 import { Player } from './Player'
@@ -29,7 +30,9 @@ export function OfficeScene({ controlsDisabled }: OfficeSceneProps) {
         <Walls />
         <Desk />
         <Television />
-        <Player controlsDisabled={controlsDisabled} />
+        <Suspense fallback={null}>
+          <Player controlsDisabled={controlsDisabled} />
+        </Suspense>
       </Physics>
     </>
   )

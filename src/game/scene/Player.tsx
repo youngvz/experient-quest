@@ -1,12 +1,14 @@
+import { useAnimations, useGLTF } from '@react-three/drei'
 import { useFrame, useThree } from '@react-three/fiber'
 import { CapsuleCollider, RigidBody, type RapierRigidBody } from '@react-three/rapier'
 import { useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
+import { SkeletonUtils } from 'three-stdlib'
 import {
   CAMERA_LOOK_HEIGHT,
   CAMERA_OFFSET,
-  COLORS,
   PLAYER_HEIGHT,
+  PLAYER_MODEL_SCALE,
   PLAYER_RADIUS,
   PLAYER_SPAWN,
   PLAYER_SPEED,
@@ -17,8 +19,19 @@ import { InteractionManager } from '../interactions/InteractionManager'
 import { presentationStops } from '../interactions/interactionTypes'
 import { getStopZoneRect } from './interactionZones'
 
+const PLAYER_MODEL_URL = '/assets/player/character.glb'
+useGLTF.preload(PLAYER_MODEL_URL)
+
 interface PlayerProps {
   controlsDisabled: boolean
+}
+
+function pickClip(clips: THREE.AnimationClip[], patterns: RegExp[]): THREE.AnimationClip | null {
+  for (const re of patterns) {
+    const match = clips.find((c) => re.test(c.name))
+    if (match) return match
+  }
+  return null
 }
 
 export function Player({ controlsDisabled }: PlayerProps) {
@@ -29,6 +42,77 @@ export function Player({ controlsDisabled }: PlayerProps) {
 
   const cameraTarget = useMemo(() => new THREE.Vector3(), [])
   const cameraDesired = useMemo(() => new THREE.Vector3(), [])
+
+  const gltf = useGLTF(PLAYER_MODEL_URL)
+  const modelFit = useMemo(() => {
+    // SkeletonUtils.clone rebinds skinned meshes to a cloned skeleton;
+    // Object3D.clone() would leave them pointing at the original.
+    const clone = SkeletonUtils.clone(gltf.scene)
+    clone.traverse((obj) => {
+      if ((obj as THREE.Mesh).isMesh) {
+        const mesh = obj as THREE.Mesh
+        mesh.castShadow = true
+        mesh.receiveShadow = false
+      }
+    })
+
+    // Bound the visible geometry only. Object3D.setFromObject would include
+    // skeleton bone tails, which can extend far past the mesh and yield a
+    // wildly wrong height.
+    clone.updateWorldMatrix(true, true)
+    const box = new THREE.Box3()
+    const meshBox = new THREE.Box3()
+    let hasMesh = false
+    clone.traverse((obj) => {
+      const mesh = obj as THREE.Mesh
+      if (!mesh.isMesh || !mesh.geometry) return
+      mesh.geometry.computeBoundingBox()
+      const geoBox = mesh.geometry.boundingBox
+      if (!geoBox) return
+      meshBox.copy(geoBox).applyMatrix4(mesh.matrixWorld)
+      if (hasMesh) box.union(meshBox)
+      else {
+        box.copy(meshBox)
+        hasMesh = true
+      }
+    })
+
+    const size = new THREE.Vector3()
+    box.getSize(size)
+    const autoFit = hasMesh && size.y > 0 ? PLAYER_HEIGHT / size.y : 1
+    const scale = autoFit * PLAYER_MODEL_SCALE
+    const offsetY = hasMesh ? -box.min.y * scale - PLAYER_HEIGHT / 2 : 0
+    return { object: clone, scale, offsetY }
+  }, [gltf.scene])
+
+  const { actions, names } = useAnimations(gltf.animations, modelFit.object)
+  const clipRefs = useMemo(() => {
+    const idle = pickClip(gltf.animations, [/idle/i, /stand/i, /breath/i])
+    const walk = pickClip(gltf.animations, [/walk/i, /move/i])
+    const run = pickClip(gltf.animations, [/run/i, /sprint/i])
+    return {
+      idleName: idle?.name ?? null,
+      walkName: walk?.name ?? run?.name ?? null,
+    }
+  }, [gltf.animations])
+
+  useEffect(() => {
+    if (import.meta.env.DEV && names.length > 0) {
+      console.info('[Player] GLB animation clips:', names)
+    }
+  }, [names])
+
+  useEffect(() => {
+    const { idleName, walkName } = clipRefs
+    const idle = idleName ? actions[idleName] : null
+    const walk = walkName ? actions[walkName] : null
+    idle?.reset().setEffectiveWeight(1).play()
+    walk?.reset().setEffectiveWeight(0).play()
+    return () => {
+      idle?.stop()
+      walk?.stop()
+    }
+  }, [actions, clipRefs])
 
   const manager = useMemo(() => {
     const m = new InteractionManager({
@@ -89,11 +173,21 @@ export function Player({ controlsDisabled }: PlayerProps) {
     cameraTarget.set(pos.x, pos.y + CAMERA_LOOK_HEIGHT, pos.z)
     camera.lookAt(cameraTarget)
 
-    if (meshRef.current) {
-      if (Math.hypot(vx, vz) > 0.01) {
-        const angle = Math.atan2(vx, vz)
-        meshRef.current.rotation.y = angle
-      }
+    const speed = Math.hypot(vx, vz)
+
+    if (meshRef.current && speed > 0.01) {
+      const angle = Math.atan2(vx, vz)
+      meshRef.current.rotation.y = angle
+    }
+
+    const { idleName, walkName } = clipRefs
+    const idle = idleName ? actions[idleName] : null
+    const walk = walkName ? actions[walkName] : null
+    if (idle || walk) {
+      const target = speed > 0.05 ? 1 : 0
+      const blend = Math.min(1, delta * 8)
+      if (walk) walk.setEffectiveWeight(THREE.MathUtils.lerp(walk.getEffectiveWeight(), target, blend))
+      if (idle) idle.setEffectiveWeight(THREE.MathUtils.lerp(idle.getEffectiveWeight(), 1 - target, blend))
     }
   })
 
@@ -109,15 +203,11 @@ export function Player({ controlsDisabled }: PlayerProps) {
     >
       <CapsuleCollider args={[Math.max(0.05, PLAYER_HEIGHT / 2 - PLAYER_RADIUS), PLAYER_RADIUS]} />
       <group ref={meshRef}>
-        <mesh castShadow position={[0, 0, 0]}>
-          <capsuleGeometry args={[PLAYER_RADIUS, PLAYER_HEIGHT - PLAYER_RADIUS * 2, 4, 12]} />
-          <meshStandardMaterial color={COLORS.player} />
-        </mesh>
-        {/* facing marker on +Z (player-forward) */}
-        <mesh position={[0, 0.3, PLAYER_RADIUS + 0.02]}>
-          <sphereGeometry args={[0.08, 8, 8]} />
-          <meshStandardMaterial color={COLORS.playerFace} />
-        </mesh>
+        <primitive
+          object={modelFit.object}
+          scale={modelFit.scale}
+          position={[0, modelFit.offsetY, 0]}
+        />
       </group>
     </RigidBody>
   )

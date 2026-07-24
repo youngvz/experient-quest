@@ -157,6 +157,7 @@ public/assets/
   employees/
   office/
   props/
+  player/
   presenters/
   media/
 ```
