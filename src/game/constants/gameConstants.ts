@@ -99,7 +99,7 @@ export const HALLWAY_DESK_CHAIRS: [number, number, number][] = [
 // walking gap between them. Same visual treatment as the alcove desks
 // (white top, light-grey legs).
 export const HALLWAY_KITCHEN_TABLE = {
-  position: [6, 17.3] as [number, number], // centerX, centerZ
+  position: [6, 18.4] as [number, number], // centerX, centerZ
   size: [4, 0.75, 1.1] as [number, number, number], // [w, h, d]
 }
 
