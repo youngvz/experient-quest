@@ -1,9 +1,12 @@
 import { Physics } from '@react-three/rapier'
 import { Suspense } from 'react'
+import { Cabinets } from './Cabinets'
 import { Chairs } from './Chairs'
+import { ConferenceLaptops } from './ConferenceLaptops'
 import { ConferenceTable } from './ConferenceTable'
 import { Exterior } from './Exterior'
 import { Floor } from './Floor'
+import { Hallway } from './Hallway'
 import { Player } from './Player'
 import { Television } from './Television'
 import { Walls } from './Walls'
@@ -31,12 +34,15 @@ export function OfficeScene({ controlsDisabled }: OfficeSceneProps) {
       <Suspense fallback={null}>
         <Exterior />
       </Suspense>
-      <Physics gravity={[0, -9.81, 0]}>
+      <Physics gravity={[0, -9.81, 0]} timeStep="vary">
         <Floor />
         <Walls />
+        <Hallway />
+        <Cabinets />
         <Whiteboard />
         <Television />
         <ConferenceTable />
+        <ConferenceLaptops />
         <Chairs />
         <Suspense fallback={null}>
           <Player controlsDisabled={controlsDisabled} />

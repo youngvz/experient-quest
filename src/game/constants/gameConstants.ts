@@ -9,17 +9,148 @@ export const WALL_THICKNESS = 0.4
 
 export const PLAYER_RADIUS = 0.35
 export const PLAYER_HEIGHT = 1.6
-export const PLAYER_SPEED = 4
-export const PLAYER_SPAWN: [number, number, number] = [5, PLAYER_HEIGHT / 2 + 0.05, 6]
+export const PLAYER_SPEED = 6
+export const PLAYER_RUN_SPEED = 13
+// Spawn just inside the hallway's south doorway (centerX = HALLWAY_SOUTH_DOOR.centerX,
+// close to the south wall at Z = ROOM_DEPTH/2 + HALLWAY.depth = 20).
+// Spawn just north of the south doorway blocker: south wall is centered at
+// Z=20 with WALL_THICKNESS=0.4 (north face at 19.8), and the player has
+// radius 0.35 — 19.4 keeps the capsule clear of the blocker.
+export const PLAYER_SPAWN: [number, number, number] = [-7.5, PLAYER_HEIGHT / 2 + 0.05, 19.4]
+
+// Initial facing (radians around Y). 0 = +Z (south, out the door);
+// Math.PI = -Z (north, into the office).
+export const PLAYER_SPAWN_FACING = Math.PI
 
 // Multiplier on top of the auto-fit that sizes the player GLB to PLAYER_HEIGHT.
 // 1.0 = human-height; adjust 0.8–1.2 to taste.
 export const PLAYER_MODEL_SCALE = 1
 
+// Doorway opening height (floor → underside of the header lintel).
+export const DOOR_HEIGHT = 2.6
+
 // Front-wall doorway. Cuts the front wall into two segments around this gap.
 export const DOOR = {
-  centerX: 4.5,
+  centerX: 3.5,
   width: 2,
+}
+
+// Hallway extending south of the conference room. Same width as the
+// conference room so the two rooms share their full front/back boundary.
+// North side is sealed by the conference room's front wall (with the
+// doorway as the only passage between rooms).
+export const HALLWAY = {
+  centerX: 0,
+  width: ROOM_WIDTH,
+  depth: 13,
+}
+
+// Hallway west-wall doorway (near the south end).
+export const HALLWAY_WEST_DOOR = {
+  centerZ: 17.5,
+  width: 2,
+}
+
+// Hallway south-wall doorway (near the west/left end).
+export const HALLWAY_SOUTH_DOOR = {
+  centerX: -7.5,
+  width: 2,
+}
+
+// Hallway south-wall glass windows (opaque wall elsewhere). Each entry is
+// [centerX, width].
+export const HALLWAY_SOUTH_WINDOWS: [number, number][] = [
+  [-4.5, 4], // wide window west of center
+  [1.5, 2],
+  [4.5, 2],
+  [7.5, 2],
+]
+
+// NE alcove: two small offices stacked north-south, entered from the hallway
+// via their west walls. The alcove's east wall coincides with the hallway's
+// east wall (opaque, already exists). The alcove's north wall coincides with
+// the conf-room's front-wall east segment (now opaque instead of glass).
+export const NE_ALCOVE = {
+  westX: 4.5,
+  eastX: ROOM_WIDTH / 2,
+  upper: { northZ: 7, southZ: 11, doorZ: 10, doorWidth: 1 },
+  lower: { northZ: 11, southZ: 15, doorZ: 12, doorWidth: 1 },
+}
+
+// Hallway desk clusters (shared workbench-style, 2m wide × 3m deep).
+export const HALLWAY_DESKS: [number, number][] = [
+  [-6.5, 10],
+  [-3.5, 10],
+  [-6.5, 14],
+  [-3.5, 14],
+]
+export const HALLWAY_DESK_SIZE: [number, number, number] = [2, 0.75, 3]
+
+// Alcove desks (3m wide × 2m deep).
+// Upper alcove: pushed flush against the north wall.
+// Lower alcove: centered.
+export const ALCOVE_DESKS: [number, number][] = [
+  [7.25, 8.2],
+  [7.25, 13.5],
+]
+export const ALCOVE_DESK_SIZE: [number, number, number] = [3, 0.75, 2]
+
+// Desk chairs: [x, z, facing] where facing = angle in radians around Y.
+// Positive rotation turns local +Z toward +X, so PI/2 faces east.
+export const HALLWAY_DESK_CHAIRS: [number, number, number][] = [
+  [-8, 10, Math.PI / 2], // west of NW cluster, facing east
+  [-2, 10, -Math.PI / 2], // east of NE-cluster, facing west
+  [-8, 14, Math.PI / 2],
+  [-2, 14, -Math.PI / 2],
+]
+
+// Sit spots — snap-to points when the player triggers sit near a desk. Each
+// entry is the chair's [x, z, facing] where facing = the angle the seated
+// character should end up rotated to (angle around Y, matching the chair).
+// Player proximity is checked in XZ; SIT_ACTIVATION_RADIUS is the distance
+// from the sit spot within which the sit action becomes available.
+export const SIT_SPOTS: [number, number, number][] = HALLWAY_DESK_CHAIRS
+export const SIT_ACTIVATION_RADIUS = 1.5
+// Forward nudge (in the sitter's facing direction, toward the desk) so the
+// character's back sits just in front of the chair back instead of clipping
+// through it. The sitting animation keeps the model's origin at hip height,
+// but the character has visible torso depth behind that origin — this offset
+// compensates.
+export const SIT_FORWARD_OFFSET = 0.18
+
+// Vertical lift applied to the character mesh when the sit animation plays.
+// The sit clip already poses the character with hips well above the mesh
+// root, so we only need a small lift to move the visible legs above the
+// seat cushion — a full seat-height lift stacks with the animation and
+// puts the character on top of the backrest.
+export const SIT_VERTICAL_OFFSET = 0.12
+
+// Long prep-style table parked west of the sink cabinets, oriented long
+// along X so it sits perpendicular to the (north-south) cabinet row with a
+// walking gap between them. Same visual treatment as the alcove desks
+// (white top, light-grey legs).
+export const HALLWAY_KITCHEN_TABLE = {
+  position: [6, 18.4] as [number, number], // centerX, centerZ
+  size: [4, 0.75, 1.1] as [number, number, number], // [w, h, d]
+}
+
+// White base cabinets running along the east wall of the south hallway, in
+// the exposed section south of the NE alcoves. The northmost cabinet has a
+// drop-in sink set into the shared countertop.
+export const HALLWAY_EAST_CABINETS = {
+  wallX: ROOM_WIDTH / 2, // east wall midplane
+  count: 7,
+  unitWidth: 0.6, // per-cabinet width along Z
+  depth: 0.6, // body depth into the hallway (west from the wall)
+  bodyHeight: 0.85,
+  counterThickness: 0.05,
+  counterOverhang: 0.04, // countertop overhangs the door face
+  // Northmost cabinet's center-Z. Cabinets run south from here.
+  startZ: NE_ALCOVE.lower.southZ + WALL_THICKNESS / 2 + 0.3,
+  bodyColor: '#f4f2ee',
+  counterColor: '#e6e2d8',
+  sinkColor: '#c8cbcf',
+  metalColor: '#a8adb3',
 }
 
 // Wall-mounted whiteboard on the back wall (Z = -ROOM_DEPTH/2), centered.
@@ -30,6 +161,19 @@ export const WHITEBOARD = {
   height: 1.8,
   depth: 0.08,
 }
+
+// Alcove whiteboards — mounted on each alcove's interior north wall, facing
+// south into the office. Sized to fit inside the alcove width (~5.5m) minus
+// a margin. Centered on the alcove.
+export const ALCOVE_WHITEBOARDS: {
+  centerX: number
+  northZ: number
+  width: number
+  centerY: number
+  height: number
+}[] = [
+  { centerX: 7.25, northZ: 11, width: 4, centerY: 1.5, height: 1.6 }, // lower alcove
+]
 
 // Wall-mounted TV on the east wall (X = +ROOM_WIDTH/2). Width runs along Z.
 export const TV = {

@@ -21,7 +21,7 @@ export function GameCanvas() {
     <div className="game-canvas">
       <Canvas
         shadows
-        dpr={[1, 2]}
+        dpr={[1, 1.5]}
         camera={{
           position: [
             PLAYER_SPAWN[0] + CAMERA_OFFSET[0],

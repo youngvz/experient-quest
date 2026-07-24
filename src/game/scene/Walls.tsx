@@ -1,13 +1,62 @@
-import { MeshTransmissionMaterial } from '@react-three/drei'
 import { CuboidCollider, RigidBody } from '@react-three/rapier'
 import {
   COLORS,
   DOOR,
+  DOOR_HEIGHT,
   ROOM_DEPTH,
   ROOM_WIDTH,
   WALL_HEIGHT,
   WALL_THICKNESS,
 } from '../constants/gameConstants'
+
+// Invisible full-height physics blocker sized to a doorway opening. Used to
+// seal exterior doorways so the player can't leave the office. When a door
+// should instead trigger a level change, swap this for a sensor collider that
+// emits an event.
+export function DoorBlocker({
+  position,
+  width,
+  spansX,
+}: {
+  position: [number, number]
+  width: number
+  spansX: boolean
+}) {
+  const [px, pz] = position
+  const half: [number, number, number] = spansX
+    ? [width / 2, WALL_HEIGHT / 2, WALL_THICKNESS / 2]
+    : [WALL_THICKNESS / 2, WALL_HEIGHT / 2, width / 2]
+  return (
+    <RigidBody type="fixed" colliders={false}>
+      <CuboidCollider args={half} position={[px, WALL_HEIGHT / 2, pz]} />
+    </RigidBody>
+  )
+}
+
+// A rectangular "lintel" spanning the top of a doorway. Static — no collider,
+// because the player physics box is shorter than the lintel is tall.
+export function DoorHeader({
+  position,
+  width,
+  spansX,
+}: {
+  position: [number, number]
+  width: number
+  spansX: boolean
+}) {
+  const headerHeight = WALL_HEIGHT - DOOR_HEIGHT
+  const centerY = DOOR_HEIGHT + headerHeight / 2
+  const [px, pz] = position
+  const size: [number, number, number] = spansX
+    ? [width, headerHeight, WALL_THICKNESS]
+    : [WALL_THICKNESS, headerHeight, width]
+  return (
+    <mesh castShadow receiveShadow position={[px, centerY, pz]}>
+      <boxGeometry args={size} />
+      <meshStandardMaterial color={COLORS.wall} />
+    </mesh>
+  )
+}
 
 interface WallPanelProps {
   position: [number, number, number]
@@ -48,7 +97,7 @@ function orientSize(
 // A wall panel: physics collider is always present. When `glass` is true, the
 // collider mesh is invisible and we build a framed window in its place — four
 // opaque rails around the perimeter with a transmissive pane inside.
-function WallPanel({ position, size, glass = false, divisions }: WallPanelProps) {
+export function WallPanel({ position, size, glass = false, divisions }: WallPanelProps) {
   if (!glass) {
     return (
       <RigidBody type="fixed" colliders="cuboid">
@@ -144,25 +193,21 @@ function WallPanel({ position, size, glass = false, divisions }: WallPanelProps)
           </mesh>
         ))}
 
-        {/* glass pane — sits inside the frame */}
+        {/* glass pane — physical material w/ transmission. No scene re-render
+            per pane, unlike MeshTransmissionMaterial. */}
         <mesh>
           <boxGeometry args={orientSize(isXFace, paneFaceW, paneHeight, paneThickness)} />
-          <MeshTransmissionMaterial
-            samples={6}
-            resolution={1024}
-            thickness={0.15}
-            roughness={0.05}
-            ior={1.05}
-            chromaticAberration={0}
-            anisotropy={0}
-            distortion={0}
-            distortionScale={0}
-            temporalDistortion={0}
+          <meshPhysicalMaterial
             color="#eaf3f9"
+            roughness={0.05}
+            metalness={0}
+            transmission={1}
+            thickness={0.15}
+            ior={1.05}
             attenuationColor="#cfe0ee"
             attenuationDistance={12}
-            transmission={1}
-            backside={false}
+            transparent
+            opacity={0.6}
           />
         </mesh>
       </group>
@@ -191,7 +236,8 @@ export function Walls() {
         glass
         divisions={3}
       />
-      {/* front wall — glass, split around the doorway */}
+      {/* front wall — glass west of the doorway, opaque east of it (shared
+          with the NE alcove's north wall) */}
       <WallPanel
         position={[frontLeftCenterX, y, halfD]}
         size={[frontLeftWidth, WALL_HEIGHT, WALL_THICKNESS]}
@@ -200,7 +246,6 @@ export function Walls() {
       <WallPanel
         position={[frontRightCenterX, y, halfD]}
         size={[frontRightWidth, WALL_HEIGHT, WALL_THICKNESS]}
-        glass
       />
       {/* west wall — glass */}
       <WallPanel
@@ -213,6 +258,8 @@ export function Walls() {
         position={[halfW, y, 0]}
         size={[WALL_THICKNESS, WALL_HEIGHT, ROOM_DEPTH]}
       />
+      {/* header lintel over the front doorway */}
+      <DoorHeader position={[DOOR.centerX, halfD]} width={DOOR.width} spansX />
     </>
   )
 }
