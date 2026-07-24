@@ -56,39 +56,93 @@ before proposing a large migration.
 - `src/app/` (`App.tsx`, `App.css`) — app shell
 - `src/components/{GameCanvas,InteractionPrompt,ContentOverlay}/` — HTML/DOM UI
 - `src/game/constants/gameConstants.ts` — tuning constants, room dimensions,
-  doorway positions, spawn point, sit spots
+  doorway positions, spawn point, camera + zoom clamps, corridor geometry
+  (`CENTRAL_CORRIDOR`, `EAST_CORRIDOR`, `CORRIDOR_POCKET`)
 - `src/game/events/{GameEventBus,gameEvents}.ts` — typed R3F ↔ React bus
 - `src/game/interactions/{InteractionManager,interactionTypes}.ts` —
-  `PresentationStop` schema + 2D-rect XZ-plane zone manager
-- `src/game/scene/` — R3F primitives. Environment: `Floor`, `Walls`
-  (`WallPanel`, `DoorHeader`, `DoorBlocker`), `Hallway`, `Exterior`,
-  `Cabinets`, `Whiteboard`, `Television`. Furniture: `Desk`, `Chairs`,
-  `ConferenceTable`, `ConferenceLaptops`. Decor: `Laptop`, `Monitor`,
-  `Paper`. Player: `Player` (dynamic Rapier RigidBody + rigged GLB from
-  `public/assets/player/character.glb`). Wiring: `OfficeScene`,
+  `PresentationStop` schema + 2D-rect XZ-plane zone manager. Zones **must**
+  be registered from a `useEffect` (not `useMemo`) — see the StrictMode
+  note in the player controller section below.
+- `src/game/scene/` — R3F primitives. Wall/door building blocks
+  (`WallPanel`, `DoorHeader`, `DoorBlocker`, `Door`) live in
+  `wallPrimitives.tsx` + `Door.tsx`. Rooms:
+  `ConferenceFloor`, `ConferenceRoom`, `TheBakery`, `CentralCorridor`,
+  `EastCorridor`, `CorridorPocket`, `Exterior`. Room-specific composites:
+  `TheBakeryCabinets`, `Whiteboards` (conference + alcove),
+  `Televisions` (main + alcove), `ConferenceChairs`, `ConferenceLaptops`,
+  `ConferenceTable`. Reusable prop primitives (singular): `Chair`, `Desk`,
+  `Laptop`, `Monitor`, `Paper`, `Whiteboard`, `Television`. Characters:
+  `Player` (dynamic Rapier RigidBody + rigged GLB from
+  `public/assets/player/youngvz.glb`), `Employee` (fixed collider
+  NPC that loads a GLB and loops a configurable animation clip; e.g.
+  `distasi.glb` at `public/assets/employees/`). Wiring: `OfficeScene`,
   `interactionZones`.
-- `src/game/state/gameStore.ts` — Zustand starter store (`activeStopId`, `completedStopIds`)
-- `src/hooks/{useKeyboard,useGameEvents}.ts` — `useKeyboard` exposes a
-  mutable ref for held keys (WASD/arrows, `R` for run toggle) plus edge
-  consumers (`consumeInteract` for `E`, `consumeJump` for `Space`,
-  `consumeClap` for `C`, `consumeSitToggle` for `X`).
+- `src/game/state/gameStore.ts` — Zustand starter store (`activeStopId`, `completedStopIds`, `activeZone`)
+- `src/game/zones/ZoneManager.ts` — engine-agnostic XZ-rect zone tracker
+  (mirrors `InteractionManager`'s pattern). Used by `Player.tsx` to update
+  `activeZone` when the player crosses into corridor/branch rects.
+- `src/game/scene/LazyBranch.tsx` — Suspense wrapper that mounts children
+  only when `activeZone` matches its `zone` prop. Pair with `React.lazy`
+  for code-split branch scenes; unmount frees GLBs/textures.
+- `src/hooks/{useKeyboard,useMouseLook,useGameEvents}.ts` — `useKeyboard`
+  exposes a mutable ref for held keys (WASD/arrows, `R` for run toggle,
+  `Q`/`E` for camera yaw, `+`/`-` for camera zoom) plus edge consumers
+  (`consumeInteract` for `F`, `consumeRoll` for `Space`, `consumeWave`
+  for `C`).
 - `tests/InteractionManager.test.ts` — Vitest unit
 - `tests/e2e/smoke.spec.ts` — Playwright smoke (canvas renders, no console errors)
 
+Naming conventions in `src/game/scene/`:
+
+- **Rooms end in the space type**: `ConferenceRoom`, `TheBakery`,
+  `CentralCorridor`, `EastCorridor`, `CorridorPocket`. Walking spaces are
+  "corridors", not "hallways".
+- **Primitives are singular** (`Chair`, `Desk`, `Whiteboard`, `Television`);
+  **room-specific bundled sets are named `[Room][Plural]`**
+  (`ConferenceChairs`, `ConferenceLaptops`, `TheBakeryCabinets`,
+  `Whiteboards` and `Televisions` when the set spans multiple rooms).
+- **String IDs are kebab-case with no `kind-` prefix**. Presentation-stop
+  ids: `events-tv`, `distasi`. Zone ids: `central-corridor`, `office`
+  (fallback), `branch-alpha`. Quest ids: `weekly-status-meeting`. The
+  container each id lives in already disambiguates its type.
+
 Player controller notes: it's a **dynamic** RigidBody with Y-translation and
 all rotations **locked** and `gravityScale=0` — driven with
-`body.setLinvel(...)`, not a kinematic character controller. Animation clips
-(`Man_Idle` / `Man_Walk` / `Man_Run` / `Man_RunningJump` / `Man_Clapping` /
-`Man_Sitting`) are all `.play()`'d once and crossfaded by weight in
-`useFrame`; the base locomotion is muted while an action clip is active. Sit
-snaps the RigidBody to the nearest `SIT_SPOTS` entry within
-`SIT_ACTIVATION_RADIUS`, with `SIT_FORWARD_OFFSET` (so the torso clears the
-chair back) and `SIT_VERTICAL_OFFSET` (so the legs sit on the seat).
+`body.setLinvel(...)`, not a kinematic character controller. Animation
+clips (idle / walk / run / roll / wave) are all `.play()`'d once and
+crossfaded by weight in `useFrame`; the base locomotion is muted while an
+action clip is active. Roll (`Space`) captures the current XZ velocity at
+takeoff so a standing-start roll still travels; wave (`C`) is a static
+one-shot. Camera zoom is a multiplicative scale on `CAMERA_DISTANCE`/
+`CAMERA_HEIGHT`, clamped to `[CAMERA_ZOOM_MIN, CAMERA_ZOOM_MAX]`.
+
+**StrictMode + InteractionManager gotcha:** register zones inside the
+same `useEffect` whose cleanup calls `manager.clearZones()`. If zones are
+registered in `useMemo` and cleared from a separate effect, StrictMode's
+dev-mode simulated mount → cleanup → remount cycle empties the manager
+permanently (the effect re-runs but `useMemo` doesn't). Symptom: fresh
+loads never fire prompts, HMR does because it recreates the component.
 
 Exterior doorways are sealed by `<DoorBlocker>` (invisible full-height
 collider); the interior conference-room doorway stays open. When adding
 level transitions, swap `DoorBlocker` for a sensor collider that emits a
 `gameEvents` message.
+
+Layout beyond the conference room: the south hallway's west doorway opens
+into the long `CentralCorridor` (X ∈ [−13, −10]). Near the top of that
+corridor a 6×6 pocket (`CORRIDOR_POCKET`) bulges east, and from that
+pocket the `EastCorridor` runs east along the top of the conference room.
+Pocket and east corridor share their boundary — the wall is carved out so
+they read as one continuous L-shaped space. The east corridor's east
+doorway stands open (no blocker).
+
+Adding NPCs: use `<Employee url=... position=[x,0,z] rotationY={r}
+clipPatterns={[/wave/i, ...]} />`. The component auto-fits the GLB to
+`PLAYER_HEIGHT` and internally lifts the RigidBody so callers pass a
+floor-level y (`0`). To make an NPC interactable, add a matching
+`PresentationStop` to `presentationStops` with a zone that overlaps the
+NPC's approach path (their own collider prevents you from standing on
+their exact XZ, so keep the zone forgiving).
 
 **Targets, not required yet** (do not migrate wholesale):
 

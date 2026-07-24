@@ -8,10 +8,12 @@ import {
   PLAYER_SPAWN,
 } from '../../game/constants/gameConstants'
 import { useGameEvent } from '../../hooks/useGameEvents'
+import { useGameStore } from '../../game/state/gameStore'
 import './GameCanvas.css'
 
 export function GameCanvas() {
   const [overlayOpen, setOverlayOpen] = useState(false)
+  const pendingUnlockQuestId = useGameStore((s) => s.pendingUnlockQuestId)
 
   useGameEvent(
     'interaction:triggered',
@@ -21,6 +23,8 @@ export function GameCanvas() {
     'overlay:closed',
     useCallback(() => setOverlayOpen(false), []),
   )
+
+  const controlsDisabled = overlayOpen || pendingUnlockQuestId !== null
 
   return (
     <div className="game-canvas">
@@ -43,7 +47,7 @@ export function GameCanvas() {
       >
         <color attach="background" args={['#c78e5f']} />
         <fog attach="fog" args={['#c78e5f', 55, 140]} />
-        <OfficeScene controlsDisabled={overlayOpen} />
+        <OfficeScene controlsDisabled={controlsDisabled} />
       </Canvas>
     </div>
   )

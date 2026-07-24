@@ -21,12 +21,28 @@ export interface CompanyEvent {
   blurb?: string
 }
 
+export interface DialogueLine {
+  // Character id from src/game/characters/characters.ts. The DialogueOverlay
+  // uses this to look up the portrait + display name.
+  speakerId: string
+  // One "screen" of text. Embedded '\n' is rendered as a line break.
+  text: string
+}
+
 export type StopContent =
   | { type: 'new-hires'; people: EmployeeProfile[] }
   | { type: 'projects'; projects: ProjectUpdate[] }
   | { type: 'events'; events: CompanyEvent[] }
   | { type: 'joke'; setup: string; punchline: string }
   | { type: 'media'; assetId: string; caption?: string }
+  | {
+      type: 'dialogue'
+      script: DialogueLine[]
+      // Played on subsequent interactions after `script` has been seen once
+      // (i.e. the stop is in `completedStopIds`). If omitted, `script` plays
+      // again every time.
+      repeatScript?: DialogueLine[]
+    }
 
 export interface PresentationStop {
   id: string
@@ -38,6 +54,9 @@ export interface PresentationStop {
   facing?: number
   interactionZone: { size: [number, number] }
   content: StopContent
+  // If present, the given quest is unlocked the first time the player
+  // finishes this stop's overlay. Handled by the overlay's close path.
+  questUnlock?: string
 }
 
 export const presentationStops: PresentationStop[] = [
@@ -52,6 +71,55 @@ export const presentationStops: PresentationStop[] = [
     position: INTERACTION_ZONE.center,
     interactionZone: { size: INTERACTION_ZONE.size },
     content: { type: 'events', events: [] },
+  },
+  {
+    id: 'distasi',
+    label: 'Distasi',
+    prompt: 'Press F to talk to Distasi',
+    overlayTitle: 'Distasi',
+    questUnlock: 'weekly-status-meeting',
+    // Zone extends beyond the pocket into the central corridor and the west
+    // end of the east corridor so the prompt fires as soon as the player
+    // approaches, not only once fully inside the pocket.
+    // Zone rect: X ∈ [-13, -3], Z ∈ [-17, -9] — spans the pocket footprint
+    // plus a 3 m entry apron on the west and 2 m south into the east corridor.
+    position: [-8, 0, -13],
+    interactionZone: { size: [10, 8] },
+    content: {
+      type: 'dialogue',
+      script: [
+        {
+          speakerId: 'distasi',
+          text: "Youngvz!! So glad you're here,\nwe need you to run this week's\nstatus meeting ASAP!",
+        },
+        {
+          speakerId: 'youngvz',
+          text: "You got it John!",
+        },
+        {
+          speakerId: 'distasi',
+          text: "Don't forget the joke of the week!!",
+        },
+        {
+          speakerId: 'distasi',
+          text: "Your performance review\ndepends on it!",
+        },
+        {
+          speakerId: 'youngvz',
+          text: "...",
+        },
+      ],
+      repeatScript: [
+        {
+          speakerId: 'distasi',
+          text: "What are you waiting for?!",
+        },
+        {
+          speakerId: 'distasi',
+          text: "We need to leave for Hopstix\nat 12pm!!",
+        },
+      ],
+    },
   },
 ]
 

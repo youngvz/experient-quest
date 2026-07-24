@@ -1,6 +1,9 @@
 import { ContentOverlay } from '../components/ContentOverlay/ContentOverlay'
+import { DialogueOverlay } from '../components/DialogueOverlay/DialogueOverlay'
 import { GameCanvas } from '../components/GameCanvas/GameCanvas'
 import { InteractionPrompt } from '../components/InteractionPrompt/InteractionPrompt'
+import { QuestLog } from '../components/QuestLog/QuestLog'
+import { QuestUnlockedModal } from '../components/QuestUnlockedModal/QuestUnlockedModal'
 import './App.css'
 
 export function App() {
@@ -8,7 +11,10 @@ export function App() {
     <div className="app">
       <GameCanvas />
       <InteractionPrompt />
+      <QuestLog />
       <ContentOverlay />
+      <DialogueOverlay />
+      <QuestUnlockedModal />
     </div>
   )
 }

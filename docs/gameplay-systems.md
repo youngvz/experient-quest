@@ -21,13 +21,17 @@ kinematic character controller — but the office is flat, so the dynamic-body
 
 Per-frame flow (all in `Player.tsx`'s single `useFrame`):
 
-1. Handle one-shot triggers (`consumeJump` / `consumeClap` / `consumeSitToggle`).
-2. If an action is active, lock input-driven movement; jumps still apply their
-   captured takeoff velocity, sits snap to the nearest `SIT_SPOTS` entry.
-3. Otherwise read the keyboard ref, build `(vx, vz)`, normalise, apply speed.
-4. `body.setLinvel(...)` and, from `body.translation()`, update the
-   `InteractionManager` and camera target.
-5. Rotate the visual mesh to face motion (`atan2(vx, vz)`); lerp animation
+1. Read camera yaw and zoom from the keyboard ref (`Q`/`E` yaw, `+`/`-`
+   zoom), clamped to `[CAMERA_ZOOM_MIN, CAMERA_ZOOM_MAX]`.
+2. Handle one-shot triggers (`consumeRoll` / `consumeWave`). Rolls capture
+   the current XZ velocity at takeoff so they travel from a standstill too.
+3. If an action is active, lock input-driven movement; rolls still apply
+   their captured takeoff velocity.
+4. Otherwise read the keyboard ref, build `(vx, vz)`, rotate by the camera
+   yaw, normalise, apply speed.
+5. `body.setLinvel(...)` and, from `body.translation()`, update the
+   `InteractionManager`, the `ZoneManager`, and the camera target.
+6. Rotate the visual mesh to face motion (`atan2(vx, vz)`); lerp animation
    clip weights toward their targets.
 
 Continuous collision detection is not enabled — no fast projectiles yet.
@@ -45,15 +49,17 @@ Current bindings:
 | Move | `WASD` / `Arrow keys` | continuous (`state.current.{forward,back,left,right}`) |
 | Run (toggle) | `R` | toggle (`state.current.running`) |
 | Interact | `F` | edge-triggered (`consumeInteract()`) |
-| Jump | `Space` | edge-triggered (`consumeJump()`) |
-| Clap | `C` | edge-triggered (`consumeClap()`) |
-| Sit | `X` | edge-triggered (`consumeSitToggle()`) |
+| Roll | `Space` | edge-triggered (`consumeRoll()`) |
+| Wave | `C` | edge-triggered (`consumeWave()`) |
 | Orbit camera | `Q` / `E` | continuous (`state.current.{yawLeft,yawRight}`) |
+| Zoom camera | `+` / `-` (or `=`, numpad) | continuous (`state.current.{zoomIn,zoomOut}`) |
 | Close overlay | `Escape` / close button | handled by `ContentOverlay` |
 
 Camera yaw also accepts right/middle-mouse drag and two-finger horizontal
 scroll on trackpads — see `useMouseLook`. All three sources write to the
-same `yaw` ref so they compose without conflict.
+same `yaw` ref so they compose without conflict. Zoom is keyboard-only
+today; it scales `CAMERA_DISTANCE` and `CAMERA_HEIGHT` together so the
+pitch angle stays fixed, clamped to `[CAMERA_ZOOM_MIN, CAMERA_ZOOM_MAX]`.
 
 Rules the hook already enforces:
 
@@ -63,30 +69,30 @@ Rules the hook already enforces:
 - Consumers of the interact edge must call `consumeInteract()` — the hook
   guards against re-firing until keyup.
 
-Adding a new binding — end-to-end pattern (`KeyG` → `wavePressed` +
-`consumeWave`):
+Adding a new edge-triggered binding — end-to-end pattern (`KeyG` →
+`bowPressed` + `consumeBow`):
 
 ```ts
 // useKeyboard.ts
-const WAVE_KEYS = new Set(['KeyG'])
+const BOW_KEYS = new Set(['KeyG'])
 // …
-else if (WAVE_KEYS.has(event.code)) s.wavePressed = true
+else if (BOW_KEYS.has(event.code)) s.bowPressed = true
 // …
-const consumeWave = () => {
+const consumeBow = () => {
   const s = state.current
-  if (!s.wavePressed) return false
-  s.wavePressed = false
+  if (!s.bowPressed) return false
+  s.bowPressed = false
   return true
 }
-return { state, /* … */, consumeWave }
+return { state, /* … */, consumeBow }
 ```
 
 ```ts
 // Player.tsx (inside useFrame)
-if (!controlsDisabled && consumeWave() && clipRefs.waveName) {
-  action.kind = 'wave'
-  action.remaining = ACTION_HOLD.wave
-  actions[clipRefs.waveName]?.reset()
+if (!controlsDisabled && consumeBow() && clipRefs.bowName) {
+  action.kind = 'bow'
+  action.remaining = ACTION_HOLD.bow
+  actions[clipRefs.bowName]?.reset()
 }
 ```
 
@@ -96,25 +102,59 @@ adapters) is a future goal, not the current state.
 
 ## Interaction model
 
-Use a two-stage interaction check:
+Interactions are XZ-plane rectangles today, not raycasts. Each
+`PresentationStop` in `src/game/interactions/interactionTypes.ts` declares
+a world `position` and an `interactionZone` size; the scene passes those
+through `getStopZoneRect` and registers them with an `InteractionManager`.
+Each frame, `Player.tsx` calls `manager.update(x, z)` with the player's XZ
+position; the manager emits `interaction:available` / `unavailable`
+events via `gameEvents` when the active zone changes, and `trigger()`
+fires `interaction:triggered` when the player presses `F`.
 
-1. **Candidate detection** through a short physics overlap or distance query.
-2. **Selection validation** through facing direction, line of sight, or a camera raycast.
-
-Each target should expose semantic metadata:
+Only one zone is active at a time (first-match wins). Approach paths
+matter: if an interactable NPC has a physics collider, its own capsule
+prevents the player from standing on its exact XZ, so the zone should
+either sit in front of them or be wide enough to catch the player at
+their stopping distance.
 
 ```ts
-export interface InteractionTarget {
-  id: string
-  type: 'screen' | 'person' | 'door' | 'prop' | 'trigger'
-  label: string
-  maxDistance: number
-  enabled: boolean
-  onInteract: () => void | Promise<void>
+// interactionTypes.ts — Distasi in the corridor pocket
+{
+  id: 'distasi',
+  label: 'Distasi',
+  prompt: 'Press F to talk to Distasi',
+  overlayTitle: 'Distasi',
+  intro: '…',
+  position: [-8, 0, -13],           // XZ rect center
+  interactionZone: { size: [10, 8] }, // covers the pocket + approaches
+  content: { type: 'events', events: [] },
 }
 ```
 
-Only show one primary prompt at a time. Resolve ties using distance, visibility, and facing angle.
+**StrictMode gotcha (repeated here because it costs hours).** Register
+zones from a `useEffect` whose cleanup calls `manager.clearZones()`:
+
+```ts
+useEffect(() => {
+  for (const stop of presentationStops) {
+    manager.registerZone(getStopZoneRect(stop), stop)
+  }
+  return () => manager.clearZones()
+}, [manager])
+```
+
+Do **not** register inside `useMemo` with cleanup in a separate effect.
+StrictMode dev-mode simulates a mount → cleanup → remount cycle to catch
+effect leaks; the cleanup empties the manager, the remount reruns
+effects but not `useMemo`, so the manager stays empty forever. Fresh
+loads then never fire any prompt, HMR does because it rebuilds the
+component and re-runs `useMemo`. Same principle applies to any
+"populate an external structure on mount" pattern.
+
+For future work: a two-stage design (physics overlap → facing/raycast
+selection) is worth reconsidering when we ship many stations close
+together and the rect-only model produces ties. Today the room is
+sparse enough that rects are the right shape.
 
 ## Camera
 
@@ -139,10 +179,14 @@ needs a scripted framing move, add a camera subsystem that owns the camera
 and takes requests — don't sprinkle `camera.position` writes across
 components.
 
+Keyboard zoom is already wired (`+`/`-` scale distance and height together,
+clamped to `[CAMERA_ZOOM_MIN, CAMERA_ZOOM_MAX]`). Yaw is unclamped today.
+
 For future camera work, prefer:
 
-- Constrained zoom and yaw (clamp `yaw`; add a distance ref if we want
-  scroll-to-zoom).
+- Constrained yaw when a presentation demands specific framing.
+- Scroll-to-zoom via the mouse-wheel event if trackpad users want a
+  smoother option alongside the current keyboard bindings.
 - Scripted transitions when entering a presentation station, with a
   reliable reset path after the overlay closes.
 - Optional camera modes (over-the-shoulder, first-person via
@@ -153,13 +197,9 @@ For future camera work, prefer:
 Drive animation from gameplay state, not raw keys. Player clips live on a
 single armature and crossfade by weight — never by stop-and-play.
 
-Current player clip inventory (`public/assets/player/character.glb`):
-
-- Locomotion — `Man_Idle`, `Man_Walk`, `Man_Run`
-- One-shots — `Man_RunningJump` (used for jump), `Man_Clapping`
-- Toggle — `Man_Sitting`
-- Available but unwired — `Man_Death`, `Man_Jump`, `Man_Punch`, `Man_Standing`,
-  `Man_SwordSlash`
+Player clips are selected by regex against the loaded GLB's clip names, so
+the code doesn't hardcode any specific clip name. The current player GLB
+is `public/assets/player/youngvz.glb`.
 
 How the player picks clips at load time (`Player.tsx`):
 
@@ -167,9 +207,19 @@ How the player picks clips at load time (`Player.tsx`):
 const idle = pickClip(gltf.animations, [/idle/i, /stand/i, /breath/i])
 const walk = pickClip(gltf.animations, [/walk/i, /move/i])
 const run = pickClip(gltf.animations, [/run/i, /sprint/i])
-// running-jump preferred; regex-guard so /run/ doesn't grab it for locomotion
-const jump = jumpCandidates.find((c) => /running.?jump|run.?jump/i.test(c.name))
+const roll = pickClip(gltf.animations, [/roll/i, /dodge/i])
+const wave = pickClip(gltf.animations, [/wave/i, /greet/i, /hello/i])
 ```
+
+Missing clips are tolerated — `pickClip` returns `null`, and every clip
+consumer optional-chains. A GLB missing e.g. run falls back to walk while
+sprinting. In DEV, `Player.tsx` logs the GLB's clip names to the console
+on load so a mismatched clip is easy to spot.
+
+NPC clips work the same way. `Employee` takes a `clipPatterns` prop
+(defaults to idle-family regexes); pass e.g.
+`clipPatterns={[/wave/i, /greet/i, /hello/i]}` to loop a wave animation
+instead of idle.
 
 How clip weights are driven in `useFrame`:
 
@@ -194,25 +244,39 @@ For 2D employee billboards (future):
 - Keep interaction hit areas separate from transparent visual bounds when
   necessary.
 
-For 2D employee billboards:
-
-- Use idle frames or subtle looping animation sparingly
-- Keep the plane facing the camera or use a constrained billboard behavior
-- Disable depth-write or tune alpha handling only when needed to prevent sorting artifacts
-- Keep interaction hit areas separate from transparent visual bounds when necessary
-
 ## NPCs
 
 Most employee characters do not need simulated navigation.
 
 Prefer these levels of complexity:
 
-1. Static billboard at a station
-2. Short scripted movement along authored waypoints
-3. Authored navmesh with `three-pathfinding`
-4. Runtime navmesh generation only when maps or obstacles truly require it
+1. **Static rigged GLB** via `<Employee>` — loads a GLB, auto-fits its
+   height, plays one looping clip (configurable via `clipPatterns`),
+   and stands as a fixed collider so the player can't walk through them.
+   Callers pass a floor-level `y` (typically `0`); the component lifts
+   the RigidBody internally.
+2. Static billboard sprite at a station (not implemented yet).
+3. Short scripted movement along authored waypoints.
+4. Authored navmesh with `three-pathfinding`.
+5. Runtime navmesh generation only when maps or obstacles truly require it.
 
 Avoid building generalized crowd AI for the initial experience.
+
+Example — Distasi in the corridor pocket, waving instead of idling:
+
+```tsx
+<Suspense fallback={null}>
+  <Employee
+    url="/assets/employees/distasi.glb"
+    position={[-9.5, 0, -12]}
+    rotationY={0}
+    clipPatterns={[/wave/i, /greet/i, /hello/i]}
+  />
+</Suspense>
+```
+
+To make the NPC interactable, add a `PresentationStop` for them (see the
+Interaction model section above).
 
 ## Presentation progression
 

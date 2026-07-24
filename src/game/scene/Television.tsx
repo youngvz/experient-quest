@@ -1,19 +1,14 @@
 import { RigidBody } from '@react-three/rapier'
 import { DoubleSide } from 'three'
-import {
-  COLORS,
-  NE_ALCOVE,
-  ROOM_WIDTH,
-  TV,
-  WALL_THICKNESS,
-} from '../constants/gameConstants'
+import { COLORS, WALL_THICKNESS } from '../constants/gameConstants'
 
-// A wall-mounted TV. `wallAxis` says which world axis the wall runs along:
+// A single wall-mounted TV. `wallAxis` says which world axis the wall runs
+// along:
 //   'x' → wall is a Z-facing wall (front/back/alcove-north). Width runs along X.
 //   'z' → wall is an X-facing wall (east/west). Width runs along Z.
 // `wallCoord` is the wall's midplane coordinate on the fixed axis.
 // `facing` = +1 or -1 (which side of the wall the screen sits on).
-export function TVPanel({
+export function Television({
   wallAxis,
   wallCoord,
   facing,
@@ -67,42 +62,5 @@ export function TVPanel({
         </mesh>
       </group>
     </RigidBody>
-  )
-}
-
-export function Television() {
-  const eastWallX = ROOM_WIDTH / 2
-  // Alcove upper office's north wall is the conference-room front wall east
-  // segment at Z = ROOM_DEPTH/2 (world Z=+7). The TV mounts on its south face,
-  // facing into the alcove (+Z).
-  const alcoveNorthWallZ = NE_ALCOVE.upper.northZ
-  const alcoveWidth = NE_ALCOVE.eastX - NE_ALCOVE.westX
-  const alcoveCenterX = (NE_ALCOVE.westX + NE_ALCOVE.eastX) / 2
-
-  return (
-    <>
-      {/* main conference-room TV on the east wall */}
-      <TVPanel
-        wallAxis="z"
-        wallCoord={eastWallX}
-        facing={-1}
-        centerAlong={TV.centerZ}
-        centerY={TV.centerY}
-        width={TV.width}
-        height={TV.height}
-        depth={TV.depth}
-      />
-      {/* small TV on the north alcove's north wall — raised above the desk */}
-      <TVPanel
-        wallAxis="x"
-        wallCoord={alcoveNorthWallZ}
-        facing={1}
-        centerAlong={alcoveCenterX}
-        centerY={2}
-        width={Math.min(3, alcoveWidth - 1)}
-        height={1.4}
-        depth={0.12}
-      />
-    </>
   )
 }

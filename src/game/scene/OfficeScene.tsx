@@ -1,16 +1,21 @@
 import { Physics } from '@react-three/rapier'
 import { Suspense } from 'react'
-import { Cabinets } from './Cabinets'
-import { Chairs } from './Chairs'
+import { ConferenceChairs } from './ConferenceChairs'
+import { ConferenceFloor } from './ConferenceFloor'
 import { ConferenceLaptops } from './ConferenceLaptops'
+import { ConferenceRoom } from './ConferenceRoom'
 import { ConferenceTable } from './ConferenceTable'
+import { CorridorPocket } from './CorridorPocket'
+import { EastCorridor } from './EastCorridor'
 import { Exterior } from './Exterior'
-import { Floor } from './Floor'
-import { Hallway } from './Hallway'
 import { Player } from './Player'
-import { Television } from './Television'
-import { Walls } from './Walls'
-import { Whiteboard } from './Whiteboard'
+import { CentralCorridor } from './CentralCorridor'
+import { Televisions } from './Televisions'
+import { TheBakery } from './TheBakery'
+import { TheBakeryCabinets } from './TheBakeryCabinets'
+import { TheLab } from './TheLab'
+import { TheLabCabinets } from './TheLabCabinets'
+import { Whiteboards } from './Whiteboards'
 
 interface OfficeSceneProps {
   controlsDisabled: boolean
@@ -35,15 +40,23 @@ export function OfficeScene({ controlsDisabled }: OfficeSceneProps) {
         <Exterior />
       </Suspense>
       <Physics gravity={[0, -9.81, 0]} timeStep="vary">
-        <Floor />
-        <Walls />
-        <Hallway />
-        <Cabinets />
-        <Whiteboard />
-        <Television />
+        <ConferenceFloor />
+        <ConferenceRoom />
+        <TheBakery />
+        <CentralCorridor />
+        <EastCorridor />
+        <CorridorPocket />
+        <TheLab />
+        <TheLabCabinets />
+        <TheBakeryCabinets />
+        <Whiteboards />
+        <Televisions />
         <ConferenceTable />
         <ConferenceLaptops />
-        <Chairs />
+        <ConferenceChairs />
+        {/* LazyBranch slots go here for future rooms whose contents are
+            heavy enough to warrant zone-gated mounting (e.g. lots of GLBs).
+            Small shells like TheLab render eagerly above. */}
         <Suspense fallback={null}>
           <Player controlsDisabled={controlsDisabled} />
         </Suspense>
