@@ -94,6 +94,25 @@ export const HALLWAY_DESK_CHAIRS: [number, number, number][] = [
   [-2, 14, -Math.PI / 2],
 ]
 
+// White base cabinets running along the east wall of the south hallway, in
+// the exposed section south of the NE alcoves. The northmost cabinet has a
+// drop-in sink set into the shared countertop.
+export const HALLWAY_EAST_CABINETS = {
+  wallX: ROOM_WIDTH / 2, // east wall midplane
+  count: 7,
+  unitWidth: 0.6, // per-cabinet width along Z
+  depth: 0.6, // body depth into the hallway (west from the wall)
+  bodyHeight: 0.85,
+  counterThickness: 0.05,
+  counterOverhang: 0.04, // countertop overhangs the door face
+  // Northmost cabinet's center-Z. Cabinets run south from here.
+  startZ: NE_ALCOVE.lower.southZ + WALL_THICKNESS / 2 + 0.3,
+  bodyColor: '#f4f2ee',
+  counterColor: '#e6e2d8',
+  sinkColor: '#c8cbcf',
+  metalColor: '#a8adb3',
+}
+
 // Wall-mounted whiteboard on the back wall (Z = -ROOM_DEPTH/2), centered.
 export const WHITEBOARD = {
   centerX: 0,
