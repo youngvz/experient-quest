@@ -1,6 +1,7 @@
 import { Physics } from '@react-three/rapier'
 import { Suspense } from 'react'
 import { Chairs } from './Chairs'
+import { ConferenceLaptops } from './ConferenceLaptops'
 import { ConferenceTable } from './ConferenceTable'
 import { Exterior } from './Exterior'
 import { Floor } from './Floor'
@@ -39,6 +40,7 @@ export function OfficeScene({ controlsDisabled }: OfficeSceneProps) {
         <Whiteboard />
         <Television />
         <ConferenceTable />
+        <ConferenceLaptops />
         <Chairs />
         <Suspense fallback={null}>
           <Player controlsDisabled={controlsDisabled} />

@@ -212,7 +212,8 @@ export function Walls() {
         glass
         divisions={3}
       />
-      {/* front wall — glass, split around the doorway */}
+      {/* front wall — glass west of the doorway, opaque east of it (shared
+          with the NE alcove's north wall) */}
       <WallPanel
         position={[frontLeftCenterX, y, halfD]}
         size={[frontLeftWidth, WALL_HEIGHT, WALL_THICKNESS]}
@@ -221,7 +222,6 @@ export function Walls() {
       <WallPanel
         position={[frontRightCenterX, y, halfD]}
         size={[frontRightWidth, WALL_HEIGHT, WALL_THICKNESS]}
-        glass
       />
       {/* west wall — glass */}
       <WallPanel

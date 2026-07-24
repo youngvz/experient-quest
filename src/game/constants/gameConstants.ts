@@ -21,7 +21,7 @@ export const DOOR_HEIGHT = 2.6
 
 // Front-wall doorway. Cuts the front wall into two segments around this gap.
 export const DOOR = {
-  centerX: 4.5,
+  centerX: 3.5,
   width: 2,
 }
 
@@ -32,22 +32,67 @@ export const DOOR = {
 export const HALLWAY = {
   centerX: 0,
   width: ROOM_WIDTH,
-  depth: 12,
+  depth: 13,
 }
 
 // Hallway west-wall doorway (near the south end).
 export const HALLWAY_WEST_DOOR = {
-  // Z measured relative to hallway's world position; the wall runs from
-  // ROOM_DEPTH/2 to ROOM_DEPTH/2 + HALLWAY.depth.
-  centerZ: 7 + 12 - 3,
+  centerZ: 17.5,
   width: 2,
 }
 
 // Hallway south-wall doorway (near the west/left end).
 export const HALLWAY_SOUTH_DOOR = {
-  centerX: -7,
+  centerX: -7.5,
   width: 2,
 }
+
+// Hallway south-wall glass windows (opaque wall elsewhere). Each entry is
+// [centerX, width].
+export const HALLWAY_SOUTH_WINDOWS: [number, number][] = [
+  [-4.5, 4], // wide window west of center
+  [1.5, 2],
+  [4.5, 2],
+  [7.5, 2],
+]
+
+// NE alcove: two small offices stacked north-south, entered from the hallway
+// via their west walls. The alcove's east wall coincides with the hallway's
+// east wall (opaque, already exists). The alcove's north wall coincides with
+// the conf-room's front-wall east segment (now opaque instead of glass).
+export const NE_ALCOVE = {
+  westX: 4.5,
+  eastX: ROOM_WIDTH / 2,
+  upper: { northZ: 7, southZ: 11, doorZ: 10, doorWidth: 1 },
+  lower: { northZ: 11, southZ: 15, doorZ: 12, doorWidth: 1 },
+}
+
+// Hallway desk clusters (shared workbench-style, 2m wide × 3m deep).
+export const HALLWAY_DESKS: [number, number][] = [
+  [-6.5, 10],
+  [-3.5, 10],
+  [-6.5, 14],
+  [-3.5, 14],
+]
+export const HALLWAY_DESK_SIZE: [number, number, number] = [2, 0.75, 3]
+
+// Alcove desks (3m wide × 2m deep).
+// Upper alcove: pushed flush against the north wall.
+// Lower alcove: centered.
+export const ALCOVE_DESKS: [number, number][] = [
+  [7.25, 8.2],
+  [7.25, 13.5],
+]
+export const ALCOVE_DESK_SIZE: [number, number, number] = [3, 0.75, 2]
+
+// Desk chairs: [x, z, facing] where facing = angle in radians around Y.
+// Positive rotation turns local +Z toward +X, so PI/2 faces east.
+export const HALLWAY_DESK_CHAIRS: [number, number, number][] = [
+  [-8, 10, Math.PI / 2], // west of NW cluster, facing east
+  [-2, 10, -Math.PI / 2], // east of NE-cluster, facing west
+  [-8, 14, Math.PI / 2],
+  [-2, 14, -Math.PI / 2],
+]
 
 // Wall-mounted whiteboard on the back wall (Z = -ROOM_DEPTH/2), centered.
 export const WHITEBOARD = {
@@ -57,6 +102,19 @@ export const WHITEBOARD = {
   height: 1.8,
   depth: 0.08,
 }
+
+// Alcove whiteboards — mounted on each alcove's interior north wall, facing
+// south into the office. Sized to fit inside the alcove width (~5.5m) minus
+// a margin. Centered on the alcove.
+export const ALCOVE_WHITEBOARDS: {
+  centerX: number
+  northZ: number
+  width: number
+  centerY: number
+  height: number
+}[] = [
+  { centerX: 7.25, northZ: 11, width: 4, centerY: 1.5, height: 1.6 }, // lower alcove
+]
 
 // Wall-mounted TV on the east wall (X = +ROOM_WIDTH/2). Width runs along Z.
 export const TV = {
