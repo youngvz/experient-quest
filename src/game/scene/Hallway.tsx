@@ -22,7 +22,7 @@ import { Desk } from './Desk'
 import { Laptop } from './Laptop'
 import { Monitor } from './Monitor'
 import { Paper } from './Paper'
-import { DoorHeader, WallPanel } from './Walls'
+import { DoorBlocker, DoorHeader, WallPanel } from './Walls'
 
 // Build alternating opaque + glass segments along an axis to render a wall
 // with windows cut into it. Returns an array of <WallPanel /> elements. Any
@@ -139,6 +139,12 @@ export function Hallway() {
         width={HALLWAY_WEST_DOOR.width}
         spansX={false}
       />
+      {/* seal the west doorway — later swap for a level-transition sensor */}
+      <DoorBlocker
+        position={[westX, HALLWAY_WEST_DOOR.centerZ]}
+        width={HALLWAY_WEST_DOOR.width}
+        spansX={false}
+      />
 
       {/* east wall — opaque, full length */}
       <WallPanel
@@ -172,6 +178,12 @@ export function Hallway() {
         height: WALL_HEIGHT,
       })}
       <DoorHeader
+        position={[HALLWAY_SOUTH_DOOR.centerX, southZ]}
+        width={HALLWAY_SOUTH_DOOR.width}
+        spansX
+      />
+      {/* seal the south doorway — later swap for a level-transition sensor */}
+      <DoorBlocker
         position={[HALLWAY_SOUTH_DOOR.centerX, southZ]}
         width={HALLWAY_SOUTH_DOOR.width}
         spansX

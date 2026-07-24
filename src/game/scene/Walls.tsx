@@ -9,6 +9,30 @@ import {
   WALL_THICKNESS,
 } from '../constants/gameConstants'
 
+// Invisible full-height physics blocker sized to a doorway opening. Used to
+// seal exterior doorways so the player can't leave the office. When a door
+// should instead trigger a level change, swap this for a sensor collider that
+// emits an event.
+export function DoorBlocker({
+  position,
+  width,
+  spansX,
+}: {
+  position: [number, number]
+  width: number
+  spansX: boolean
+}) {
+  const [px, pz] = position
+  const half: [number, number, number] = spansX
+    ? [width / 2, WALL_HEIGHT / 2, WALL_THICKNESS / 2]
+    : [WALL_THICKNESS / 2, WALL_HEIGHT / 2, width / 2]
+  return (
+    <RigidBody type="fixed" colliders={false}>
+      <CuboidCollider args={half} position={[px, WALL_HEIGHT / 2, pz]} />
+    </RigidBody>
+  )
+}
+
 // A rectangular "lintel" spanning the top of a doorway. Static — no collider,
 // because the player physics box is shorter than the lintel is tall.
 export function DoorHeader({
