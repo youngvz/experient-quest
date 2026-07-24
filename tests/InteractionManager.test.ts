@@ -1,13 +1,15 @@
 import { describe, expect, it, vi } from 'vitest'
 import { InteractionManager } from '../src/game/interactions/InteractionManager'
-import type { InteractionDefinition } from '../src/game/interactions/interactionTypes'
+import type { PresentationStop } from '../src/game/interactions/interactionTypes'
 
-const definition: InteractionDefinition = {
+const stop: PresentationStop = {
   id: 'events-tv',
   label: 'Events Television',
   prompt: 'Press E to view meeting information',
-  contentTitle: 'Technology Status Meeting',
-  contentBody: 'Body',
+  overlayTitle: 'Technology Status Meeting',
+  position: [0, 0, 0],
+  interactionZone: { size: [4, 3.5] },
+  content: { type: 'events', events: [] },
 }
 
 const zone = { x: 100, y: 100, width: 50, height: 50 }
@@ -17,7 +19,7 @@ function build() {
   const onUnavailable = vi.fn()
   const onTriggered = vi.fn()
   const manager = new InteractionManager({ onAvailable, onUnavailable, onTriggered })
-  manager.registerZone('events-tv', zone, definition)
+  manager.registerZone(zone, stop)
   return { manager, onAvailable, onUnavailable, onTriggered }
 }
 
@@ -35,7 +37,7 @@ describe('InteractionManager', () => {
     manager.update({ x: 120, y: 120 })
     manager.update({ x: 125, y: 125 })
     expect(onAvailable).toHaveBeenCalledTimes(1)
-    expect(onAvailable).toHaveBeenCalledWith(definition)
+    expect(onAvailable).toHaveBeenCalledWith(stop)
     expect(manager.getActiveId()).toBe('events-tv')
   })
 
@@ -47,12 +49,12 @@ describe('InteractionManager', () => {
     expect(manager.getActiveId()).toBeNull()
   })
 
-  it('trigger returns the active definition and calls onTriggered', () => {
+  it('trigger returns the active stop and calls onTriggered', () => {
     const { manager, onTriggered } = build()
     manager.update({ x: 120, y: 120 })
     const result = manager.trigger()
-    expect(result).toBe(definition)
-    expect(onTriggered).toHaveBeenCalledWith(definition)
+    expect(result).toBe(stop)
+    expect(onTriggered).toHaveBeenCalledWith(stop)
   })
 
   it('trigger returns null when no zone is active', () => {

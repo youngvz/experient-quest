@@ -1,4 +1,4 @@
-import type { InteractionDefinition, InteractionId } from './interactionTypes'
+import type { PresentationStop } from './interactionTypes'
 
 export interface RectLike {
   x: number
@@ -8,31 +8,31 @@ export interface RectLike {
 }
 
 export interface InteractionManagerEvents {
-  onAvailable: (definition: InteractionDefinition) => void
+  onAvailable: (stop: PresentationStop) => void
   onUnavailable: () => void
-  onTriggered: (definition: InteractionDefinition) => void
+  onTriggered: (stop: PresentationStop) => void
 }
 
 interface RegisteredZone {
-  id: InteractionId
+  id: string
   zone: RectLike
-  definition: InteractionDefinition
+  stop: PresentationStop
 }
 
-// Uses rect origins that match Phaser's zone.getBounds(): x/y are the top-left corner.
-// Kept Phaser-free so Vitest can exercise it without a renderer.
+// Rect origins are top-left (x,y is a corner, not a center). The scene passes X/Z
+// positions here — kept renderer-agnostic so Vitest can exercise it without R3F.
 export class InteractionManager {
-  private readonly zones = new Map<InteractionId, RegisteredZone>()
+  private readonly zones = new Map<string, RegisteredZone>()
   private readonly events: InteractionManagerEvents
-  private activeId: InteractionId | null = null
+  private activeId: string | null = null
   private enabled = true
 
   constructor(events: InteractionManagerEvents) {
     this.events = events
   }
 
-  registerZone(id: InteractionId, zone: RectLike, definition: InteractionDefinition): void {
-    this.zones.set(id, { id, zone, definition })
+  registerZone(zone: RectLike, stop: PresentationStop): void {
+    this.zones.set(stop.id, { id: stop.id, zone, stop })
   }
 
   clearZones(): void {
@@ -59,19 +59,19 @@ export class InteractionManager {
 
     this.activeId = nextId
     if (next) {
-      this.events.onAvailable(next.definition)
+      this.events.onAvailable(next.stop)
     } else {
       this.events.onUnavailable()
     }
   }
 
-  trigger(): InteractionDefinition | null {
+  trigger(): PresentationStop | null {
     if (!this.enabled) return null
     if (this.activeId === null) return null
     const registered = this.zones.get(this.activeId)
     if (!registered) return null
-    this.events.onTriggered(registered.definition)
-    return registered.definition
+    this.events.onTriggered(registered.stop)
+    return registered.stop
   }
 
   enable(): void {
@@ -91,7 +91,7 @@ export class InteractionManager {
     return this.enabled
   }
 
-  getActiveId(): InteractionId | null {
+  getActiveId(): string | null {
     return this.activeId
   }
 

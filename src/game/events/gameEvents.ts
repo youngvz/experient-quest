@@ -1,12 +1,10 @@
 export interface InteractionAvailablePayload {
-  id: string
+  stopId: string
   prompt: string
 }
 
 export interface InteractionTriggeredPayload {
-  id: string
-  title: string
-  body: string
+  stopId: string
 }
 
 export interface GameEventMap {

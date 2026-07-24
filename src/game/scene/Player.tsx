@@ -14,8 +14,8 @@ import {
 import { useKeyboard } from '../../hooks/useKeyboard'
 import { gameEvents } from '../events/GameEventBus'
 import { InteractionManager } from '../interactions/InteractionManager'
-import { officeInteractions } from '../interactions/interactionTypes'
-import { getEventsTvZoneRect } from './interactionZones'
+import { presentationStops } from '../interactions/interactionTypes'
+import { getStopZoneRect } from './interactionZones'
 
 interface PlayerProps {
   controlsDisabled: boolean
@@ -32,17 +32,15 @@ export function Player({ controlsDisabled }: PlayerProps) {
 
   const manager = useMemo(() => {
     const m = new InteractionManager({
-      onAvailable: (def) =>
-        gameEvents.emit('interaction:available', { id: def.id, prompt: def.prompt }),
+      onAvailable: (stop) =>
+        gameEvents.emit('interaction:available', { stopId: stop.id, prompt: stop.prompt }),
       onUnavailable: () => gameEvents.emit('interaction:unavailable', undefined),
-      onTriggered: (def) =>
-        gameEvents.emit('interaction:triggered', {
-          id: def.id,
-          title: def.contentTitle,
-          body: def.contentBody,
-        }),
+      onTriggered: (stop) =>
+        gameEvents.emit('interaction:triggered', { stopId: stop.id }),
     })
-    m.registerZone('events-tv', getEventsTvZoneRect(), officeInteractions['events-tv'])
+    for (const stop of presentationStops) {
+      m.registerZone(getStopZoneRect(stop), stop)
+    }
     return m
   }, [])
 
