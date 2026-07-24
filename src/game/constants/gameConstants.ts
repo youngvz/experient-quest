@@ -10,6 +10,7 @@ export const WALL_THICKNESS = 0.4
 export const PLAYER_RADIUS = 0.35
 export const PLAYER_HEIGHT = 1.6
 export const PLAYER_SPEED = 6
+export const PLAYER_RUN_SPEED = 9
 export const PLAYER_SPAWN: [number, number, number] = [5, PLAYER_HEIGHT / 2 + 0.05, 6]
 
 // Multiplier on top of the auto-fit that sizes the player GLB to PLAYER_HEIGHT.

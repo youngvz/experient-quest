@@ -10,6 +10,7 @@ import {
   PLAYER_HEIGHT,
   PLAYER_MODEL_SCALE,
   PLAYER_RADIUS,
+  PLAYER_RUN_SPEED,
   PLAYER_SPAWN,
   PLAYER_SPEED,
 } from '../constants/gameConstants'
@@ -92,7 +93,8 @@ export function Player({ controlsDisabled }: PlayerProps) {
     const run = pickClip(gltf.animations, [/run/i, /sprint/i])
     return {
       idleName: idle?.name ?? null,
-      walkName: walk?.name ?? run?.name ?? null,
+      walkName: walk?.name ?? null,
+      runName: run?.name ?? null,
     }
   }, [gltf.animations])
 
@@ -103,14 +105,17 @@ export function Player({ controlsDisabled }: PlayerProps) {
   }, [names])
 
   useEffect(() => {
-    const { idleName, walkName } = clipRefs
+    const { idleName, walkName, runName } = clipRefs
     const idle = idleName ? actions[idleName] : null
     const walk = walkName ? actions[walkName] : null
+    const run = runName ? actions[runName] : null
     idle?.reset().setEffectiveWeight(1).play()
     walk?.reset().setEffectiveWeight(0).play()
+    run?.reset().setEffectiveWeight(0).play()
     return () => {
       idle?.stop()
       walk?.stop()
+      run?.stop()
     }
   }, [actions, clipRefs])
 
@@ -143,17 +148,20 @@ export function Player({ controlsDisabled }: PlayerProps) {
 
     let vx = 0
     let vz = 0
+    let isRunning = false
     if (!controlsDisabled) {
       const s = state.current
       if (s.forward) vz -= 1
       if (s.back) vz += 1
       if (s.left) vx -= 1
       if (s.right) vx += 1
+      isRunning = s.running
 
       const len = Math.hypot(vx, vz)
       if (len > 0) {
-        vx = (vx / len) * PLAYER_SPEED
-        vz = (vz / len) * PLAYER_SPEED
+        const speed = isRunning ? PLAYER_RUN_SPEED : PLAYER_SPEED
+        vx = (vx / len) * speed
+        vz = (vz / len) * speed
       }
     }
 
@@ -183,14 +191,22 @@ export function Player({ controlsDisabled }: PlayerProps) {
       meshRef.current.rotation.y = angle
     }
 
-    const { idleName, walkName } = clipRefs
+    const { idleName, walkName, runName } = clipRefs
     const idle = idleName ? actions[idleName] : null
     const walk = walkName ? actions[walkName] : null
-    if (idle || walk) {
-      const target = speed > 0.05 ? 1 : 0
+    const run = runName ? actions[runName] : null
+    if (idle || walk || run) {
+      const moving = speed > 0.05
+      // If run clip is missing, fall back to walk while sprinting.
+      const useRunClip = moving && isRunning && !!run
+      const useWalkClip = moving && !useRunClip && !!walk
+      const idleTarget = moving ? 0 : 1
+      const walkTarget = useWalkClip ? 1 : 0
+      const runTarget = useRunClip ? 1 : 0
       const blend = Math.min(1, delta * 8)
-      if (walk) walk.setEffectiveWeight(THREE.MathUtils.lerp(walk.getEffectiveWeight(), target, blend))
-      if (idle) idle.setEffectiveWeight(THREE.MathUtils.lerp(idle.getEffectiveWeight(), 1 - target, blend))
+      if (idle) idle.setEffectiveWeight(THREE.MathUtils.lerp(idle.getEffectiveWeight(), idleTarget, blend))
+      if (walk) walk.setEffectiveWeight(THREE.MathUtils.lerp(walk.getEffectiveWeight(), walkTarget, blend))
+      if (run) run.setEffectiveWeight(THREE.MathUtils.lerp(run.getEffectiveWeight(), runTarget, blend))
     }
   })
 

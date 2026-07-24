@@ -5,6 +5,7 @@ export interface KeyboardState {
   back: boolean
   left: boolean
   right: boolean
+  running: boolean
   interactPressed: boolean
   interactConsumed: boolean
 }
@@ -14,6 +15,7 @@ const BACK_KEYS = new Set(['KeyS', 'ArrowDown'])
 const LEFT_KEYS = new Set(['KeyA', 'ArrowLeft'])
 const RIGHT_KEYS = new Set(['KeyD', 'ArrowRight'])
 const INTERACT_KEYS = new Set(['KeyE'])
+const RUN_TOGGLE_KEYS = new Set(['KeyR'])
 
 // Mutable state ref updated by DOM listeners; useFrame reads it every frame.
 // interactPressed is edge-triggered — consumer calls `consumeInteract()` to clear the pulse.
@@ -26,6 +28,7 @@ export function useKeyboard(): {
     back: false,
     left: false,
     right: false,
+    running: false,
     interactPressed: false,
     interactConsumed: false,
   })
@@ -41,6 +44,7 @@ export function useKeyboard(): {
       else if (INTERACT_KEYS.has(event.code)) {
         if (!s.interactConsumed) s.interactPressed = true
       }
+      else if (RUN_TOGGLE_KEYS.has(event.code)) s.running = !s.running
     }
     const onKeyUp = (event: KeyboardEvent) => {
       const s = state.current
