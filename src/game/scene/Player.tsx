@@ -21,6 +21,7 @@ import {
   PLAYER_SPAWN_FACING,
   PLAYER_SPEED,
   CENTRAL_CORRIDOR,
+  THE_LAB,
 } from '../constants/gameConstants'
 import { CHARACTERS } from '../characters/characters'
 import { useKeyboard } from '../../hooks/useKeyboard'
@@ -212,17 +213,33 @@ export function Player({ controlsDisabled }: PlayerProps) {
 
   // Zone manager: fires setActiveZone on the game store whenever the player
   // crosses into a new named region. Zones are registered in
-  // most-specific-first order so branches win over their parent corridor.
+  // most-specific-first order so rooms win over their parent corridor.
   const zones = useMemo(() => {
     const setActiveZone = useGameStore.getState().setActiveZone
     const z = new ZoneManager({ fallback: 'office', onChange: setActiveZone })
-    // Branch-door zones — register first so they take priority when the
-    // player is inside the branch's activation rect.
+    // Placeholder branch-door zones — register first so they take priority
+    // when the player is inside the branch's activation rect.
     for (const door of BRANCH_DOORS) {
       z.registerZone({ id: door.id, ...door.activationRect })
     }
+    // TheLab — first real room off the central corridor. L-shaped, so
+    // registered as two rects sharing the same id (west rect + east rect).
+    z.registerZone({
+      id: 'the-lab',
+      minX: THE_LAB.westX,
+      maxX: THE_LAB.stepX,
+      minZ: THE_LAB.northZ,
+      maxZ: THE_LAB.westSouthZ,
+    })
+    z.registerZone({
+      id: 'the-lab',
+      minX: THE_LAB.stepX,
+      maxX: THE_LAB.eastX,
+      minZ: THE_LAB.northZ,
+      maxZ: THE_LAB.eastSouthZ,
+    })
     // Zone covers the whole central corridor floor. `office` is the
-    // fallback so anything not in the corridor or a branch defaults to it.
+    // fallback so anything not in the corridor or a room defaults to it.
     z.registerZone({
       id: 'central-corridor',
       minX: CENTRAL_CORRIDOR.westX,

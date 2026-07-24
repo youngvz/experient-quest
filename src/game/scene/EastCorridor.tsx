@@ -3,9 +3,11 @@ import {
   COLORS,
   CORRIDOR_POCKET,
   EAST_CORRIDOR,
+  THE_LAB,
   WALL_HEIGHT,
   WALL_THICKNESS,
 } from '../constants/gameConstants'
+import { Door } from './Door'
 import { DoorHeader, WallPanel } from './wallPrimitives'
 
 // East-running corridor branching off the central corridor's north end. Runs
@@ -34,11 +36,40 @@ export function EastCorridor() {
         </mesh>
       </RigidBody>
 
-      {/* north wall — carved to open into CORRIDOR_POCKET at its NW corner */}
-      <WallPanel
-        position={[(CORRIDOR_POCKET.eastX + eastX) / 2, y, northZ]}
-        size={[eastX - CORRIDOR_POCKET.eastX, WALL_HEIGHT, WALL_THICKNESS]}
-      />
+      {/* north wall — this stretch (X: pocket.eastX .. eastX) is shared
+          with TheLab's south boundary. Carve out an opening at
+          THE_LAB.southDoorX so a door connects the two spaces. */}
+      {(() => {
+        const wallWestX = CORRIDOR_POCKET.eastX
+        const doorLo = THE_LAB.southDoorX - THE_LAB.southDoorWidth / 2
+        const doorHi = THE_LAB.southDoorX + THE_LAB.southDoorWidth / 2
+        return (
+          <>
+            <WallPanel
+              position={[(wallWestX + doorLo) / 2, y, northZ]}
+              size={[doorLo - wallWestX, WALL_HEIGHT, WALL_THICKNESS]}
+            />
+            <WallPanel
+              position={[(doorHi + eastX) / 2, y, northZ]}
+              size={[eastX - doorHi, WALL_HEIGHT, WALL_THICKNESS]}
+            />
+            <DoorHeader
+              position={[THE_LAB.southDoorX, northZ]}
+              width={THE_LAB.southDoorWidth}
+              spansX
+            />
+            {/* Open glass door standing in the doorway between TheLab
+                (north) and the East Corridor (south). */}
+            <Door
+              position={[THE_LAB.southDoorX, northZ]}
+              width={THE_LAB.southDoorWidth}
+              spansX
+              blocking={false}
+              open
+            />
+          </>
+        )
+      })()}
 
       {/* east wall — split around dead-end doorway */}
       <WallPanel

@@ -5,6 +5,7 @@ import {
   CORRIDOR_POCKET,
   EAST_CORRIDOR,
   THE_BAKERY_WEST_DOOR,
+  THE_LAB,
   ROOM_DEPTH,
   WALL_HEIGHT,
   WALL_THICKNESS,
@@ -72,6 +73,12 @@ export function CentralCorridor() {
       centerZ: deadEndDoorZ,
       width: deadEndDoorWidth,
     },
+    {
+      lo: THE_LAB.doorCenterZ - THE_LAB.doorWidth / 2,
+      hi: THE_LAB.doorCenterZ + THE_LAB.doorWidth / 2,
+      centerZ: THE_LAB.doorCenterZ,
+      width: THE_LAB.doorWidth,
+    },
     ...BRANCH_DOORS.map((door) => ({
       lo: door.centerZ - door.width / 2,
       hi: door.centerZ + door.width / 2,
@@ -109,15 +116,21 @@ export function CentralCorridor() {
 
       {/* east wall — segments between openings, then clipped so we don't
           render coplanar with the conference room's own west wall.
-          Opaque, so the exterior ring buildings north of the office don't
-          show through as "huge cubes" from inside the corridor. */}
-      {clipSegments(wallSegments).map(([lo, hi], i) => (
-        <WallPanel
-          key={`east-${i}`}
-          position={[eastX, y, (lo + hi) / 2]}
-          size={[WALL_THICKNESS, WALL_HEIGHT, hi - lo]}
-        />
-      ))}
+          Segments that fall entirely within TheLab's Z-span render as
+          glass (storefront wall); everything else stays opaque so the
+          exterior ring buildings north of the office don't show through
+          as "huge cubes" from inside the corridor. */}
+      {clipSegments(wallSegments).map(([lo, hi], i) => {
+        const isGlass = lo >= THE_LAB.northZ && hi <= THE_LAB.westSouthZ
+        return (
+          <WallPanel
+            key={`east-${i}`}
+            position={[eastX, y, (lo + hi) / 2]}
+            size={[WALL_THICKNESS, WALL_HEIGHT, hi - lo]}
+            glass={isGlass}
+          />
+        )
+      })}
 
       {/* Door headers on every east-wall opening */}
       {openings.map((opening, i) => (
@@ -149,6 +162,15 @@ export function CentralCorridor() {
           spansX={false}
         />
       ))}
+
+      {/* TheLab entrance — open glass door standing in the shared doorway. */}
+      <Door
+        position={[eastX, THE_LAB.doorCenterZ]}
+        width={THE_LAB.doorWidth}
+        spansX={false}
+        blocking={false}
+        open
+      />
 
       {/* west wall — solid full length */}
       <WallPanel

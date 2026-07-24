@@ -114,6 +114,88 @@ export const CORRIDOR_POCKET = {
   southZ: -ROOM_DEPTH / 2 - 3, // -10 (coplanar w/ east corridor north wall)
 }
 
+// TheLab — first branch room off the central corridor's east wall.
+// L-shaped: full width matches the east corridor's length (20 m along X).
+// Its south boundary reuses the *existing* north walls of CORRIDOR_POCKET
+// and EAST_CORRIDOR — no separate south wall is rendered in TheLab. The
+// pocket's east wall (X=-4, Z:-16..-10) fills the inside-corner of the L.
+//
+//   X:  -10       -4                        +10
+//        ┌─────────────────────────────────┐   Z=-32 (north wall)
+//        │                                 │
+//        │  west portion    east portion   │
+//        │  X:-10..-4       X:-4..+10      │
+//        │                                 │
+//        │                                 │
+//        └────────────┐                    │   Z=-16 (pocket north wall)
+//                     │                    │
+//        ← pocket →   └────────────────────┘   Z=-10 (east-corridor n. wall)
+//        (not part of TheLab)
+export const THE_LAB = {
+  // Bounding rect (used for the corridor-side doorway math + zone rect).
+  westX: -ROOM_WIDTH / 2, // -10 (coplanar with central corridor east wall)
+  eastX: ROOM_WIDTH / 2, // +10
+  northZ: -32,
+  // Southern edges — L-shape. `westSouthZ` is the north wall of the pocket;
+  // `eastSouthZ` is the north wall of the east corridor. The "step" at
+  // X = stepX is the pocket's east wall.
+  westSouthZ: -16,
+  eastSouthZ: -10,
+  stepX: -4,
+  // Doorway on the shared west wall (with central corridor). Centered on
+  // the west rect of the L (Z ∈ [northZ, westSouthZ] = [-32, -16]).
+  doorCenterZ: -24,
+  doorWidth: 1.6,
+  // Doorway on the shared south wall (with east corridor's north wall).
+  // Centered on the east rect of the L (X ∈ [-4, +10], midpoint X=+3).
+  southDoorX: 3,
+  southDoorWidth: 1.6,
+}
+
+// Row of base cabinets backed against the OUTSIDE (west-facing) face of
+// Alcove A's west partition wall. Cabinets sit in TheLab's main open
+// floor, fronts facing west into the room. Northmost cabinet holds a
+// drop-in sink, matching The Bakery's kitchen row.
+export const THE_LAB_CABINETS = {
+  // Alcove A's west partition midplane (X=THE_LAB_ALCOVES.westX = 5).
+  wallX: 5,
+  // Cabinets push west (-X) from the wall into TheLab's main open area.
+  facing: -1 as -1 | 1,
+  count: 10,
+  unitWidth: 0.6,
+  depth: 0.6,
+  bodyHeight: 0.85,
+  counterThickness: 0.05,
+  counterOverhang: 0.04,
+  // Northmost cabinet's center-Z. Bodies extend south from here.
+  startZ: -31.2,
+  // Sink on the southmost cabinet (largest Z / lower on the Z axis).
+  sinkIndex: 9,
+  bodyColor: '#f4f2ee',
+  counterColor: '#e6e2d8',
+  sinkColor: '#c8cbcf',
+  metalColor: '#a8adb3',
+} as const
+
+// Three small alcove offices carved into TheLab's east interior. Each
+// alcove pushes 3 m west of TheLab's east wall; the doorway is on the
+// alcove's west (open) side, facing back into TheLab. Divider walls
+// between bays keep the alcoves separate. Bay Z-spans are chosen to
+// sit inside TheLab's east rect (Z ∈ [northZ, eastSouthZ]) with a bit
+// of clearance north and south.
+export const THE_LAB_ALCOVES = {
+  eastX: 10, // coplanar with THE_LAB.eastX (interior side)
+  westX: 5, // 5 m alcove depth
+  // Bays tile TheLab's east rect Z-span [-32, -10] with no gaps — first
+  // and last bays are flush with TheLab's north and south walls
+  // respectively, and adjacent bays share divider walls.
+  bays: [
+    { id: 'a', northZ: -32, southZ: -20, doorZ: -23, doorWidth: 1.4 },
+    { id: 'b', northZ: -20, southZ: -15, doorZ: -17.5, doorWidth: 1.4 },
+    { id: 'c', northZ: -15, southZ: -10, doorZ: -12.5, doorWidth: 1.4 },
+  ],
+} as const
+
 // Future branch doorways along the corridor's east wall. Each entry is
 // where a scene like a meeting room, project office, or joke corner will
 // hang off the corridor. Rendered as a door-frame + invisible blocker for
@@ -128,18 +210,10 @@ export interface BranchDoor {
   activationRect: { minX: number; maxX: number; minZ: number; maxZ: number }
 }
 
-export const BRANCH_DOORS: BranchDoor[] = [
-  // First branch — placeholder near the middle of the corridor. No scene
-  // built yet, but the doorway + zone trigger are wired.
-  {
-    id: 'branch-alpha',
-    centerZ: -30,
-    width: 1.6,
-    // A ~4 m x 5 m rect just east of the doorway (inside the branch space
-    // we haven't built yet). Adjust when the branch geometry lands.
-    activationRect: { minX: -10, maxX: -6, minZ: -32.5, maxZ: -27.5 },
-  },
-]
+// TheLab has replaced the earlier `branch-alpha` placeholder; leaving
+// the list empty for now. Add entries here for future sealed placeholder
+// doors that don't yet have real rooms.
+export const BRANCH_DOORS: BranchDoor[] = []
 
 // The Bakery south-wall doorway (near the west/left end).
 export const THE_BAKERY_SOUTH_DOOR = {
@@ -209,6 +283,9 @@ export const THE_BAKERY_KITCHEN_TABLE = {
 // drop-in sink set into the shared countertop.
 export const THE_BAKERY_EAST_CABINETS = {
   wallX: ROOM_WIDTH / 2, // east wall midplane
+  // Cabinets sit west of the wall (into The Bakery). `facing = -1` picks
+  // the -X side; see CabinetRow.tsx.
+  facing: -1 as -1 | 1,
   count: 7,
   unitWidth: 0.6, // per-cabinet width along Z
   depth: 0.6, // body depth into the The Bakery (west from the wall)

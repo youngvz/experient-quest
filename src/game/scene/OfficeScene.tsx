@@ -8,12 +8,13 @@ import { ConferenceTable } from './ConferenceTable'
 import { CorridorPocket } from './CorridorPocket'
 import { EastCorridor } from './EastCorridor'
 import { Exterior } from './Exterior'
-import { LazyBranch } from './LazyBranch'
 import { Player } from './Player'
 import { CentralCorridor } from './CentralCorridor'
 import { Televisions } from './Televisions'
 import { TheBakery } from './TheBakery'
 import { TheBakeryCabinets } from './TheBakeryCabinets'
+import { TheLab } from './TheLab'
+import { TheLabCabinets } from './TheLabCabinets'
 import { Whiteboards } from './Whiteboards'
 
 interface OfficeSceneProps {
@@ -45,21 +46,17 @@ export function OfficeScene({ controlsDisabled }: OfficeSceneProps) {
         <CentralCorridor />
         <EastCorridor />
         <CorridorPocket />
+        <TheLab />
+        <TheLabCabinets />
         <TheBakeryCabinets />
         <Whiteboards />
         <Televisions />
         <ConferenceTable />
         <ConferenceLaptops />
         <ConferenceChairs />
-        {/* Branch slots. Each <LazyBranch> mounts its children only when
-            the player is in the matching zone; the corridor stays cheap.
-            When a real branch scene is built, wire it here with a lazy
-            import: const Foo = lazy(() => import('./FooBranch')). */}
-        <LazyBranch zone="branch-alpha">
-          {/* No scene yet — this slot is proof-of-plumbing. Drop the
-              branch component in here when it exists. */}
-          {null}
-        </LazyBranch>
+        {/* LazyBranch slots go here for future rooms whose contents are
+            heavy enough to warrant zone-gated mounting (e.g. lots of GLBs).
+            Small shells like TheLab render eagerly above. */}
         <Suspense fallback={null}>
           <Player controlsDisabled={controlsDisabled} />
         </Suspense>
