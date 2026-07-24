@@ -12,7 +12,7 @@ export const WALL_THICKNESS = 0.4
 export const PLAYER_RADIUS = 0.4375
 export const PLAYER_HEIGHT = 2.0
 export const PLAYER_SPEED = 6
-export const PLAYER_RUN_SPEED = 13
+export const PLAYER_RUN_SPEED = 16.25
 // Spawn just south of the central corridor's south doorway (exterior side),
 // centered on the corridor's X midline. The corridor's south wall is at
 // Z = CENTRAL_CORRIDOR.southZ (=20) with WALL_THICKNESS=0.4 (south face at
