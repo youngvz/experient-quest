@@ -94,6 +94,14 @@ export const HALLWAY_DESK_CHAIRS: [number, number, number][] = [
   [-2, 14, -Math.PI / 2],
 ]
 
+// Long prep-style table parked west of the sink cabinets, oriented long
+// along Z to mirror the cabinet row with a walking gap between them. Same
+// visual treatment as the alcove desks (white top, light-grey legs).
+export const HALLWAY_KITCHEN_TABLE = {
+  position: [7.4, 17.3] as [number, number], // centerX, centerZ
+  size: [1.1, 0.75, 4] as [number, number, number], // [w, h, d]
+}
+
 // White base cabinets running along the east wall of the south hallway, in
 // the exposed section south of the NE alcoves. The northmost cabinet has a
 // drop-in sink set into the shared countertop.

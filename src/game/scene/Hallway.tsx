@@ -8,6 +8,7 @@ import {
   HALLWAY_DESKS,
   HALLWAY_DESK_CHAIRS,
   HALLWAY_DESK_SIZE,
+  HALLWAY_KITCHEN_TABLE,
   HALLWAY_SOUTH_DOOR,
   HALLWAY_SOUTH_WINDOWS,
   HALLWAY_WEST_DOOR,
@@ -306,6 +307,15 @@ export function Hallway() {
           </group>
         )
       })}
+
+      {/* long prep-style table west of the sink cabinets, matching the alcove
+          desks' white top + light-grey legs */}
+      <Desk
+        position={HALLWAY_KITCHEN_TABLE.position}
+        size={HALLWAY_KITCHEN_TABLE.size}
+        topColor="#f3f1ec"
+        legColor="#b8b8bc"
+      />
 
       {/* alcove desks — white top with light-grey legs to contrast the hallway
           workbenches */}
