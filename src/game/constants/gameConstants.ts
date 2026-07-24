@@ -10,7 +10,7 @@ export const WALL_THICKNESS = 0.4
 export const PLAYER_RADIUS = 0.35
 export const PLAYER_HEIGHT = 1.6
 export const PLAYER_SPEED = 6
-export const PLAYER_RUN_SPEED = 9
+export const PLAYER_RUN_SPEED = 13
 export const PLAYER_SPAWN: [number, number, number] = [5, PLAYER_HEIGHT / 2 + 0.05, 6]
 
 // Multiplier on top of the auto-fit that sizes the player GLB to PLAYER_HEIGHT.
@@ -94,6 +94,27 @@ export const HALLWAY_DESK_CHAIRS: [number, number, number][] = [
   [-8, 14, Math.PI / 2],
   [-2, 14, -Math.PI / 2],
 ]
+
+// Sit spots — snap-to points when the player triggers sit near a desk. Each
+// entry is the chair's [x, z, facing] where facing = the angle the seated
+// character should end up rotated to (angle around Y, matching the chair).
+// Player proximity is checked in XZ; SIT_ACTIVATION_RADIUS is the distance
+// from the sit spot within which the sit action becomes available.
+export const SIT_SPOTS: [number, number, number][] = HALLWAY_DESK_CHAIRS
+export const SIT_ACTIVATION_RADIUS = 1.5
+// Forward nudge (in the sitter's facing direction, toward the desk) so the
+// character's back sits just in front of the chair back instead of clipping
+// through it. The sitting animation keeps the model's origin at hip height,
+// but the character has visible torso depth behind that origin — this offset
+// compensates.
+export const SIT_FORWARD_OFFSET = 0.18
+
+// Vertical lift applied to the character mesh when the sit animation plays.
+// The sit clip already poses the character with hips well above the mesh
+// root, so we only need a small lift to move the visible legs above the
+// seat cushion — a full seat-height lift stacks with the animation and
+// puts the character on top of the backrest.
+export const SIT_VERTICAL_OFFSET = 0.12
 
 // Long prep-style table parked west of the sink cabinets, oriented long
 // along X so it sits perpendicular to the (north-south) cabinet row with a

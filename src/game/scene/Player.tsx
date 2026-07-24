@@ -13,6 +13,10 @@ import {
   PLAYER_RUN_SPEED,
   PLAYER_SPAWN,
   PLAYER_SPEED,
+  SIT_ACTIVATION_RADIUS,
+  SIT_FORWARD_OFFSET,
+  SIT_SPOTS,
+  SIT_VERTICAL_OFFSET,
 } from '../constants/gameConstants'
 import { useKeyboard } from '../../hooks/useKeyboard'
 import { gameEvents } from '../events/GameEventBus'
@@ -35,11 +39,40 @@ function pickClip(clips: THREE.AnimationClip[], patterns: RegExp[]): THREE.Anima
   return null
 }
 
+type ActionKind = 'jump' | 'clap' | 'sit'
+
+// One-shot action clips (jump/clap) hold movement for their duration.
+// Jump = RunningJump clip; horizontal velocity is preserved during the leap
+// so the character actually travels instead of playing in place.
+const ACTION_HOLD: Record<Exclude<ActionKind, 'sit'>, number> = {
+  jump: 0.9,
+  clap: 1.4,
+}
+
+// Standing-jump speed floor: pressing Space from a standstill still moves the
+// player forward (in facing direction) so the running-jump clip reads right.
+const STANDING_JUMP_SPEED = 6
+
 export function Player({ controlsDisabled }: PlayerProps) {
   const bodyRef = useRef<RapierRigidBody | null>(null)
   const meshRef = useRef<THREE.Group | null>(null)
   const { camera } = useThree()
-  const { state, consumeInteract } = useKeyboard()
+  const { state, consumeInteract, consumeJump, consumeClap, consumeSitToggle } = useKeyboard()
+
+  // Per-frame action state. Refs (not React state) so useFrame doesn't re-render.
+  // `jumpVel` is the horizontal velocity carried through a running jump —
+  // captured at takeoff so the leap covers ground even without held keys.
+  const actionRef = useRef<{
+    kind: ActionKind | null
+    remaining: number
+    jumpVx: number
+    jumpVz: number
+  }>({
+    kind: null,
+    remaining: 0,
+    jumpVx: 0,
+    jumpVz: 0,
+  })
 
   const cameraTarget = useMemo(() => new THREE.Vector3(), [])
   const cameraDesired = useMemo(() => new THREE.Vector3(), [])
@@ -91,10 +124,22 @@ export function Player({ controlsDisabled }: PlayerProps) {
     const idle = pickClip(gltf.animations, [/idle/i, /stand/i, /breath/i])
     const walk = pickClip(gltf.animations, [/walk/i, /move/i])
     const run = pickClip(gltf.animations, [/run/i, /sprint/i])
+    // Prefer the running-jump variant so Space plays a full leap; fall back
+    // to any other jump clip if the model only ships a standing jump.
+    const jumpCandidates = gltf.animations.filter((c) => /jump/i.test(c.name))
+    const jump =
+      jumpCandidates.find((c) => /running.?jump|run.?jump/i.test(c.name)) ??
+      jumpCandidates[0] ??
+      null
+    const clap = pickClip(gltf.animations, [/clap/i])
+    const sit = pickClip(gltf.animations, [/sit/i])
     return {
       idleName: idle?.name ?? null,
       walkName: walk?.name ?? null,
       runName: run?.name ?? null,
+      jumpName: jump?.name ?? null,
+      clapName: clap?.name ?? null,
+      sitName: sit?.name ?? null,
     }
   }, [gltf.animations])
 
@@ -105,17 +150,27 @@ export function Player({ controlsDisabled }: PlayerProps) {
   }, [names])
 
   useEffect(() => {
-    const { idleName, walkName, runName } = clipRefs
+    const { idleName, walkName, runName, jumpName, clapName, sitName } = clipRefs
     const idle = idleName ? actions[idleName] : null
     const walk = walkName ? actions[walkName] : null
     const run = runName ? actions[runName] : null
+    const jump = jumpName ? actions[jumpName] : null
+    const clap = clapName ? actions[clapName] : null
+    const sit = sitName ? actions[sitName] : null
     idle?.reset().setEffectiveWeight(1).play()
     walk?.reset().setEffectiveWeight(0).play()
     run?.reset().setEffectiveWeight(0).play()
+    // Action clips stay loaded at 0 weight; useFrame ramps them up on trigger.
+    jump?.reset().setEffectiveWeight(0).play()
+    clap?.reset().setEffectiveWeight(0).play()
+    sit?.reset().setEffectiveWeight(0).play()
     return () => {
       idle?.stop()
       walk?.stop()
       run?.stop()
+      jump?.stop()
+      clap?.stop()
+      sit?.stop()
     }
   }, [actions, clipRefs])
 
@@ -146,11 +201,106 @@ export function Player({ controlsDisabled }: PlayerProps) {
     const body = bodyRef.current
     if (!body) return
 
+    const pos = body.translation()
+    const action = actionRef.current
+
+    // Any movement key cancels a sit — jump/clap play through instead.
+    const s = state.current
+    const movementRequested =
+      !controlsDisabled && (s.forward || s.back || s.left || s.right)
+    if (action.kind === 'sit' && movementRequested) {
+      action.kind = null
+      action.remaining = 0
+    }
+
+    // Process one-shot triggers (jump/clap take precedence over sit start).
+    if (!controlsDisabled && action.kind === null) {
+      if (consumeJump() && clipRefs.jumpName) {
+        action.kind = 'jump'
+        action.remaining = ACTION_HOLD.jump
+        // Capture takeoff velocity: use current linvel if moving, otherwise
+        // launch forward along the character's facing at STANDING_JUMP_SPEED.
+        const lv = body.linvel()
+        const currentSpeed = Math.hypot(lv.x, lv.z)
+        if (currentSpeed > 0.5) {
+          action.jumpVx = lv.x
+          action.jumpVz = lv.z
+        } else {
+          // meshRef.rotation.y = atan2(vx, vz) so forward = (sin, cos)
+          const facing = meshRef.current?.rotation.y ?? 0
+          action.jumpVx = Math.sin(facing) * STANDING_JUMP_SPEED
+          action.jumpVz = Math.cos(facing) * STANDING_JUMP_SPEED
+        }
+        const jumpAction = actions[clipRefs.jumpName]
+        jumpAction?.reset()
+      } else if (consumeClap() && clipRefs.clapName) {
+        action.kind = 'clap'
+        action.remaining = ACTION_HOLD.clap
+        const clapAction = actions[clipRefs.clapName]
+        clapAction?.reset()
+      }
+    }
+
+    // Sit toggle: near a desk → start sit (snapping to the sit spot);
+    // pressing again while sitting stands up. Ignored during jump/clap.
+    if (
+      !controlsDisabled &&
+      consumeSitToggle() &&
+      (action.kind === null || action.kind === 'sit') &&
+      clipRefs.sitName
+    ) {
+      if (action.kind === 'sit') {
+        action.kind = null
+      } else {
+        // Nearest sit spot within activation radius wins.
+        let nearest: (typeof SIT_SPOTS)[number] | null = null
+        let nearestDist = Infinity
+        for (const spot of SIT_SPOTS) {
+          const dx = spot[0] - pos.x
+          const dz = spot[1] - pos.z
+          const d = Math.hypot(dx, dz)
+          if (d < nearestDist) {
+            nearestDist = d
+            nearest = spot
+          }
+        }
+        if (nearest && nearestDist <= SIT_ACTIVATION_RADIUS) {
+          action.kind = 'sit'
+          action.remaining = 0
+          // Snap the rigid body to the sit spot so the seated animation lines
+          // up with the chair. Nudge slightly forward (toward the desk) so
+          // the torso doesn't clip through the chair back. Facing angle θ
+          // means forward = (sin θ, cos θ) in world XZ.
+          const facing = nearest[2]
+          const fx = Math.sin(facing) * SIT_FORWARD_OFFSET
+          const fz = Math.cos(facing) * SIT_FORWARD_OFFSET
+          body.setTranslation(
+            { x: nearest[0] + fx, y: pos.y, z: nearest[1] + fz },
+            true,
+          )
+          body.setLinvel({ x: 0, y: 0, z: 0 }, true)
+          if (meshRef.current) meshRef.current.rotation.y = facing
+          actions[clipRefs.sitName]?.reset()
+        }
+      }
+    }
+
+    // Countdown for jump/clap. Sit lasts until toggled off.
+    if (action.kind === 'jump' || action.kind === 'clap') {
+      action.remaining -= delta
+      if (action.remaining <= 0) {
+        action.kind = null
+        action.remaining = 0
+      }
+    }
+
+    // Movement locked while any action is active.
+    const locked = action.kind !== null
+
     let vx = 0
     let vz = 0
     let isRunning = false
-    if (!controlsDisabled) {
-      const s = state.current
+    if (!controlsDisabled && !locked) {
       if (s.forward) vz -= 1
       if (s.back) vz += 1
       if (s.left) vx -= 1
@@ -163,16 +313,18 @@ export function Player({ controlsDisabled }: PlayerProps) {
         vx = (vx / len) * speed
         vz = (vz / len) * speed
       }
+    } else if (action.kind === 'jump') {
+      // Jumps carry their takeoff velocity through the leap.
+      vx = action.jumpVx
+      vz = action.jumpVz
     }
 
     body.setLinvel({ x: vx, y: 0, z: vz }, true)
 
-    const pos = body.translation()
-
     // 2D interaction is measured on the XZ plane — we pass X as "x" and Z as "y".
     manager.update({ x: pos.x, y: pos.z })
 
-    if (!controlsDisabled && consumeInteract()) {
+    if (!controlsDisabled && !locked && consumeInteract()) {
       manager.trigger()
     }
 
@@ -191,23 +343,49 @@ export function Player({ controlsDisabled }: PlayerProps) {
       meshRef.current.rotation.y = angle
     }
 
-    const { idleName, walkName, runName } = clipRefs
+    // Sit lift: raise the visual mesh up onto the chair seat while seated so
+    // the legs rest on top of the chair instead of clipping through it. The
+    // RigidBody Y is locked, so we drive this on the mesh group only.
+    if (meshRef.current) {
+      const targetY = action.kind === 'sit' ? SIT_VERTICAL_OFFSET : 0
+      const liftBlend = Math.min(1, delta * 10)
+      meshRef.current.position.y = THREE.MathUtils.lerp(
+        meshRef.current.position.y,
+        targetY,
+        liftBlend,
+      )
+    }
+
+    const { idleName, walkName, runName, jumpName, clapName, sitName } = clipRefs
     const idle = idleName ? actions[idleName] : null
     const walk = walkName ? actions[walkName] : null
     const run = runName ? actions[runName] : null
-    if (idle || walk || run) {
-      const moving = speed > 0.05
-      // If run clip is missing, fall back to walk while sprinting.
-      const useRunClip = moving && isRunning && !!run
-      const useWalkClip = moving && !useRunClip && !!walk
-      const idleTarget = moving ? 0 : 1
-      const walkTarget = useWalkClip ? 1 : 0
-      const runTarget = useRunClip ? 1 : 0
-      const blend = Math.min(1, delta * 8)
-      if (idle) idle.setEffectiveWeight(THREE.MathUtils.lerp(idle.getEffectiveWeight(), idleTarget, blend))
-      if (walk) walk.setEffectiveWeight(THREE.MathUtils.lerp(walk.getEffectiveWeight(), walkTarget, blend))
-      if (run) run.setEffectiveWeight(THREE.MathUtils.lerp(run.getEffectiveWeight(), runTarget, blend))
-    }
+    const jump = jumpName ? actions[jumpName] : null
+    const clap = clapName ? actions[clapName] : null
+    const sit = sitName ? actions[sitName] : null
+
+    const moving = speed > 0.05
+    // If run clip is missing, fall back to walk while sprinting.
+    const useRunClip = moving && isRunning && !!run
+    const useWalkClip = moving && !useRunClip && !!walk
+
+    const jumpTarget = action.kind === 'jump' ? 1 : 0
+    const clapTarget = action.kind === 'clap' ? 1 : 0
+    const sitTarget = action.kind === 'sit' ? 1 : 0
+    // Base locomotion clips are muted while an action is active so the action
+    // clip drives the whole armature.
+    const baseGain = locked ? 0 : 1
+    const idleTarget = (moving ? 0 : 1) * baseGain
+    const walkTarget = (useWalkClip ? 1 : 0) * baseGain
+    const runTarget = (useRunClip ? 1 : 0) * baseGain
+
+    const blend = Math.min(1, delta * 8)
+    if (idle) idle.setEffectiveWeight(THREE.MathUtils.lerp(idle.getEffectiveWeight(), idleTarget, blend))
+    if (walk) walk.setEffectiveWeight(THREE.MathUtils.lerp(walk.getEffectiveWeight(), walkTarget, blend))
+    if (run) run.setEffectiveWeight(THREE.MathUtils.lerp(run.getEffectiveWeight(), runTarget, blend))
+    if (jump) jump.setEffectiveWeight(THREE.MathUtils.lerp(jump.getEffectiveWeight(), jumpTarget, blend))
+    if (clap) clap.setEffectiveWeight(THREE.MathUtils.lerp(clap.getEffectiveWeight(), clapTarget, blend))
+    if (sit) sit.setEffectiveWeight(THREE.MathUtils.lerp(sit.getEffectiveWeight(), sitTarget, blend))
   })
 
   return (
