@@ -218,8 +218,25 @@ export const INTERACTION_ZONE = {
   size: [3.5, 5] as [number, number],
 }
 
-export const CAMERA_OFFSET: [number, number, number] = [0, 8, 8]
+// Third-person camera orbits the player as polar coordinates:
+// - CAMERA_DISTANCE: horizontal radius (metres) from the player.
+// - CAMERA_HEIGHT: absolute Y (metres) of the camera in world space.
+// - CAMERA_INITIAL_YAW: starting yaw in radians. 0 = camera directly south
+//   of the player, looking north. Increasing yaw orbits CCW when viewed
+//   from above.
+// The old fixed offset [0, 8, 8] corresponds to distance=8, height=8, yaw=0.
+export const CAMERA_DISTANCE = 8
+export const CAMERA_HEIGHT = 8
+export const CAMERA_INITIAL_YAW = 0
 export const CAMERA_LOOK_HEIGHT = 0.5
+// Radians of camera yaw per pixel of horizontal mouse drag.
+// 0.005 ≈ a full 90° orbit per ~314 px — comfortable for slow inspection.
+export const MOUSE_LOOK_SENSITIVITY = 0.005
+// Radians of camera yaw per pixel of horizontal trackpad-scroll delta.
+// Scroll deltas are much larger than drag pixels, so this is scaled down.
+export const TRACKPAD_LOOK_SENSITIVITY = 0.003
+// Radians per second while Q/E is held.
+export const KEY_LOOK_SPEED = 2.2
 
 export const COLORS = {
   floor: '#2f3540',

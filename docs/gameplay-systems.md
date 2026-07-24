@@ -44,11 +44,16 @@ Current bindings:
 | --- | --- | --- |
 | Move | `WASD` / `Arrow keys` | continuous (`state.current.{forward,back,left,right}`) |
 | Run (toggle) | `R` | toggle (`state.current.running`) |
-| Interact | `E` | edge-triggered (`consumeInteract()`) |
+| Interact | `F` | edge-triggered (`consumeInteract()`) |
 | Jump | `Space` | edge-triggered (`consumeJump()`) |
 | Clap | `C` | edge-triggered (`consumeClap()`) |
 | Sit | `X` | edge-triggered (`consumeSitToggle()`) |
+| Orbit camera | `Q` / `E` | continuous (`state.current.{yawLeft,yawRight}`) |
 | Close overlay | `Escape` / close button | handled by `ContentOverlay` |
+
+Camera yaw also accepts right/middle-mouse drag and two-finger horizontal
+scroll on trackpads — see `useMouseLook`. All three sources write to the
+same `yaw` ref so they compose without conflict.
 
 Rules the hook already enforces:
 
@@ -113,17 +118,35 @@ Only show one primary prompt at a time. Resolve ties using distance, visibility,
 
 ## Camera
 
-Use Drei `CameraControls` or a small camera subsystem built around it.
+Current implementation: a third-person polar-orbit camera driven from
+`Player.tsx`.
 
-For the office presentation experience, prefer:
+- Position is `(player.x + CAMERA_DISTANCE·sin(yaw), CAMERA_HEIGHT,
+  player.z + CAMERA_DISTANCE·cos(yaw))`, so yaw=0 puts the camera due
+  south of the player looking north.
+- `yaw` is a mutable ref owned by `src/hooks/useMouseLook.ts` — right-click
+  (or middle-click) drag adds `dx * MOUSE_LOOK_SENSITIVITY` radians per
+  pixel. The hook also suppresses the browser context menu so the popup
+  can't appear mid-drag.
+- Camera position lerps toward the polar target with frame-rate-independent
+  exponential smoothing (`1 - Math.exp(-delta * 12)`); `lookAt` targets the
+  player each frame.
+- Movement input is rotated by the same `yaw` so W is always "away from
+  the camera" (see the `ix`/`iz` → `vx`/`vz` rotation in `Player.tsx`).
 
-- A slightly elevated third-person or isometric-style view
-- Soft follow behavior
-- Constrained zoom and rotation
-- Scripted transitions when entering a presentation station
-- A reliable reset path after an overlay or cinematic movement
+Only `Player.tsx` writes to the camera. If a presentation station ever
+needs a scripted framing move, add a camera subsystem that owns the camera
+and takes requests — don't sprinkle `camera.position` writes across
+components.
 
-Do not let multiple components mutate the camera independently. Route camera requests through a single subsystem.
+For future camera work, prefer:
+
+- Constrained zoom and yaw (clamp `yaw`; add a distance ref if we want
+  scroll-to-zoom).
+- Scripted transitions when entering a presentation station, with a
+  reliable reset path after the overlay closes.
+- Optional camera modes (over-the-shoulder, first-person via
+  `PointerLockControls`).
 
 ## Animation
 

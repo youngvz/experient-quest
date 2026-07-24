@@ -5,8 +5,10 @@ import { useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { SkeletonUtils } from 'three-stdlib'
 import {
+  CAMERA_DISTANCE,
+  CAMERA_HEIGHT,
   CAMERA_LOOK_HEIGHT,
-  CAMERA_OFFSET,
+  KEY_LOOK_SPEED,
   PLAYER_HEIGHT,
   PLAYER_MODEL_SCALE,
   PLAYER_RADIUS,
@@ -20,6 +22,7 @@ import {
   SIT_VERTICAL_OFFSET,
 } from '../constants/gameConstants'
 import { useKeyboard } from '../../hooks/useKeyboard'
+import { useMouseLook } from '../../hooks/useMouseLook'
 import { gameEvents } from '../events/GameEventBus'
 import { InteractionManager } from '../interactions/InteractionManager'
 import { presentationStops } from '../interactions/interactionTypes'
@@ -59,6 +62,7 @@ export function Player({ controlsDisabled }: PlayerProps) {
   const meshRef = useRef<THREE.Group | null>(null)
   const { camera } = useThree()
   const { state, consumeInteract, consumeJump, consumeClap, consumeSitToggle } = useKeyboard()
+  const { yaw } = useMouseLook()
 
   // Per-frame action state. Refs (not React state) so useFrame doesn't re-render.
   // `jumpVel` is the horizontal velocity carried through a running jump —
@@ -211,8 +215,20 @@ export function Player({ controlsDisabled }: PlayerProps) {
     const pos = body.translation()
     const action = actionRef.current
 
-    // Any movement key cancels a sit — jump/clap play through instead.
     const s = state.current
+
+    // Q/E → continuous camera yaw. Same ref the mouse hook mutates, so all
+    // input sources (drag / trackpad / keys) compose into one yaw value.
+    if (!controlsDisabled) {
+      // Direction chosen to match mouse-drag: dragging right (or two-finger
+      // scrolling right) increases yaw, so `yawRight` (E) does too. Flip
+      // both signs if you'd rather Q/E match the on-screen character
+      // direction instead.
+      if (s.yawLeft) yaw.current -= KEY_LOOK_SPEED * delta
+      if (s.yawRight) yaw.current += KEY_LOOK_SPEED * delta
+    }
+
+    // Any movement key cancels a sit — jump/clap play through instead.
     const movementRequested =
       !controlsDisabled && (s.forward || s.back || s.left || s.right)
     if (action.kind === 'sit' && movementRequested) {
@@ -308,17 +324,28 @@ export function Player({ controlsDisabled }: PlayerProps) {
     let vz = 0
     let isRunning = false
     if (!controlsDisabled && !locked) {
-      if (s.forward) vz -= 1
-      if (s.back) vz += 1
-      if (s.left) vx -= 1
-      if (s.right) vx += 1
+      // Camera-relative input: at yaw=0 the camera sits south of the player
+      // looking north, so "forward" (W) should send the player north (-Z).
+      // We build a local (ix, iz) intent, then rotate by the camera's yaw.
+      let ix = 0
+      let iz = 0
+      if (s.forward) iz -= 1
+      if (s.back) iz += 1
+      if (s.left) ix -= 1
+      if (s.right) ix += 1
       isRunning = s.running
 
-      const len = Math.hypot(vx, vz)
+      const len = Math.hypot(ix, iz)
       if (len > 0) {
         const speed = isRunning ? PLAYER_RUN_SPEED : PLAYER_SPEED
-        vx = (vx / len) * speed
-        vz = (vz / len) * speed
+        ix = (ix / len) * speed
+        iz = (iz / len) * speed
+        // Rotate the input vector by the camera yaw. yaw > 0 orbits the
+        // camera CCW (viewed from above); the movement frame rotates with it.
+        const cy = Math.cos(yaw.current)
+        const sy = Math.sin(yaw.current)
+        vx = ix * cy + iz * sy
+        vz = -ix * sy + iz * cy
       }
     } else if (action.kind === 'jump') {
       // Jumps carry their takeoff velocity through the leap.
@@ -335,7 +362,16 @@ export function Player({ controlsDisabled }: PlayerProps) {
       manager.trigger()
     }
 
-    cameraDesired.set(pos.x + CAMERA_OFFSET[0], CAMERA_OFFSET[1], pos.z + CAMERA_OFFSET[2])
+    // Polar-orbit camera: at yaw=0 the offset is (0, +Z) — camera due south
+    // of the player looking north, matching the original fixed offset. yaw
+    // rotates the horizontal offset CCW (viewed from above); height is fixed.
+    const cy = Math.cos(yaw.current)
+    const sy = Math.sin(yaw.current)
+    cameraDesired.set(
+      pos.x + CAMERA_DISTANCE * sy,
+      CAMERA_HEIGHT,
+      pos.z + CAMERA_DISTANCE * cy,
+    )
     // Frame-rate-independent exponential smoothing: at any fps the camera
     // covers the same fraction of remaining distance per second.
     const smoothing = 1 - Math.exp(-delta * 12)

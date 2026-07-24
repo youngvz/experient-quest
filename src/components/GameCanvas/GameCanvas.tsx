@@ -1,7 +1,12 @@
 import { Canvas } from '@react-three/fiber'
 import { useCallback, useState } from 'react'
 import { OfficeScene } from '../../game/scene/OfficeScene'
-import { CAMERA_OFFSET, PLAYER_SPAWN } from '../../game/constants/gameConstants'
+import {
+  CAMERA_DISTANCE,
+  CAMERA_HEIGHT,
+  CAMERA_INITIAL_YAW,
+  PLAYER_SPAWN,
+} from '../../game/constants/gameConstants'
 import { useGameEvent } from '../../hooks/useGameEvents'
 import './GameCanvas.css'
 
@@ -23,10 +28,12 @@ export function GameCanvas() {
         shadows
         dpr={[1, 1.5]}
         camera={{
+          // Match the runtime polar-orbit math at CAMERA_INITIAL_YAW so the
+          // first frame doesn't visibly snap into place.
           position: [
-            PLAYER_SPAWN[0] + CAMERA_OFFSET[0],
-            CAMERA_OFFSET[1],
-            PLAYER_SPAWN[2] + CAMERA_OFFSET[2],
+            PLAYER_SPAWN[0] + CAMERA_DISTANCE * Math.sin(CAMERA_INITIAL_YAW),
+            CAMERA_HEIGHT,
+            PLAYER_SPAWN[2] + CAMERA_DISTANCE * Math.cos(CAMERA_INITIAL_YAW),
           ],
           fov: 55,
           near: 0.1,

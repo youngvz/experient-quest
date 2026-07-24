@@ -11,17 +11,21 @@ export interface KeyboardState {
   jumpPressed: boolean
   clapPressed: boolean
   sitTogglePressed: boolean
+  yawLeft: boolean
+  yawRight: boolean
 }
 
 const FORWARD_KEYS = new Set(['KeyW', 'ArrowUp'])
 const BACK_KEYS = new Set(['KeyS', 'ArrowDown'])
 const LEFT_KEYS = new Set(['KeyA', 'ArrowLeft'])
 const RIGHT_KEYS = new Set(['KeyD', 'ArrowRight'])
-const INTERACT_KEYS = new Set(['KeyE'])
+const INTERACT_KEYS = new Set(['KeyF'])
 const RUN_TOGGLE_KEYS = new Set(['KeyR'])
 const JUMP_KEYS = new Set(['Space'])
 const CLAP_KEYS = new Set(['KeyC'])
 const SIT_KEYS = new Set(['KeyX'])
+const YAW_LEFT_KEYS = new Set(['KeyQ'])
+const YAW_RIGHT_KEYS = new Set(['KeyE'])
 
 // Mutable state ref updated by DOM listeners; useFrame reads it every frame.
 // interactPressed is edge-triggered — consumer calls `consumeInteract()` to clear the pulse.
@@ -43,6 +47,8 @@ export function useKeyboard(): {
     jumpPressed: false,
     clapPressed: false,
     sitTogglePressed: false,
+    yawLeft: false,
+    yawRight: false,
   })
 
   useEffect(() => {
@@ -64,6 +70,8 @@ export function useKeyboard(): {
       }
       else if (CLAP_KEYS.has(event.code)) s.clapPressed = true
       else if (SIT_KEYS.has(event.code)) s.sitTogglePressed = true
+      else if (YAW_LEFT_KEYS.has(event.code)) s.yawLeft = true
+      else if (YAW_RIGHT_KEYS.has(event.code)) s.yawRight = true
     }
     const onKeyUp = (event: KeyboardEvent) => {
       const s = state.current
@@ -75,6 +83,8 @@ export function useKeyboard(): {
         s.interactConsumed = false
         s.interactPressed = false
       }
+      else if (YAW_LEFT_KEYS.has(event.code)) s.yawLeft = false
+      else if (YAW_RIGHT_KEYS.has(event.code)) s.yawRight = false
     }
     const onBlur = () => {
       const s = state.current
@@ -84,6 +94,8 @@ export function useKeyboard(): {
       s.jumpPressed = false
       s.clapPressed = false
       s.sitTogglePressed = false
+      s.yawLeft = false
+      s.yawRight = false
     }
     window.addEventListener('keydown', onKeyDown)
     window.addEventListener('keyup', onKeyUp)
