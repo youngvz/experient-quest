@@ -169,7 +169,10 @@ export function Player({ controlsDisabled }: PlayerProps) {
     }
 
     cameraDesired.set(pos.x + CAMERA_OFFSET[0], CAMERA_OFFSET[1], pos.z + CAMERA_OFFSET[2])
-    camera.position.lerp(cameraDesired, Math.min(1, delta * 8))
+    // Frame-rate-independent exponential smoothing: at any fps the camera
+    // covers the same fraction of remaining distance per second.
+    const smoothing = 1 - Math.exp(-delta * 12)
+    camera.position.lerp(cameraDesired, smoothing)
     cameraTarget.set(pos.x, pos.y + CAMERA_LOOK_HEIGHT, pos.z)
     camera.lookAt(cameraTarget)
 

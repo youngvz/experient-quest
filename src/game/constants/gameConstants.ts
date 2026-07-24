@@ -9,16 +9,43 @@ export const WALL_THICKNESS = 0.4
 
 export const PLAYER_RADIUS = 0.35
 export const PLAYER_HEIGHT = 1.6
-export const PLAYER_SPEED = 4
+export const PLAYER_SPEED = 6
 export const PLAYER_SPAWN: [number, number, number] = [5, PLAYER_HEIGHT / 2 + 0.05, 6]
 
 // Multiplier on top of the auto-fit that sizes the player GLB to PLAYER_HEIGHT.
 // 1.0 = human-height; adjust 0.8–1.2 to taste.
 export const PLAYER_MODEL_SCALE = 1
 
+// Doorway opening height (floor → underside of the header lintel).
+export const DOOR_HEIGHT = 2.6
+
 // Front-wall doorway. Cuts the front wall into two segments around this gap.
 export const DOOR = {
   centerX: 4.5,
+  width: 2,
+}
+
+// Hallway extending south of the conference room. Same width as the
+// conference room so the two rooms share their full front/back boundary.
+// North side is sealed by the conference room's front wall (with the
+// doorway as the only passage between rooms).
+export const HALLWAY = {
+  centerX: 0,
+  width: ROOM_WIDTH,
+  depth: 12,
+}
+
+// Hallway west-wall doorway (near the south end).
+export const HALLWAY_WEST_DOOR = {
+  // Z measured relative to hallway's world position; the wall runs from
+  // ROOM_DEPTH/2 to ROOM_DEPTH/2 + HALLWAY.depth.
+  centerZ: 7 + 12 - 3,
+  width: 2,
+}
+
+// Hallway south-wall doorway (near the west/left end).
+export const HALLWAY_SOUTH_DOOR = {
+  centerX: -7,
   width: 2,
 }
 
