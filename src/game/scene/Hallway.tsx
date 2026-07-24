@@ -19,10 +19,11 @@ import {
 } from '../constants/gameConstants'
 import { Chair } from './Chairs'
 import { Desk } from './Desk'
+import { Door } from './Door'
 import { Laptop } from './Laptop'
 import { Monitor } from './Monitor'
 import { Paper } from './Paper'
-import { DoorBlocker, DoorHeader, WallPanel } from './Walls'
+import { DoorHeader, WallPanel } from './Walls'
 
 // Build alternating opaque + glass segments along an axis to render a wall
 // with windows cut into it. Returns an array of <WallPanel /> elements. Any
@@ -177,11 +178,14 @@ export function Hallway() {
         width={HALLWAY_SOUTH_DOOR.width}
         spansX
       />
-      {/* seal the south doorway — later swap for a level-transition sensor */}
-      <DoorBlocker
+      {/* Glass door — visible pane + handle. blocking=true seals the opening
+          in place of the old invisible DoorBlocker; swap for a sensor
+          collider when this becomes a level transition. */}
+      <Door
         position={[HALLWAY_SOUTH_DOOR.centerX, southZ]}
         width={HALLWAY_SOUTH_DOOR.width}
         spansX
+        blocking
       />
 
       {/* NE alcove west wall — glass, split around two doorways */}

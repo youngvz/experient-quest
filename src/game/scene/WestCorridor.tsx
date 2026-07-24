@@ -10,6 +10,7 @@ import {
   WALL_THICKNESS,
   WEST_CORRIDOR,
 } from '../constants/gameConstants'
+import { Door } from './Door'
 import { DoorBlocker, DoorHeader, WallPanel } from './Walls'
 
 // Remove any part of each input segment that overlaps the conference room's
@@ -41,11 +42,21 @@ function clipSegments(segments: [number, number][]): [number, number][] {
 // until a branch scene is wired up. The far north end has a dead-end door.
 export function WestCorridor() {
   const y = WALL_HEIGHT / 2
-  const { eastX, westX, southZ, northZ, width, deadEndDoorZ, deadEndDoorWidth } =
-    WEST_CORRIDOR
+  const {
+    eastX,
+    westX,
+    southZ,
+    northZ,
+    width,
+    deadEndDoorZ,
+    deadEndDoorWidth,
+    southDoorWidth,
+  } = WEST_CORRIDOR
   const centerX = (eastX + westX) / 2
   const centerZ = (northZ + southZ) / 2
   const length = southZ - northZ
+  const southDoorLo = centerX - southDoorWidth / 2
+  const southDoorHi = centerX + southDoorWidth / 2
 
   // Doorway openings on the east wall — each gets a header lintel.
   const openings: { lo: number; hi: number; centerZ: number; width: number }[] = [
@@ -145,10 +156,27 @@ export function WestCorridor() {
         size={[WALL_THICKNESS, WALL_HEIGHT, length]}
       />
 
-      {/* south wall — seals the south end of the corridor */}
+      {/* south wall — split around the south doorway (player entrance) */}
       <WallPanel
-        position={[centerX, y, southZ]}
-        size={[width, WALL_HEIGHT, WALL_THICKNESS]}
+        position={[(westX + southDoorLo) / 2, y, southZ]}
+        size={[southDoorLo - westX, WALL_HEIGHT, WALL_THICKNESS]}
+      />
+      <WallPanel
+        position={[(southDoorHi + eastX) / 2, y, southZ]}
+        size={[eastX - southDoorHi, WALL_HEIGHT, WALL_THICKNESS]}
+      />
+      <DoorHeader
+        position={[centerX, southZ]}
+        width={southDoorWidth}
+        spansX
+      />
+      <Door
+        position={[centerX, southZ]}
+        width={southDoorWidth}
+        spansX
+        blocking={false}
+        open
+        openDirection="outward"
       />
 
       {/* north wall — seals the north end of the corridor */}

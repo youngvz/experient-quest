@@ -54,6 +54,9 @@ export interface PresentationStop {
   facing?: number
   interactionZone: { size: [number, number] }
   content: StopContent
+  // If present, the given quest is unlocked the first time the player
+  // finishes this stop's overlay. Handled by the overlay's close path.
+  questUnlock?: string
 }
 
 export const presentationStops: PresentationStop[] = [
@@ -74,6 +77,7 @@ export const presentationStops: PresentationStop[] = [
     label: 'Distasi',
     prompt: 'Press F to talk to Distasi',
     overlayTitle: 'Distasi',
+    questUnlock: 'weekly-status-meeting',
     // Zone extends beyond the pocket into the west corridor and the west
     // end of the east corridor so the prompt fires as soon as the player
     // approaches, not only once fully inside the pocket.

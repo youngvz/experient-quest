@@ -44,7 +44,18 @@ export function DialogueOverlay() {
   )
 
   const handleClose = useCallback(() => {
-    if (activeStopId) markCompleted(activeStopId)
+    if (activeStopId) {
+      const stop = findStop(activeStopId)
+      // Unlock BEFORE marking completed — unlockQuest() is a no-op if the
+      // quest is already unlocked, so the ordering only matters for the
+      // "first close" path. Firing before markCompleted keeps the mental
+      // model "closing revealed the quest" intact even if a future stop
+      // ever reads completedStopIds inside its own unlock hook.
+      if (stop?.questUnlock) {
+        useGameStore.getState().unlockQuest(stop.questUnlock)
+      }
+      markCompleted(activeStopId)
+    }
     setActiveStop(null)
     gameEvents.emit('overlay:closed', undefined)
     const previous = previouslyFocusedRef.current

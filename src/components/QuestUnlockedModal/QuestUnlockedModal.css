@@ -1,0 +1,132 @@
+.quest-unlocked {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(8, 10, 14, 0.55);
+  padding: 24px;
+  font-family: 'Press Start 2P', ui-monospace, monospace;
+}
+
+.quest-unlocked__panel {
+  min-width: 320px;
+  max-width: 520px;
+  width: 100%;
+  padding: 20px 24px 22px;
+  background: #e8d089;
+  color: #2a2013;
+  border: 4px solid #2a2013;
+  border-radius: 6px;
+  box-shadow:
+    0 0 0 2px #d9b667 inset,
+    0 8px 0 rgba(0, 0, 0, 0.35);
+  image-rendering: pixelated;
+  animation: quest-unlocked-in 220ms ease-out;
+}
+
+@keyframes quest-unlocked-in {
+  from {
+    transform: translateY(-6px) scale(0.98);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.quest-unlocked__title {
+  font-size: 18px;
+  letter-spacing: 0.06em;
+  color: #f9f0c8;
+  text-shadow: 2px 2px 0 #2a2013;
+  text-align: center;
+  margin-bottom: 6px;
+}
+
+.quest-unlocked__subtitle {
+  font-size: 14px;
+  color: #2a2013;
+  text-align: center;
+  margin-bottom: 16px;
+  opacity: 0.85;
+}
+
+.quest-unlocked__task-list {
+  list-style: none;
+  margin: 0 0 18px;
+  padding: 14px 16px;
+  background: #d9b667;
+  border: 3px solid #2a2013;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.quest-unlocked__task {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: #2a2013;
+}
+
+.quest-unlocked__task--done .quest-unlocked__task-label {
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+.quest-unlocked__check {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.quest-unlocked__check--done {
+  color: #2a5f2a;
+}
+
+.quest-unlocked__actions {
+  display: flex;
+  justify-content: center;
+}
+
+.quest-unlocked__close {
+  font-family: inherit;
+  font-size: 14px;
+  padding: 10px 18px;
+  background: #2a2013;
+  color: #f9f0c8;
+  border: 3px solid #2a2013;
+  border-radius: 4px;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  letter-spacing: 0.04em;
+}
+
+.quest-unlocked__close:focus-visible {
+  outline: 3px solid #f9f0c8;
+  outline-offset: 2px;
+}
+
+.quest-unlocked__close:hover {
+  background: #3a2c1b;
+}
+
+@media (max-width: 640px) {
+  .quest-unlocked__title {
+    font-size: 15px;
+  }
+  .quest-unlocked__subtitle,
+  .quest-unlocked__task,
+  .quest-unlocked__close {
+    font-size: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .quest-unlocked__panel {
+    animation: none;
+  }
+}

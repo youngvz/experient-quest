@@ -7,19 +7,21 @@ export const ROOM_DEPTH = 14
 export const WALL_HEIGHT = 3
 export const WALL_THICKNESS = 0.4
 
-export const PLAYER_RADIUS = 0.35
-export const PLAYER_HEIGHT = 1.6
+// Player + NPC scale. Both use PLAYER_HEIGHT as the GLB auto-fit target
+// (see Employee.tsx), so bumping these grows every character uniformly.
+export const PLAYER_RADIUS = 0.4375
+export const PLAYER_HEIGHT = 2.0
 export const PLAYER_SPEED = 6
 export const PLAYER_RUN_SPEED = 13
-// Spawn just inside the hallway's south doorway (centerX = HALLWAY_SOUTH_DOOR.centerX,
-// close to the south wall at Z = ROOM_DEPTH/2 + HALLWAY.depth = 20).
-// Spawn just north of the south doorway blocker: south wall is centered at
-// Z=20 with WALL_THICKNESS=0.4 (north face at 19.8), and the player has
-// radius 0.35 — 19.4 keeps the capsule clear of the blocker.
-export const PLAYER_SPAWN: [number, number, number] = [-7.5, PLAYER_HEIGHT / 2 + 0.05, 19.4]
+// Spawn just south of the west corridor's south doorway (exterior side),
+// centered on the corridor's X midline. The corridor's south wall is at
+// Z = WEST_CORRIDOR.southZ (=20) with WALL_THICKNESS=0.4 (south face at
+// 20.2). Player radius is 0.35 — Z=21 keeps the capsule clear of the wall
+// on the outside, facing north through the doorway into the corridor.
+export const PLAYER_SPAWN: [number, number, number] = [-11.5, PLAYER_HEIGHT / 2 + 0.05, 21]
 
-// Initial facing (radians around Y). 0 = +Z (south, out the door);
-// Math.PI = -Z (north, into the office).
+// Initial facing (radians around Y). 0 = +Z (south); Math.PI = -Z (north,
+// into the corridor through the south doorway).
 export const PLAYER_SPAWN_FACING = Math.PI
 
 // Multiplier on top of the auto-fit that sizes the player GLB to PLAYER_HEIGHT.
@@ -77,6 +79,9 @@ export const WEST_CORRIDOR = {
   // (Z=-7) so it isn't coplanar with the conference-room back glass wall.
   deadEndDoorZ: -68,
   deadEndDoorWidth: 1.6,
+  // Open doorway on the south wall — the player's spawn-side entrance to
+  // the building. Centered on the corridor's X midline. No blocker.
+  southDoorWidth: 2,
 }
 
 // East-running corridor branching off the west corridor at its north end.
@@ -143,12 +148,13 @@ export const HALLWAY_SOUTH_DOOR = {
 }
 
 // Hallway south-wall glass windows (opaque wall elsewhere). Each entry is
-// [centerX, width].
+// [centerX, width]. West of the doorway: one 4m pane. East of the doorway:
+// two 4m panes with a wall divider between them, matching the west pane's
+// width for visual symmetry.
 export const HALLWAY_SOUTH_WINDOWS: [number, number][] = [
   [-4.5, 4], // wide window west of center
-  [1.5, 2],
-  [4.5, 2],
-  [7.5, 2],
+  [2.5, 4],
+  [6.5, 4],
 ]
 
 // NE alcove: two small offices stacked north-south, entered from the hallway
