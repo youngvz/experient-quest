@@ -60,7 +60,7 @@ export function ContentOverlay() {
   }, [hasNext, next, handleClose])
 
   useEffect(() => {
-    if (!activeStopId) return
+    if (!shouldRender) return
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -81,7 +81,7 @@ export function ContentOverlay() {
     window.addEventListener('keydown', onKeyDown)
     closeButtonRef.current?.focus()
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [activeStopId, handleClose, advanceOrClose, prev])
+  }, [shouldRender, handleClose, advanceOrClose, prev])
 
   if (!shouldRender || !stop) return null
 
