@@ -97,10 +97,15 @@ before proposing a large migration.
   only when `activeZone` matches its `zone` prop. Pair with `React.lazy`
   for code-split branch scenes; unmount frees GLBs/textures.
 - `src/hooks/{useKeyboard,useMouseLook,useGameEvents}.ts` — `useKeyboard`
-  exposes a mutable ref for held keys (WASD/arrows, `R` for run toggle,
+  exposes a mutable ref for held keys (WASD movement, `R` for run toggle,
   `Q`/`E` for camera yaw, `+`/`-` for camera zoom) plus edge consumers
   (`consumeInteract` for `F`, `consumeRoll` for `Space`, `consumeWave`
-  for `C`).
+  for `C`). Arrow keys default to **camera control** (`↑`/`↓` zoom,
+  `←`/`→` yaw) and can be flipped back to movement at runtime by setting
+  `arrowKeyMode: 'movement'` on `useGameStore` — a future settings UI
+  will expose this toggle. The hook reads the mode synchronously via
+  `useGameStore.getState()` on each key event, so no re-registration is
+  needed when the mode changes.
 - `tests/InteractionManager.test.ts` — Vitest unit
 - `tests/e2e/smoke.spec.ts` — Playwright smoke (canvas renders, no console errors)
 

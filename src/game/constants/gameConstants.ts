@@ -815,6 +815,10 @@ export const TOUCH_JOYSTICK_STICK_RADIUS = 24
 // Fraction of the base radius under which the stick reports zero — prevents
 // jitter from a resting thumb.
 export const TOUCH_JOYSTICK_DEADZONE = 0.12
+// Exponent applied to the raw prev/curr pinch ratio before feeding it to
+// touchInput.addZoomFactor. 1 = passthrough (spread fingers 2× → camera
+// zooms out to 0.5×). <1 dampens, >1 amplifies. Set once we tune on-device.
+export const TOUCH_PINCH_SENSITIVITY = 1
 
 export const COLORS = {
   floor: '#2f3540',

@@ -10,4 +10,7 @@
   width: 100% !important;
   height: 100% !important;
   outline: none;
+  /* Prevents iOS/Android from claiming multi-touch as a page gesture so our
+     window-level pinch tracker sees both pointers. */
+  touch-action: none;
 }

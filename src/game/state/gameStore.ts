@@ -6,6 +6,11 @@ import { create } from 'zustand'
 // this is what lets us keep one <Physics> world while lazy-loading rooms.
 export type ZoneId = 'office' | 'central-corridor' | (string & {})
 
+// How the arrow keys behave. 'camera' is the default: ↑/↓ zoom, ←/→ yaw.
+// 'movement' mirrors WASD (↑ forward, ↓ back, ← strafe left, → strafe right).
+// Configurable at runtime so a future settings UI can flip it without code.
+export type ArrowKeyMode = 'camera' | 'movement'
+
 export interface GameState {
   activeStopId: string | null
   completedStopIds: ReadonlySet<string>
@@ -27,6 +32,7 @@ export interface GameState {
   // Stop that triggered the pending unlock. Marked completed only when the
   // player accepts (so a dismissed modal replays the original dialogue).
   pendingUnlockStopId: string | null
+  arrowKeyMode: ArrowKeyMode
   setActiveStop: (id: string | null) => void
   markCompleted: (id: string) => void
   setActiveZone: (zone: ZoneId) => void
@@ -35,6 +41,7 @@ export interface GameState {
   acceptQuestUnlock: () => void
   dismissUnlock: () => void
   toggleTask: (questId: string, taskId: string) => void
+  setArrowKeyMode: (mode: ArrowKeyMode) => void
   reset: () => void
 }
 
@@ -56,6 +63,7 @@ export const useGameStore = create<GameState>((set) => ({
   completedTaskIds: new Set<string>(),
   pendingUnlockQuestId: null,
   pendingUnlockStopId: null,
+  arrowKeyMode: 'camera',
   setActiveStop: (id) => set({ activeStopId: id }),
   markCompleted: (id) =>
     set((state) => {
@@ -110,6 +118,8 @@ export const useGameStore = create<GameState>((set) => ({
       else next.add(key)
       return { completedTaskIds: next }
     }),
+  setArrowKeyMode: (mode) =>
+    set((state) => (state.arrowKeyMode === mode ? state : { arrowKeyMode: mode })),
   reset: () =>
     set({
       activeStopId: null,
@@ -120,6 +130,7 @@ export const useGameStore = create<GameState>((set) => ({
       completedTaskIds: new Set<string>(),
       pendingUnlockQuestId: null,
       pendingUnlockStopId: null,
+      arrowKeyMode: 'camera',
     }),
 }))
 
@@ -132,3 +143,4 @@ export const useIsRoomNearby = (id: string) =>
   useGameStore((s) => s.nearbyRooms.has(id))
 export const useIsTaskComplete = (questId: string, taskId: string) =>
   useGameStore((s) => s.completedTaskIds.has(taskKey(questId, taskId)))
+export const useArrowKeyMode = () => useGameStore((s) => s.arrowKeyMode)
