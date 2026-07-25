@@ -15,6 +15,7 @@ import { TheBakery } from './TheBakery'
 import { TheBakeryCabinets } from './TheBakeryCabinets'
 import { TheLab } from './TheLab'
 import { TheLabCabinets } from './TheLabCabinets'
+import { TheStation } from './TheStation'
 import { Whiteboards } from './Whiteboards'
 
 interface OfficeSceneProps {
@@ -48,6 +49,7 @@ export function OfficeScene({ controlsDisabled }: OfficeSceneProps) {
         <CorridorPocket />
         <TheLab />
         <TheLabCabinets />
+        <TheStation />
         <TheBakeryCabinets />
         <Whiteboards />
         <Televisions />

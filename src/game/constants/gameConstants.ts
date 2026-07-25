@@ -12,7 +12,7 @@ export const WALL_THICKNESS = 0.4
 export const PLAYER_RADIUS = 0.4375
 export const PLAYER_HEIGHT = 2.0
 export const PLAYER_SPEED = 6
-export const PLAYER_RUN_SPEED = 13
+export const PLAYER_RUN_SPEED = 16.25
 // Spawn just south of the central corridor's south doorway (exterior side),
 // centered on the corridor's X midline. The corridor's south wall is at
 // Z = CENTRAL_CORRIDOR.southZ (=20) with WALL_THICKNESS=0.4 (south face at
@@ -145,12 +145,144 @@ export const THE_LAB = {
   // Doorway on the shared west wall (with central corridor). Centered on
   // the west rect of the L (Z ∈ [northZ, westSouthZ] = [-32, -16]).
   doorCenterZ: -24,
-  doorWidth: 1.6,
+  doorWidth: 2,
   // Doorway on the shared south wall (with east corridor's north wall).
   // Centered on the east rect of the L (X ∈ [-4, +10], midpoint X=+3).
   southDoorX: 3,
   southDoorWidth: 1.6,
 }
+
+// The Station — second room off the central corridor, halfway between
+// TheLab's doorway (Z=-24) and the corridor's north dead-end (Z=-68).
+// 20 m × 12 m rectangle east of the corridor. West wall coincides with
+// the corridor's east wall (rendered as glass along this Z-span by
+// CentralCorridor.tsx, with an open glass door at doorCenterZ).
+export const THE_STATION = {
+  westX: -ROOM_WIDTH / 2, // -10 (coplanar with central corridor east wall)
+  // Extended east from the default ROOM_WIDTH so the east-side alcoves
+  // sit clear of Alcove C's doorway on the north wall.
+  eastX: ROOM_WIDTH / 2 + 4, // +14
+  // Shifted 6 m north from TheLab so the corridor has real separation
+  // between the two rooms. Room is 23 m along Z (to fit 3 east alcoves).
+  northZ: -62,
+  southZ: -39,
+  // Doorway near the south end of the west wall.
+  doorCenterZ: -42,
+  doorWidth: 2,
+}
+
+// Alcoves carved into The Station's north wall. Each 6 m along X × 5 m
+// along Z, south-facing doorway.
+export const THE_STATION_ALCOVES = {
+  northZ: -62, // coplanar with The Station's north wall
+  southZ: -57, // 5 m deep
+  bays: [
+    { id: 'a', westX: -10, eastX: -4, doorX: -7, doorWidth: 1.4 },
+    { id: 'b', westX: -4, eastX: 2, doorX: -1, doorWidth: 1.4 },
+    { id: 'c', westX: 2, eastX: 10, doorX: 6, doorWidth: 1.4 },
+  ],
+} as const
+
+// Three alcoves along The Station's east wall. Each 5 m along X × 6 m
+// along Z (matches Alcove A/B footprint, just rotated). West-facing
+// doorway on each bay opens back into The Station's main floor. Bays
+// tile Z ∈ [-51, -33] to sit clear of the north-side alcoves.
+// D and E are 5 m deep (X ∈ [+9, +14]). F is expanded to reach The
+// Boardroom's east wall — see THE_STATION_F_EXPANSION for its westX
+// (and the extra north-facing doorway on Z=-45).
+export const THE_STATION_EAST_ALCOVES = {
+  westX: 9, // default 5 m depth for D + E
+  eastX: 14, // coplanar with The Station's east wall
+  bays: [
+    { id: 'd', northZ: -57, southZ: -51, doorZ: -54, doorWidth: 1.4 },
+    { id: 'e', northZ: -51, southZ: -45, doorZ: -48, doorWidth: 1.4 },
+    // F's westX is overridden by THE_STATION_F_EXPANSION.westX so it
+    // stretches west to the Boardroom's east wall.
+    { id: 'f', northZ: -45, southZ: -39, doorZ: -42, doorWidth: 1.4 },
+  ],
+} as const
+
+// The Boardroom — carved into The Station's south interior, west of
+// Alcove F. Perimeter walls: X=-4 (west), X=+5 (east), Z=-48 (north);
+// south flush with The Station's south wall (Z=-39). West wall has a
+// 2 m doorway centered at Z=-42 into the main floor. Wall-mounted TV
+// on the north wall facing south, big conference table with 4 sitters.
+export const THE_BOARDROOM = {
+  westX: -4,
+  eastX: 5,
+  northZ: -48,
+  southZ: -39, // coplanar with The Station's south wall
+  // West-wall doorway centered at Z=-42 (2 m wide).
+  doorCenterZ: -42,
+  doorWidth: 2,
+  // North-wall TV: 4 m wide (X-span), centered at X=+1, facing south.
+  tv: {
+    centerX: 1,
+    centerY: 1.6,
+    width: 4,
+    height: 1.6,
+    depth: 0.12,
+  },
+  // Table: X ∈ [-1, +2] (3 m), Z ∈ [-45, -40] (5 m).
+  table: {
+    centerX: 0.5,
+    centerZ: -42.5,
+    size: [3, 0.75, 5] as [number, number, number],
+  },
+  // 4 chairs — two pairs on the long (east/west) sides facing across.
+  // West sitters at X=-2 face east (rotationY = +PI/2);
+  // east sitters at X=+2 face west (rotationY = -PI/2).
+  chairs: [
+    [-2, -44, Math.PI / 2],
+    [2, -44, -Math.PI / 2],
+    [-2, -42, Math.PI / 2],
+    [2, -42, -Math.PI / 2],
+  ] as [number, number, number][],
+} as const
+
+// Two solo workstations along The Station's west (glass) wall. Each is a
+// 2×3 desk with a chair on its west side facing east (toward the desk).
+// The desks live in the north half of the main floor, between the
+// corridor doorway and the north-side alcoves.
+export const THE_STATION_WEST_WORKSTATIONS: readonly {
+  deskCenter: [number, number]
+  chair: [number, number, number]
+  deskSize: [number, number, number]
+}[] = [
+  {
+    // North workstation.
+    deskCenter: [-7.5, -53],
+    chair: [-9, -53, Math.PI / 2],
+    deskSize: [2, 0.75, 3],
+  },
+  {
+    // South workstation.
+    deskCenter: [-7.5, -48],
+    chair: [-9, -48, Math.PI / 2],
+    deskSize: [2, 0.75, 3],
+  },
+]
+
+// Alcove F expansion: F now stretches west from X=+9 to X=+5, sharing
+// its west wall with The Boardroom's east wall. The northern edge of
+// F (Z=-45, X ∈ [+5, +9]) has a north-facing doorway at X=+6 (2 m
+// wide) plus a 2 m glass panel at X ∈ [+8, +9]; the segment at X=+5..+6
+// is opaque wall.
+export const THE_STATION_F_EXPANSION = {
+  // Extended west face of Alcove F.
+  westX: 5,
+  // Existing east face of Alcove F is unchanged at THE_STATION_EAST_ALCOVES.eastX = 14.
+  // North doorway centered at X=+6.5, 2 m wide.
+  northDoorX: 6.5,
+  northDoorWidth: 2,
+  // Workstation inside F: 2 m × 3 m table at X ∈ [+11, +12], Z ∈ [-43, -41],
+  // chair at X=+13 facing west. Monitor + laptop + papers on the desk.
+  workstation: {
+    deskCenter: [11.5, -42] as [number, number],
+    deskSize: [2, 0.75, 3] as [number, number, number],
+    chair: [13, -42, -Math.PI / 2] as [number, number, number],
+  },
+} as const
 
 // Row of base cabinets backed against the OUTSIDE (west-facing) face of
 // Alcove A's west partition wall. Cabinets sit in TheLab's main open

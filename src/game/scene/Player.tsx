@@ -21,7 +21,9 @@ import {
   PLAYER_SPAWN_FACING,
   PLAYER_SPEED,
   CENTRAL_CORRIDOR,
+  THE_BOARDROOM,
   THE_LAB,
+  THE_STATION,
 } from '../constants/gameConstants'
 import { CHARACTERS } from '../characters/characters'
 import { useKeyboard } from '../../hooks/useKeyboard'
@@ -237,6 +239,24 @@ export function Player({ controlsDisabled }: PlayerProps) {
       maxX: THE_LAB.eastX,
       minZ: THE_LAB.northZ,
       maxZ: THE_LAB.eastSouthZ,
+    })
+    // The Boardroom — enclosed sub-room inside The Station. Registered
+    // BEFORE The Station so it wins on first-match when the player is
+    // inside the Boardroom's rect.
+    z.registerZone({
+      id: 'the-boardroom',
+      minX: THE_BOARDROOM.westX,
+      maxX: THE_BOARDROOM.eastX,
+      minZ: THE_BOARDROOM.northZ,
+      maxZ: THE_BOARDROOM.southZ,
+    })
+    // TheStation — second room off the central corridor.
+    z.registerZone({
+      id: 'the-station',
+      minX: THE_STATION.westX,
+      maxX: THE_STATION.eastX,
+      minZ: THE_STATION.northZ,
+      maxZ: THE_STATION.southZ,
     })
     // Zone covers the whole central corridor floor. `office` is the
     // fallback so anything not in the corridor or a room defaults to it.
