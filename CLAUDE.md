@@ -250,7 +250,20 @@ Before finishing:
 1. Run type checking, linting, and relevant tests.
 2. Confirm assets load from a production-like path.
 3. Check keyboard controls and basic responsive behavior.
-4. State what was changed, what was tested, and any remaining risks.
+4. Check whether the change makes any documentation stale or leaves a
+   gap. Re-scan the docs listed in the routing table above for the areas
+   you touched. Update them when the change:
+   - alters or removes behavior a doc currently describes,
+   - adds a new command, script, slash command, or dependency that a
+     reader would reasonably expect to find in the relevant doc,
+   - changes a public interface, file path, or convention referenced
+     elsewhere.
+   Do NOT edit docs for internal-only refactors, work-in-progress
+   experiments, or details already implicit in the code. If a doc could
+   be updated but isn't clearly warranted, mention it in the final
+   report instead of editing.
+5. State what was changed, what was tested, whether docs were updated
+   (or explicitly why not), and any remaining risks.
 
 ## Project-specific product guidance
 

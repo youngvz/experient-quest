@@ -12,7 +12,8 @@
     "test:e2e": "playwright test",
     "test:e2e:install": "playwright install --with-deps",
     "lint": "oxlint",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "optimize-glb": "node scripts/optimize-glb.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.7",
