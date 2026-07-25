@@ -9,9 +9,13 @@ import {
 } from '../constants/gameConstants'
 import { Chair } from './Chair'
 import { Desk } from './Desk'
+import { FilingCabinet } from './FilingCabinet'
 import { Laptop } from './Laptop'
 import { Monitor } from './Monitor'
+import { Mug } from './Mug'
+import { Painting } from './Painting'
 import { Paper } from './Paper'
+import { Telephone } from './Telephone'
 import { Whiteboard } from './Whiteboard'
 import { DoorHeader, WallPanel } from './wallPrimitives'
 
@@ -130,6 +134,50 @@ export function TheLibrary() {
           facing={w.facing}
         />
       ))}
+
+      {/* Desk-top clutter: a mug on the first desk, a telephone on the
+          third. Sparse on purpose — this is a focus room. */}
+      {(() => {
+        const d0 = THE_LIBRARY_DESKS[0]!
+        const d2 = THE_LIBRARY_DESKS[2]!
+        return (
+          <>
+            <Mug
+              position={[d0.deskCenter[0] + 0.1, d0.deskCenter[1] + 0.5]}
+              deskTopY={d0.deskSize[1]}
+            />
+            <Telephone
+              position={[d2.deskCenter[0] + 0.15, d2.deskCenter[1] - 0.45]}
+              deskTopY={d2.deskSize[1]}
+              rotationY={Math.PI / 2}
+            />
+          </>
+        )
+      })()}
+
+      {/* A pair of short filing cabinets stacked flush against the north
+          wall, drawer fronts facing south into the room. Cabinet width
+          = 0.5 m; centers 0.5 m apart so bodies touch with no gap.
+          Depth = 0.6 m; north wall at Z = -22 (inner face at -21.8),
+          so centerZ = -21.5 seats the back flush against the wall. */}
+      <FilingCabinet position={[-14, -21.5]} rotationY={0} drawers={2} />
+      <FilingCabinet position={[-13.5, -21.5]} rotationY={0} drawers={2} />
+      <Painting
+        centerX={-16.5}
+        wallZ={THE_LIBRARY.northZ}
+        facing={1}
+        centerY={1.7}
+        size={[1.1, 0.8]}
+        color="#3b7a5c"
+      />
+      <Painting
+        centerX={-18}
+        wallZ={THE_LIBRARY.southZ}
+        facing={-1}
+        centerY={1.7}
+        size={[1.3, 0.9]}
+        color="#7f5390"
+      />
     </>
   )
 }

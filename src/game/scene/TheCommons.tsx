@@ -10,8 +10,13 @@ import {
 } from '../constants/gameConstants'
 import { Chair } from './Chair'
 import { Desk } from './Desk'
+import { FilingCabinet } from './FilingCabinet'
+import { Mug } from './Mug'
+import { Painting } from './Painting'
 import { Paper } from './Paper'
+import { Sofa } from './Sofa'
 import { Television } from './Television'
+import { WaterCooler } from './WaterCooler'
 import { Whiteboard } from './Whiteboard'
 import { DoorHeader, WallPanel } from './wallPrimitives'
 
@@ -107,8 +112,43 @@ export function TheCommons() {
             rotationY={i === 0 ? -0.25 : 0.5}
             layer={1}
           />
+          {/* A mug on each table, offset so it doesn't clash with the papers. */}
+          <Mug
+            position={[t.center[0] + 0.5, t.center[1] - 0.5]}
+            deskTopY={t.size[1]}
+            rotationY={i === 0 ? -0.4 : 0.6}
+            color={i === 0 ? 'white' : 'black'}
+          />
         </group>
       ))}
+
+      {/* Break-area kit: a 3-seat sofa against the west (opaque) wall
+          facing east into the room, a water cooler in the SW corner,
+          a filing cabinet against the south wall, and two paintings on
+          the west wall above the sofa. */}
+      <Sofa
+        position={[-18.4, 10]}
+        rotationY={Math.PI / 2}
+        seatCount={3}
+      />
+      <WaterCooler position={[-18.2, 16.5]} rotationY={Math.PI / 2} />
+      <FilingCabinet position={[-13.6, 3.4]} rotationY={-Math.PI / 2} drawers={3} />
+      <Painting
+        centerZ={5}
+        wallX={THE_COMMONS.westX}
+        facing={1}
+        centerY={1.7}
+        size={[1.2, 0.9]}
+        color="#c47a4b"
+      />
+      <Painting
+        centerZ={15}
+        wallX={THE_COMMONS.westX}
+        facing={1}
+        centerY={1.7}
+        size={[1.4, 1.0]}
+        color="#5d7fa8"
+      />
 
       {/* Whiteboard on the north wall, facing south into the room. */}
       <Whiteboard

@@ -22,9 +22,13 @@ import { CabinetRow } from './CabinetRow'
 import { Chair } from './Chair'
 import { Desk } from './Desk'
 import { Door } from './Door'
+import { FaxMachine } from './FaxMachine'
 import { Laptop } from './Laptop'
 import { Monitor } from './Monitor'
+import { Mug } from './Mug'
+import { Painting } from './Painting'
 import { Paper } from './Paper'
+import { WaterCooler } from './WaterCooler'
 import { DoorHeader, WallPanel } from './wallPrimitives'
 
 // Build alternating opaque + glass segments along an axis to render a wall
@@ -352,6 +356,49 @@ export function TheBakery() {
         />
       ))}
       <CabinetRow config={THE_BAKERY_EAST_CABINETS} />
+
+      {/* Kitchen-area water cooler tucked against the south wall west of
+          the doorway, spigot facing north into the room. */}
+      <WaterCooler position={[-9, 19.4]} rotationY={Math.PI / 2} />
+
+      {/* Mugs on the long prep table — a small cluster for texture. */}
+      <Mug
+        position={[THE_BAKERY_KITCHEN_TABLE.position[0] - 1.2, THE_BAKERY_KITCHEN_TABLE.position[1]]}
+        deskTopY={THE_BAKERY_KITCHEN_TABLE.size[1]}
+        color="black"
+      />
+      <Mug
+        position={[THE_BAKERY_KITCHEN_TABLE.position[0] - 0.9, THE_BAKERY_KITCHEN_TABLE.position[1] + 0.25]}
+        deskTopY={THE_BAKERY_KITCHEN_TABLE.size[1]}
+        color="black"
+        rotationY={0.6}
+      />
+      <Mug
+        position={[THE_BAKERY_KITCHEN_TABLE.position[0] - 0.6, THE_BAKERY_KITCHEN_TABLE.position[1] - 0.2]}
+        deskTopY={THE_BAKERY_KITCHEN_TABLE.size[1]}
+        color="black"
+        rotationY={-0.8}
+      />
+
+      {/* Fax + phone shared between the two south-cluster desks. Sits on
+          the south-east desk in the SE cluster. */}
+      <FaxMachine
+        position={[THE_BAKERY_DESKS[3]![0] + 0.55, THE_BAKERY_DESKS[3]![1] + 1.1]}
+        deskTopY={THE_BAKERY_DESK_SIZE[1]}
+        rotationY={Math.PI / 2}
+      />
+
+      {/* A single painting on the east (opaque) wall of the bakery,
+          hung above the sink cabinet row. East wall X = ROOM_WIDTH/2 = +10;
+          cabinets span Z ≈ [15, 22], so center the painting at Z=19. */}
+      <Painting
+        centerZ={17}
+        wallX={halfW + THE_BAKERY.centerX}
+        facing={-1}
+        centerY={2.1}
+        size={[1.4, 1.0]}
+        color="#c99a3f"
+      />
     </>
   )
 }

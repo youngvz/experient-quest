@@ -944,4 +944,29 @@ export const COLORS = {
   tvScreen: '#3aa0ff',
   player: '#4a90e2',
   playerFace: '#f0f5ff',
+  // Decorative props
+  filingCabinet: '#8b8f96',
+  filingCabinetDrawer: '#9ba0a8',
+  filingCabinetHandle: '#3a3d42',
+  waterCoolerBody: '#e6e8ec',
+  waterCoolerTank: '#8fb9d6',
+  waterCoolerSpigot: '#3a3d42',
+  faxBody: '#1e2128',
+  faxAccent: '#0a0b0f',
+  faxPaper: '#f4f2ee',
+  telephoneBody: '#0e0f13',
+  telephoneAccent: '#2a2c33',
+  mugBody: '#c94a3f',
+  mugRim: '#a6362d',
+  sofaFrame: '#3a3f47',
+  sofaCushion: '#556170',
+  paintingFrame: '#241a12',
 } as const
+
+// Shared texture atlas for wall paintings. Ships as a single WebP whose
+// grid divides evenly into `PAINTINGS_TILES_PER_ROW × PAINTINGS_TILES_PER_ROW`
+// tiles; each Painting component picks a tile index and computes its
+// UV window from it. Introduced with the first useTexture prop in the
+// codebase; extend the atlas rather than adding more textures.
+export const PAINTINGS_ATLAS_URL = '/assets/props/paintings-atlas.webp'
+export const PAINTINGS_TILES_PER_ROW = 4
