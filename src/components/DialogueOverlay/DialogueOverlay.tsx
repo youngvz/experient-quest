@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { gameEvents } from '../../game/events/GameEventBus'
 import { useGameEvent } from '../../hooks/useGameEvents'
 import type { InteractionTriggeredPayload } from '../../game/events/gameEvents'
 import { findStop, type DialogueLine } from '../../game/interactions/interactionTypes'
 import { getCharacter } from '../../game/characters/characters'
 import { useGameStore } from '../../game/state/gameStore'
+import { usePaginatedChildren } from '../../hooks/usePaginatedChildren'
 import './DialogueOverlay.css'
 
 export function DialogueOverlay() {
@@ -18,6 +19,8 @@ export function DialogueOverlay() {
   const activeScriptRef = useRef<DialogueLine[] | null>(null)
   const panelRef = useRef<HTMLDivElement | null>(null)
   const previouslyFocusedRef = useRef<HTMLElement | null>(null)
+  const viewportRef = useRef<HTMLDivElement | null>(null)
+  const measureRef = useRef<HTMLDivElement | null>(null)
 
   useGameEvent(
     'interaction:triggered',
@@ -71,11 +74,25 @@ export function DialogueOverlay() {
     ? activeScriptRef.current
     : null
 
+  const line = script ? script[lineIndex] : null
+  const segments = useMemo(() => (line ? line.text.split('\n') : []), [line])
+
+  const contentKey = `${activeStopId ?? ''}:${lineIndex}`
+  const { pages, pageIndex, pageCount, hasNext, hasPrev, next, prev } = usePaginatedChildren({
+    viewportRef,
+    measureRef,
+    contentKey,
+  })
+
   const advance = useCallback(() => {
     if (!script) return
+    if (hasNext) {
+      next()
+      return
+    }
     if (lineIndex >= script.length - 1) handleClose()
     else setLineIndex((i) => i + 1)
-  }, [script, lineIndex, handleClose])
+  }, [script, hasNext, next, lineIndex, handleClose])
 
   useEffect(() => {
     if (!script) return
@@ -84,20 +101,24 @@ export function DialogueOverlay() {
       if (event.key === 'Escape') {
         event.preventDefault()
         handleClose()
-      } else if (event.key === ' ' || event.key === 'Enter') {
+      } else if (event.key === ' ' || event.key === 'Enter' || event.key === 'ArrowRight') {
         event.preventDefault()
         advance()
+      } else if (event.key === 'ArrowLeft') {
+        event.preventDefault()
+        if (hasPrev) prev()
       }
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [script, advance, handleClose])
+  }, [script, advance, handleClose, hasPrev, prev])
 
-  if (!script) return null
-  const line = script[lineIndex]
-  if (!line) return null
+  if (!script || !line) return null
   const speaker = getCharacter(line.speakerId)
-  const hasMore = lineIndex < script.length - 1
+  const isLastLine = lineIndex >= script.length - 1
+  const hasMore = hasNext || !isLastLine
+  const visibleIndexes = pages[pageIndex] ?? []
+  const visibleSet = new Set(visibleIndexes)
 
   return (
     <div className="dialogue-overlay" role="presentation" onClick={handleClose}>
@@ -123,13 +144,57 @@ export function DialogueOverlay() {
         </div>
         <div className="dialogue-overlay__text">
           <div className="dialogue-overlay__speaker">{speaker.name.toUpperCase()}</div>
-          <div className="dialogue-overlay__body">
-            {line.text.split('\n').map((segment, i) => (
-              <div key={i} className="dialogue-overlay__line">
-                {segment}
-              </div>
-            ))}
+          <div className="dialogue-overlay__body" ref={viewportRef}>
+            <div className="dialogue-overlay__body-visible">
+              {segments.map((segment, i) =>
+                visibleSet.has(i) ? (
+                  <div key={`visible-${i}`} className="dialogue-overlay__line">
+                    {segment}
+                  </div>
+                ) : null,
+              )}
+            </div>
+            <div
+              className="dialogue-overlay__body-measure"
+              ref={measureRef}
+              aria-hidden="true"
+            >
+              {segments.map((segment, i) => (
+                <div key={`measure-${i}`} className="dialogue-overlay__line">
+                  {segment}
+                </div>
+              ))}
+            </div>
           </div>
+          {pageCount > 1 ? (
+            <div
+              className="dialogue-overlay__pager"
+              aria-live="polite"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <button
+                type="button"
+                className="dialogue-overlay__pager-btn"
+                onClick={prev}
+                disabled={!hasPrev}
+                aria-label="Previous page"
+              >
+                ‹
+              </button>
+              <span className="dialogue-overlay__pager-label">
+                {pageIndex + 1} / {pageCount}
+              </span>
+              <button
+                type="button"
+                className="dialogue-overlay__pager-btn"
+                onClick={next}
+                disabled={!hasNext}
+                aria-label="Next page"
+              >
+                ›
+              </button>
+            </div>
+          ) : null}
           <div
             className={
               hasMore

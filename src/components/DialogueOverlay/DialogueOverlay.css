@@ -16,6 +16,7 @@
   grid-template-columns: 192px 1fr;
   gap: 12px;
   width: min(960px, 100%);
+  height: min(240px, 30vh);
   padding: 12px;
   background: #e8d089;
   color: #f4efdc;
@@ -28,6 +29,7 @@
   image-rendering: pixelated;
   cursor: pointer;
   outline: none;
+  box-sizing: border-box;
 }
 
 .dialogue-overlay__panel:focus-visible {
@@ -39,6 +41,7 @@
 
 .dialogue-overlay__portrait-frame {
   width: 192px;
+  height: 100%;
   align-self: stretch;
   background: #1a1a1a;
   border: 3px solid #2a2013;
@@ -46,6 +49,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  box-sizing: border-box;
 }
 
 .dialogue-overlay__portrait {
@@ -63,10 +67,12 @@
   background: #d9b667;
   border: 3px solid #2a2013;
   color: #2a2013;
-  min-height: 192px;
+  height: 100%;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .dialogue-overlay__speaker {
@@ -74,9 +80,20 @@
   letter-spacing: 0.06em;
   color: #f9f0c8;
   text-shadow: 2px 2px 0 #2a2013;
+  flex: 0 0 auto;
 }
 
 .dialogue-overlay__body {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.dialogue-overlay__body-visible {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -85,9 +102,59 @@
   color: #2a2013;
 }
 
+.dialogue-overlay__body-measure {
+  position: absolute;
+  inset: 0;
+  visibility: hidden;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 22px;
+  line-height: 1.6;
+}
+
 .dialogue-overlay__line {
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.dialogue-overlay__pager {
+  position: absolute;
+  left: 12px;
+  bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #2a2013;
+  cursor: default;
+}
+
+.dialogue-overlay__pager-btn {
+  background: #f4efdc;
+  color: #2a2013;
+  border: 2px solid #2a2013;
+  border-radius: 2px;
+  padding: 2px 6px;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  min-width: 24px;
+}
+
+.dialogue-overlay__pager-btn:hover:not(:disabled) {
+  background: #fff8db;
+}
+
+.dialogue-overlay__pager-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.dialogue-overlay__pager-label {
+  font-variant-numeric: tabular-nums;
 }
 
 .dialogue-overlay__indicator {
@@ -108,20 +175,32 @@
 }
 
 @media (max-width: 640px) {
+  .dialogue-overlay {
+    padding: 12px;
+  }
   .dialogue-overlay__panel {
     grid-template-columns: 120px 1fr;
+    height: min(200px, 34vh);
   }
   .dialogue-overlay__portrait-frame {
     width: 120px;
   }
-  .dialogue-overlay__text {
-    min-height: 120px;
-  }
   .dialogue-overlay__speaker {
     font-size: 16px;
   }
-  .dialogue-overlay__body {
+  .dialogue-overlay__body-visible,
+  .dialogue-overlay__body-measure {
     font-size: 17px;
+    line-height: 1.5;
+    gap: 8px;
+  }
+  .dialogue-overlay__pager {
+    font-size: 11px;
+  }
+  .dialogue-overlay__pager-btn {
+    font-size: 12px;
+    padding: 2px 5px;
+    min-width: 20px;
   }
 }
 
