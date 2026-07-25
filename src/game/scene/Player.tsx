@@ -36,6 +36,8 @@ import { presentationStops } from '../interactions/interactionTypes'
 import { getStopZoneRect } from './interactionZones'
 import { useGameStore } from '../state/gameStore'
 import { ZoneManager } from '../zones/ZoneManager'
+import { PROXIMITY_ANCHORS } from './proximity/anchors'
+import { ProximityManager } from './proximity/ProximityManager'
 
 const PLAYER_MODEL_URL = CHARACTERS.youngvz.glbUrl
 
@@ -290,6 +292,21 @@ export function Player({ controlsDisabled }: PlayerProps) {
     return z
   }, [])
 
+  // Proximity manager: fires setNearbyRooms whenever the set of rooms
+  // within their radius of the player changes. Independent of zones —
+  // a room can be "nearby" (mounted) without being the active zone.
+  const proximity = useMemo(() => {
+    const setNearbyRooms = useGameStore.getState().setNearbyRooms
+    return new ProximityManager({ onChange: setNearbyRooms })
+  }, [])
+
+  useEffect(() => {
+    for (const anchor of PROXIMITY_ANCHORS) {
+      proximity.registerAnchor(anchor)
+    }
+    return () => proximity.clearAnchors()
+  }, [proximity])
+
   useEffect(() => {
     if (controlsDisabled) manager.disable()
     else manager.enable()
@@ -401,6 +418,8 @@ export function Player({ controlsDisabled }: PlayerProps) {
     manager.update({ x: pos.x, y: pos.z })
     // Zone tracking runs off the same XZ point.
     zones.update(pos.x, pos.z)
+    // Proximity tracking for range-based scene mounting.
+    proximity.update(pos.x, pos.z)
 
     if (!controlsDisabled && !locked && consumeInteract()) {
       manager.trigger()

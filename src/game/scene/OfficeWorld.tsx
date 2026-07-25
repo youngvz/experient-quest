@@ -11,6 +11,7 @@ import { CorridorPocket } from './CorridorPocket'
 import { EastCorridor } from './EastCorridor'
 import { LazyBranch } from './LazyBranch'
 import { Player } from './Player'
+import { ProximityBranch } from './ProximityBranch'
 import { CentralCorridor } from './CentralCorridor'
 import { Televisions } from './Televisions'
 import { Whiteboards } from './Whiteboards'
@@ -47,20 +48,21 @@ export default function OfficeWorld({ controlsDisabled }: OfficeWorldProps) {
       <ConferenceLaptops />
       <ConferenceChairs />
 
-      {/* Branch rooms mount when the player is in their zone or in an
-          adjacent zone whose glass wall looks into them. */}
-      <LazyBranch zone="the-lab" alsoMountFor={['central-corridor', 'the-station']}>
-        <TheLab />
-      </LazyBranch>
-      <LazyBranch
-        zone="the-station"
-        alsoMountFor={['central-corridor', 'the-lab', 'the-boardroom']}
-      >
-        <TheStation />
-      </LazyBranch>
-      <LazyBranch zone="the-bakery" alsoMountFor={['office']}>
+      {/* Branch rooms mount by *distance* from the player (see
+          proximity/anchors.ts for radii). Bakery has a big radius so
+          it's loading from spawn; Lab and Station stream in as the
+          player walks north up the corridor. */}
+      <ProximityBranch room="the-bakery">
         <TheBakery />
-      </LazyBranch>
+      </ProximityBranch>
+      <ProximityBranch room="the-lab">
+        <TheLab />
+      </ProximityBranch>
+      <ProximityBranch room="the-station">
+        <TheStation />
+      </ProximityBranch>
+      {/* Outdoor stays zone-based — a trigger-style branch, not a
+          proximity one. Real outdoor doorway will replace this. */}
       <LazyBranch zone="outdoor">
         <Outdoor />
       </LazyBranch>
