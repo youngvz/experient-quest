@@ -43,7 +43,12 @@ npm run test:e2e       # playwright smoke suite (dev server auto-started)
 npm run test:e2e:install  # first-time: install Playwright browsers
 npm run lint           # oxlint (not eslint)
 npm run format         # prettier --write .
+npm run optimize-glb   # scripts/optimize-glb.mjs — prune clips + Meshopt/Draco compress a GLB
+npm run optimize-png   # scripts/optimize-png.mjs — resize + palette-quantize a pixel-art PNG
 ```
+
+Slash commands `/optimize-glb` and `/optimize-png` drive the scripts
+end-to-end (inspect → confirm choices → run). See `scripts/README.md`.
 
 ## Current vs aspirational
 
