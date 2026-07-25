@@ -121,7 +121,8 @@
 
 .dialogue-overlay__pager {
   position: absolute;
-  left: 12px;
+  left: 50%;
+  transform: translateX(-50%);
   bottom: 8px;
   display: flex;
   align-items: center;
@@ -179,28 +180,40 @@
     padding: 12px;
   }
   .dialogue-overlay__panel {
-    grid-template-columns: 120px 1fr;
+    grid-template-columns: 96px 1fr;
     height: min(200px, 34vh);
+    gap: 10px;
+    padding: 10px;
   }
   .dialogue-overlay__portrait-frame {
-    width: 120px;
+    width: 96px;
+  }
+  .dialogue-overlay__text {
+    padding: 10px 12px;
   }
   .dialogue-overlay__speaker {
-    font-size: 16px;
+    font-size: 13px;
   }
   .dialogue-overlay__body-visible,
   .dialogue-overlay__body-measure {
-    font-size: 17px;
+    font-size: 12px;
     line-height: 1.5;
-    gap: 8px;
+    gap: 6px;
   }
   .dialogue-overlay__pager {
-    font-size: 11px;
+    font-size: 10px;
+    gap: 4px;
+    bottom: 6px;
   }
   .dialogue-overlay__pager-btn {
-    font-size: 12px;
+    font-size: 11px;
     padding: 2px 5px;
-    min-width: 20px;
+    min-width: 18px;
+  }
+  .dialogue-overlay__indicator {
+    font-size: 14px;
+    right: 10px;
+    bottom: 8px;
   }
 }
 

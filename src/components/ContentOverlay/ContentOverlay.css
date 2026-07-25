@@ -161,20 +161,36 @@
   }
 
   .content-overlay__title {
-    font-size: 18px;
+    font-size: 16px;
   }
 
   .content-overlay__body-item p,
   .content-overlay__body-item ul {
-    font-size: 15px;
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
+  .content-overlay__body-item li {
+    margin-bottom: 4px;
+  }
+
+  .content-overlay__pager {
+    font-size: 11px;
   }
 
   .content-overlay__pager-label {
-    min-width: 72px;
-    font-size: 12px;
+    min-width: 64px;
+    font-size: 11px;
+  }
+
+  .content-overlay__pager-btn {
+    font-size: 14px;
+    padding: 3px 8px;
+    min-width: 28px;
   }
 
   .content-overlay__close {
-    padding: 10px 14px;
+    padding: 8px 12px;
+    font-size: 12px;
   }
 }

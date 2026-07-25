@@ -101,7 +101,7 @@ export function DialogueOverlay() {
       if (event.key === 'Escape') {
         event.preventDefault()
         handleClose()
-      } else if (event.key === ' ' || event.key === 'Enter' || event.key === 'ArrowRight') {
+      } else if (event.key === 'Enter' || event.key === 'ArrowRight') {
         event.preventDefault()
         advance()
       } else if (event.key === 'ArrowLeft') {
