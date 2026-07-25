@@ -33,23 +33,25 @@ npm run format          # prettier --write .
 
 ```text
 Move            WASD / Arrow keys
-Run (toggle)    R
-Jump            Space          — plays Man_RunningJump, carries velocity
-Clap            C
-Sit             X              — near a chair; press again to stand
-Interact        F              — opens overlay in range of a stop
-Orbit camera    Q / E          — rotate view left / right
+Run (toggle)    R                — running is ON by default
+Roll            Space            — carries current velocity
+Wave            C
+Interact        F                — opens dialogue / overlay in range of a stop
+Orbit camera    Q / E            — rotate view left / right
                 Two-finger horizontal scroll (trackpad)
                 Right- or middle-mouse drag (external mouse)
-Close overlay   Escape / Close button
+Zoom camera     + / -            — scales distance + height together
+Close overlay   Escape / Close button / Backdrop click
+Advance dialog  Space / Enter / click the panel
 ```
 
 The camera is a third-person follow that orbits the player when you drag with
 the right (or middle) mouse button. Movement is **camera-relative**: W always
 sends the player away from the camera, so the same key feels consistent as
-you rotate the view. Movement is locked during jump / clap / sit. The player
-can't leave the office — exterior doorways are sealed by invisible
-`DoorBlocker` colliders (interior doorways stay open).
+you rotate the view. Movement is locked during roll / wave and while an
+overlay or the quest-unlocked modal is open. Exterior doorways are either
+sealed by invisible `DoorBlocker` colliders or open glass doors (`<Door>`
+component); interior doorways stay open.
 
 ## Architecture at a glance
 
@@ -59,13 +61,15 @@ and camera. They communicate through a typed event bus
 components.
 
 ```
-React (HTML)                        R3F (canvas)
-─ App shell                         ─ OfficeScene
-─ GameCanvas (hosts <Canvas>)       ─ Floor / Walls / Hallway / …
-─ InteractionPrompt                 ─ Player (Rapier capsule + GLB + camera)
-─ ContentOverlay                    ─ InteractionManager (XZ-plane zones)
-        ▲                                   │
-        └───── typed event bus ─────────────┘
+React (HTML)                             R3F (canvas)
+─ App shell                              ─ OfficeScene
+─ GameCanvas (hosts <Canvas>)            ─ ConferenceRoom / TheBakery /
+─ InteractionPrompt                        CentralCorridor / EastCorridor /
+─ ContentOverlay (TV / events)             CorridorPocket / TheLab / TheStation
+─ DialogueOverlay (pixel-art NPC chat)   ─ Player (Rapier capsule + GLB + camera)
+─ QuestUnlockedModal + QuestLog          ─ InteractionManager (XZ-plane zones)
+        ▲                                        │
+        └────────── typed event bus ─────────────┘
 ```
 
 Events on the bus: `interaction:available` / `interaction:unavailable` /
@@ -81,6 +85,7 @@ and design notes:
 | Overall structure, new modules, refactors | [architecture.md](docs/architecture.md) |
 | Player movement, camera, interactions, animations, NPCs | [gameplay-systems.md](docs/gameplay-systems.md) |
 | Office layout, GLB imports, sprites, asset pipeline | [assets-and-content.md](docs/assets-and-content.md) |
+| **Building or editing a room via ASCII grid** | [room-authoring.md](docs/room-authoring.md) |
 | FPS, draw calls, mobile devices, quality profiles | [performance.md](docs/performance.md) |
 | Unit + E2E testing, acceptance criteria | [testing.md](docs/testing.md) |
 | Hosting, CDN, headers, CSP, releases | [deployment-and-security.md](docs/deployment-and-security.md) |
@@ -94,21 +99,45 @@ doc per task.
 
 ## What's in the box today
 
-- Multi-room layout: 20×14 m conference room + south hallway with desk
-  clusters, kitchen counter with sink, and a two-office NE alcove.
-- Rigged GLB player with `Man_Idle` / `Man_Walk` / `Man_Run` blending, plus
-  one-shot `Man_RunningJump` / `Man_Clapping` and toggleable `Man_Sitting`.
-- Rapier physics: dynamic capsule player, static geometry, sealed exterior
-  doorways.
-- Fixed-offset third-person camera that lerps toward the player.
-- One interaction zone in front of the east-wall TV; React modal overlay
-  (ESC + close-button dismiss) with placeholder content.
-- Unit tests for `InteractionManager` + Playwright smoke test.
+- **Layout**:
+  - `ConferenceRoom` (20 × 14 m) with table, 10 chairs, wall TV, whiteboard.
+  - `TheBakery` (south corridor) with desk clusters, kitchen counter + sink,
+    and two NE alcove offices.
+  - `CentralCorridor` — long N–S corridor west of the office; glass storefront
+    east wall along every adjacent room's Z-span.
+  - `CorridorPocket` + `EastCorridor` — L-shaped landing north of the
+    conference room; hosts Distasi (interactable NPC) at a workbench.
+  - `TheLab` — first branch room off the corridor. L-shaped, 3 east-side
+    alcoves (2 furnished workstations), north/south work clusters,
+    `TheLabCabinets` kitchen row.
+  - `TheStation` — second branch room. L-shaped (NE corner clipped), 3
+    north-side + 3 east-side alcoves, 2 west-wall workstations, and
+    **The Boardroom** — enclosed sub-room with a wall-mounted TV and a
+    4-seat meeting table.
+- **Player**: rigged GLB (`youngvz.glb`) with idle / walk / run / roll /
+  wave animation blending, camera-relative movement.
+- **Rapier physics**: dynamic capsule player, static geometry, sealed +
+  open glass doors via reusable `<Door>` component.
+- **Third-person camera** with mouse-drag / trackpad orbit and keyboard
+  zoom, clamped multiplicative scale.
+- **NPCs**: reusable `<Employee>` static-NPC component; Distasi wired
+  with a multi-line dialogue script.
+- **Interactions**:
+  - TV in the conference room (React modal overlay).
+  - Distasi (retro pixel-art `<DialogueOverlay>` with portrait, first-
+    encounter + repeat scripts).
+- **Quest system**: `weekly-status-meeting` quest unlocks after the
+  first Distasi chat, with a "New Quest Unlocked!" modal and a
+  persistent top-right `QuestLog` HUD.
+- **Tests**: Vitest unit test for `InteractionManager`, Playwright
+  smoke test.
 
 ## Future
 
 - Level transitions on doorway exit (swap `DoorBlocker` for a sensor collider).
-- Employee NPCs (billboards + optional rigged presenters).
+- More NPCs (billboards + additional rigged presenters).
 - Camera modes: over-the-shoulder, first-person.
 - Additional interactables (new-hires, jokes, project rooms).
+- Wire quest-task completion to specific stops (`toggleTask` already
+  in the store).
 - Audio + captions, touch controls, localStorage save state.
