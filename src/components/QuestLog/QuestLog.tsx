@@ -8,9 +8,10 @@ import './QuestLog.css'
 // `toggleTask()` on the store.
 export function QuestLog() {
   const unlockedQuestIds = useGameStore((s) => s.unlockedQuestIds)
-  // Hide the log while the "New Quest Unlocked!" modal is up — it appears
-  // only after the player dismisses that modal ("Got it" / Enter / Space /
-  // Esc / backdrop click all clear pendingUnlockQuestId).
+  // Hide the log while the "New Quest Unlocked!" modal is up. The modal
+  // has two exits: accept (Got it / Enter / Space — commits and shows the
+  // log) or dismiss (Escape / backdrop click — nothing is unlocked, so
+  // the log stays hidden until the player re-approaches and accepts).
   const pendingUnlockQuestId = useGameStore((s) => s.pendingUnlockQuestId)
   if (unlockedQuestIds.length === 0) return null
   if (pendingUnlockQuestId !== null) return null
