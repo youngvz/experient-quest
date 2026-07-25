@@ -4,10 +4,15 @@ import {
   TOUCH_JOYSTICK_DEADZONE,
   TOUCH_JOYSTICK_STICK_RADIUS,
   TOUCH_LOOK_SENSITIVITY,
+  TOUCH_PINCH_SENSITIVITY,
 } from '../../game/constants/gameConstants'
 import { touchInput } from '../../game/input/touchInput'
 import { useGameEvent } from '../../hooks/useGameEvents'
 import './TouchControls.css'
+
+// Module-scoped flag so Joystick/LookPad can suppress their single-touch
+// output while a global pinch is active. Set by useGlobalPinch below.
+const pinchState = { active: false }
 
 export function TouchControls() {
   const [suppressed, setSuppressed] = useState(false)
@@ -30,6 +35,8 @@ export function TouchControls() {
     return () => window.removeEventListener('blur', onBlur)
   }, [])
 
+  useGlobalPinch(!suppressed)
+
   if (suppressed) return null
 
   return (
@@ -38,6 +45,78 @@ export function TouchControls() {
       <LookPad />
     </div>
   )
+}
+
+// Tracks every active touch pointer globally so a pinch anywhere on screen —
+// over the canvas, joystick, look pad, or overlays — feeds camera zoom.
+// Listens at the window in the capture phase so it observes events even when
+// a local surface calls setPointerCapture / stopPropagation. `pointerType`
+// filter skips mouse/pen so a two-button mouse click can't accidentally
+// register as a pinch.
+function useGlobalPinch(enabled: boolean) {
+  useEffect(() => {
+    if (!enabled) return
+    const pointers = new Map<number, { x: number; y: number }>()
+    const pinchDistRef = { current: null as number | null }
+
+    const pairDistance = () => {
+      const pts = Array.from(pointers.values())
+      if (pts.length < 2) return null
+      // Use the first two live touches. If a third finger lands we ignore it
+      // rather than jumping the baseline — simple and predictable.
+      return Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y)
+    }
+
+    const onPointerDown = (event: PointerEvent) => {
+      if (event.pointerType !== 'touch') return
+      pointers.set(event.pointerId, { x: event.clientX, y: event.clientY })
+      if (pointers.size >= 2) {
+        pinchState.active = true
+        pinchDistRef.current = pairDistance()
+        // Cancel any pending single-touch move so a pinch doesn't drift the
+        // player during the gesture.
+        touchInput.setMove(0, 0)
+      }
+    }
+
+    const onPointerMove = (event: PointerEvent) => {
+      if (event.pointerType !== 'touch') return
+      if (!pointers.has(event.pointerId)) return
+      pointers.set(event.pointerId, { x: event.clientX, y: event.clientY })
+      if (pointers.size < 2) return
+      const dist = pairDistance()
+      const prev = pinchDistRef.current
+      if (dist !== null && prev !== null && prev > 0 && dist > 0) {
+        // Fingers spreading (dist > prev) means we're zooming out. `zoomRef`
+        // scales CAMERA_DISTANCE, so spreading fingers should reduce
+        // zoomRef — invert the ratio. The exponent tunes sensitivity.
+        touchInput.addZoomFactor((prev / dist) ** TOUCH_PINCH_SENSITIVITY)
+      }
+      pinchDistRef.current = dist
+    }
+
+    const onPointerEnd = (event: PointerEvent) => {
+      if (event.pointerType !== 'touch') return
+      pointers.delete(event.pointerId)
+      if (pointers.size < 2) {
+        pinchState.active = false
+        pinchDistRef.current = null
+      }
+    }
+
+    const opts: AddEventListenerOptions = { capture: true, passive: true }
+    window.addEventListener('pointerdown', onPointerDown, opts)
+    window.addEventListener('pointermove', onPointerMove, opts)
+    window.addEventListener('pointerup', onPointerEnd, opts)
+    window.addEventListener('pointercancel', onPointerEnd, opts)
+    return () => {
+      window.removeEventListener('pointerdown', onPointerDown, opts)
+      window.removeEventListener('pointermove', onPointerMove, opts)
+      window.removeEventListener('pointerup', onPointerEnd, opts)
+      window.removeEventListener('pointercancel', onPointerEnd, opts)
+      pinchState.active = false
+    }
+  }, [enabled])
 }
 
 function Joystick() {
@@ -73,6 +152,13 @@ function Joystick() {
 
   const onPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
     if (pointerIdRef.current !== event.pointerId) return
+    // While a global pinch is active, freeze move output so a rotating grip
+    // doesn't walk the player. The stick also snaps to center for feedback.
+    if (pinchState.active) {
+      applyStick(0, 0)
+      touchInput.setMove(0, 0)
+      return
+    }
     const center = centerRef.current
     let dx = event.clientX - center.x
     let dy = event.clientY - center.y
@@ -122,52 +208,35 @@ function Joystick() {
 
 function LookPad() {
   const padRef = useRef<HTMLDivElement | null>(null)
-  const pointersRef = useRef<Map<number, { x: number; y: number }>>(new Map())
-  const pinchDistRef = useRef<number | null>(null)
-
-  const currentPinchDist = () => {
-    const pts = Array.from(pointersRef.current.values())
-    if (pts.length < 2) return null
-    const [a, b] = pts
-    return Math.hypot(a.x - b.x, a.y - b.y)
-  }
+  const lastRef = useRef<{ id: number; x: number } | null>(null)
 
   const onPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
-    pointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY })
+    // Only claim the first touch — additional fingers belong to the global
+    // pinch tracker. Also skip if a pinch is already in flight.
+    if (lastRef.current !== null || pinchState.active) return
+    lastRef.current = { id: event.pointerId, x: event.clientX }
     padRef.current?.setPointerCapture(event.pointerId)
-    if (pointersRef.current.size >= 2) {
-      pinchDistRef.current = currentPinchDist()
-    }
     event.preventDefault()
   }
 
   const onPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
-    const prev = pointersRef.current.get(event.pointerId)
-    if (!prev) return
-    const curr = { x: event.clientX, y: event.clientY }
-    pointersRef.current.set(event.pointerId, curr)
-    if (pointersRef.current.size >= 2) {
-      // Two-finger pinch — camera zoom. Ignore yaw drag while pinching so a
-      // slight rotation between fingers doesn't spin the camera.
-      const dist = currentPinchDist()
-      if (dist !== null && pinchDistRef.current !== null && pinchDistRef.current > 0) {
-        // Fingers spreading (dist > previous) means we're zooming out. Player
-        // camera zoom `zoomRef` scales CAMERA_DISTANCE, so spreading fingers
-        // should decrease the zoom factor toward CAMERA_ZOOM_MIN — invert.
-        touchInput.addZoomFactor(pinchDistRef.current / dist)
-      }
-      pinchDistRef.current = dist
+    const last = lastRef.current
+    if (!last || last.id !== event.pointerId) return
+    // Suppress yaw during a pinch — a slight rotation between fingers
+    // shouldn't spin the camera. Refresh the baseline so we resume smoothly.
+    if (pinchState.active) {
+      lastRef.current = { id: event.pointerId, x: event.clientX }
       return
     }
-    // Single-finger drag — camera yaw. Sign matches useMouseLook: dragging
+    // Single-finger drag → camera yaw. Sign matches useMouseLook: dragging
     // right increases yaw (world rotates CCW under the camera).
-    const dx = curr.x - prev.x
+    const dx = event.clientX - last.x
+    lastRef.current = { id: event.pointerId, x: event.clientX }
     touchInput.addYawDelta(dx * TOUCH_LOOK_SENSITIVITY)
   }
 
   const onPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
-    pointersRef.current.delete(event.pointerId)
-    if (pointersRef.current.size < 2) pinchDistRef.current = null
+    if (lastRef.current?.id === event.pointerId) lastRef.current = null
   }
 
   return (

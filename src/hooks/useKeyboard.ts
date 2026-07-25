@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { useGameStore, type ArrowKeyMode } from '../game/state/gameStore'
 
 export interface KeyboardState {
   forward: boolean
@@ -16,10 +17,14 @@ export interface KeyboardState {
   zoomOut: boolean
 }
 
-const FORWARD_KEYS = new Set(['KeyW', 'ArrowUp'])
-const BACK_KEYS = new Set(['KeyS', 'ArrowDown'])
-const LEFT_KEYS = new Set(['KeyA', 'ArrowLeft'])
-const RIGHT_KEYS = new Set(['KeyD', 'ArrowRight'])
+// Held-directional fields; arrow keys route to one of these based on the
+// current arrowKeyMode (see resolveArrowField).
+type ArrowField = 'forward' | 'back' | 'left' | 'right' | 'yawLeft' | 'yawRight' | 'zoomIn' | 'zoomOut'
+
+const FORWARD_KEYS = new Set(['KeyW'])
+const BACK_KEYS = new Set(['KeyS'])
+const LEFT_KEYS = new Set(['KeyA'])
+const RIGHT_KEYS = new Set(['KeyD'])
 const INTERACT_KEYS = new Set(['KeyF'])
 const RUN_TOGGLE_KEYS = new Set(['KeyR'])
 const ROLL_KEYS = new Set(['Space'])
@@ -30,6 +35,21 @@ const YAW_RIGHT_KEYS = new Set(['KeyE'])
 // both the main-row minus and the numpad minus.
 const ZOOM_IN_KEYS = new Set(['Equal', 'NumpadAdd'])
 const ZOOM_OUT_KEYS = new Set(['Minus', 'NumpadSubtract'])
+
+function resolveArrowField(code: string, mode: ArrowKeyMode): ArrowField | null {
+  if (mode === 'camera') {
+    if (code === 'ArrowUp') return 'zoomIn'
+    if (code === 'ArrowDown') return 'zoomOut'
+    if (code === 'ArrowLeft') return 'yawLeft'
+    if (code === 'ArrowRight') return 'yawRight'
+    return null
+  }
+  if (code === 'ArrowUp') return 'forward'
+  if (code === 'ArrowDown') return 'back'
+  if (code === 'ArrowLeft') return 'left'
+  if (code === 'ArrowRight') return 'right'
+  return null
+}
 
 // Mutable state ref updated by DOM listeners; useFrame reads it every frame.
 // interactPressed is edge-triggered — consumer calls `consumeInteract()` to clear the pulse.
@@ -59,6 +79,16 @@ export function useKeyboard(): {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.repeat) return
       const s = state.current
+      if (event.code.startsWith('Arrow')) {
+        const mode = useGameStore.getState().arrowKeyMode
+        const field = resolveArrowField(event.code, mode)
+        if (field) {
+          s[field] = true
+          // Prevent arrow keys from scrolling the page while the game has focus.
+          event.preventDefault()
+        }
+        return
+      }
       if (FORWARD_KEYS.has(event.code)) s.forward = true
       else if (BACK_KEYS.has(event.code)) s.back = true
       else if (LEFT_KEYS.has(event.code)) s.left = true
@@ -80,6 +110,15 @@ export function useKeyboard(): {
     }
     const onKeyUp = (event: KeyboardEvent) => {
       const s = state.current
+      if (event.code.startsWith('Arrow')) {
+        // Clear whichever field this key controls under the CURRENT mode. If the
+        // mode changed while a key was held, `onBlur` clears the stale flag; a
+        // subsequent mode flip mid-hold is a corner case we don't guard against.
+        const mode = useGameStore.getState().arrowKeyMode
+        const field = resolveArrowField(event.code, mode)
+        if (field) s[field] = false
+        return
+      }
       if (FORWARD_KEYS.has(event.code)) s.forward = false
       else if (BACK_KEYS.has(event.code)) s.back = false
       else if (LEFT_KEYS.has(event.code)) s.left = false

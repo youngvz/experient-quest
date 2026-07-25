@@ -46,20 +46,34 @@ Current bindings:
 
 | Action | Keys | Kind |
 | --- | --- | --- |
-| Move | `WASD` / `Arrow keys` | continuous (`state.current.{forward,back,left,right}`) |
+| Move | `WASD` | continuous (`state.current.{forward,back,left,right}`) |
 | Run (toggle) | `R` | toggle (`state.current.running`) |
 | Interact | `F` | edge-triggered (`consumeInteract()`) |
 | Roll | `Space` | edge-triggered (`consumeRoll()`) |
 | Wave | `C` | edge-triggered (`consumeWave()`) |
 | Orbit camera | `Q` / `E` | continuous (`state.current.{yawLeft,yawRight}`) |
 | Zoom camera | `+` / `-` (or `=`, numpad) | continuous (`state.current.{zoomIn,zoomOut}`) |
+| Arrow keys — `camera` mode (default) | `↑`/`↓` zoom, `←`/`→` yaw | continuous, routed by `arrowKeyMode` |
+| Arrow keys — `movement` mode | `↑`/`↓`/`←`/`→` mirror WASD | continuous, routed by `arrowKeyMode` |
 | Close overlay | `Escape` / close button | handled by `ContentOverlay` |
 
-Camera yaw also accepts right/middle-mouse drag and two-finger horizontal
-scroll on trackpads — see `useMouseLook`. All three sources write to the
-same `yaw` ref so they compose without conflict. Zoom is keyboard-only
-today; it scales `CAMERA_DISTANCE` and `CAMERA_HEIGHT` together so the
-pitch angle stays fixed, clamped to `[CAMERA_ZOOM_MIN, CAMERA_ZOOM_MAX]`.
+Arrow-key mode is stored on `useGameStore` as `arrowKeyMode: 'camera' |
+'movement'` (default `'camera'`). The hook reads it synchronously per
+key event, so a future settings UI can flip modes without re-registering
+listeners.
+
+Camera yaw also accepts right/middle-mouse drag, two-finger horizontal
+trackpad scroll, and single-finger drag on the touch LookPad — see
+`useMouseLook` and `TouchControls`. All sources write to the same `yaw`
+ref so they compose without conflict. Zoom accepts keyboard (`+`/`-`,
+arrow `↑`/`↓` in camera mode) and touch (two-finger pinch anywhere on
+screen — handled by a window-level capture-phase pointer tracker in
+`TouchControls`); it scales `CAMERA_DISTANCE` and `CAMERA_HEIGHT`
+together so pitch stays fixed, clamped to
+`[CAMERA_ZOOM_MIN, CAMERA_ZOOM_MAX]`. Pinch sensitivity is tuned via
+`TOUCH_PINCH_SENSITIVITY` in `gameConstants.ts`. While a pinch is in
+flight, the joystick and look pad freeze their single-touch output so
+finger rotation doesn't walk or yaw.
 
 Rules the hook already enforces:
 
@@ -179,8 +193,11 @@ needs a scripted framing move, add a camera subsystem that owns the camera
 and takes requests — don't sprinkle `camera.position` writes across
 components.
 
-Keyboard zoom is already wired (`+`/`-` scale distance and height together,
-clamped to `[CAMERA_ZOOM_MIN, CAMERA_ZOOM_MAX]`). Yaw is unclamped today.
+Zoom is wired for keyboard (`+`/`-`, arrow `↑`/`↓` in `arrowKeyMode:
+'camera'`) and touch (two-finger pinch anywhere on screen — the tracker
+in `TouchControls` listens at the window in the capture phase). All
+sources scale distance and height together, clamped to
+`[CAMERA_ZOOM_MIN, CAMERA_ZOOM_MAX]`. Yaw is unclamped today.
 
 For future camera work, prefer:
 
