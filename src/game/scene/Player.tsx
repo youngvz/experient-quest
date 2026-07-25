@@ -109,12 +109,12 @@ export function Player({ controlsDisabled }: PlayerProps) {
       }
     })
 
-    // Bound the visible geometry only. Walk meshes and use setFromObject
-    // with precise=true — reads vertices through BufferAttribute.getX/Y/Z
-    // so KHR_mesh_quantization / EXT_meshopt_compression's `normalized`
-    // int16 POSITION accessors are decoded correctly. The plain
-    // geometry.boundingBox path returns int16-range values on quantized
-    // GLBs and blows up the auto-fit.
+    // Walk each mesh with Box3.expandByObject(precise=true) — reads
+    // vertices via BufferAttribute.getX/Y/Z (so KHR_mesh_quantization /
+    // EXT_meshopt_compression's normalized int16 POSITION accessors
+    // decode correctly) and, on SkinnedMesh, applies bone transforms so
+    // the AABB reflects the skinned mesh's real world-space extent
+    // instead of the [-1, +1] pre-skinning quantization envelope.
     clone.updateWorldMatrix(true, true)
     const box = new THREE.Box3()
     const meshBox = new THREE.Box3()
@@ -122,7 +122,7 @@ export function Player({ controlsDisabled }: PlayerProps) {
     clone.traverse((obj) => {
       const mesh = obj as THREE.Mesh
       if (!mesh.isMesh || !mesh.geometry) return
-      meshBox.makeEmpty().setFromObject(mesh, true)
+      meshBox.makeEmpty().expandByObject(mesh, true)
       if (meshBox.isEmpty()) return
       if (hasMesh) box.union(meshBox)
       else {
