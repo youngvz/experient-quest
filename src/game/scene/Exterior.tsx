@@ -8,6 +8,7 @@ import {
   ROOM_DEPTH,
   ROOM_WIDTH,
   THE_BAKERY,
+  THE_GARAGE,
   THE_STATION,
   WEST_ROOM_WEST_X,
 } from '../constants/gameConstants'
@@ -24,9 +25,22 @@ interface BuildingInstance {
 // don't kiss the glass walls.
 const BUILDING_MARGIN = 4
 const BUILDING_AABB = (() => {
-  const minX = Math.min(WEST_ROOM_WEST_X, CENTRAL_CORRIDOR.westX, -ROOM_WIDTH / 2)
-  const maxX = Math.max(EAST_CORRIDOR.eastX, ROOM_WIDTH / 2, THE_STATION.eastX)
-  const minZ = Math.min(CENTRAL_CORRIDOR.northZ, -ROOM_DEPTH / 2)
+  const minX = Math.min(
+    WEST_ROOM_WEST_X,
+    CENTRAL_CORRIDOR.westX,
+    -ROOM_WIDTH / 2,
+  )
+  const maxX = Math.max(
+    EAST_CORRIDOR.eastX,
+    ROOM_WIDTH / 2,
+    THE_STATION.eastX,
+    THE_GARAGE.eastX,
+  )
+  const minZ = Math.min(
+    CENTRAL_CORRIDOR.northZ,
+    -ROOM_DEPTH / 2,
+    THE_GARAGE.conference.northZ,
+  )
   const maxZ = Math.max(
     THE_BAKERY.centerX + THE_BAKERY.depth,
     ROOM_DEPTH / 2 + THE_BAKERY.depth,

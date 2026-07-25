@@ -66,19 +66,15 @@ export const CENTRAL_CORRIDOR = {
   eastX: -ROOM_WIDTH / 2, // -10
   westX: -ROOM_WIDTH / 2 - 3, // -13
   // Corridor runs from `southZ` (aligned with The Bakery south face for a clean
-  // visual seam) north to `northZ` — long enough to feel like a corridor and
-  // to place the dead-end door past the conference room's north wall so the
-  // door reads as a real opening, not a doorway pressed against glass.
+  // visual seam) north to `northZ` — long enough for the east-wall branch
+  // doorways below (Bakery, Lab, Station, Garage) plus the Garage's
+  // conference sub-room, whose west face is coplanar with the corridor's
+  // east wall.
   southZ: ROOM_DEPTH / 2 + 13, // 20
-  // Long north extension — ~90 m corridor. Gives room for many future
-  // branch doorways along the east wall (see BRANCH_DOORS below).
-  northZ: -70,
-  // Dead-end doorway near (but not at) the north end, on the east side (the
-  // player's right as they walk north). "Does nothing" — sealed with a
-  // DoorBlocker. Positioned safely north of the conf-room's north face
-  // (Z=-7) so it isn't coplanar with the conference-room back glass wall.
-  deadEndDoorZ: -68,
-  deadEndDoorWidth: 1.6,
+  // Long north extension — extended to -100 so the corridor's east wall
+  // runs the full length of TheGarage (Z ∈ [-88, -66]) AND its northern
+  // conference sub-room (Z ∈ [-100, -88]).
+  northZ: -100,
   // Open doorway on the south wall — the player's spawn-side entrance to
   // the building. Centered on the corridor's X midline. No blocker.
   southDoorWidth: 2,
@@ -607,6 +603,121 @@ export const THE_LAB_ALCOVES = {
     { id: 'c', northZ: -15, southZ: -10, doorZ: -12.5, doorWidth: 1.4 },
   ],
 } as const
+
+// The Garage — large open floor east of the central corridor, entered
+// through a doorway on the corridor's east wall. Its west face is
+// coplanar with the corridor's east wall (X = CENTRAL_CORRIDOR.eastX)
+// and renders as glass storefront from both sides, matching the
+// Lab/Station pattern. Every other perimeter wall is opaque.
+//
+// Attached to its northern edge is a wider formal conference sub-room
+// that ALSO has its west wall coplanar with the corridor east wall
+// (glass), so the corridor's storefront continues unbroken along the
+// full Z-span of the Garage complex.
+export const THE_GARAGE = {
+  // Main floor: 24 m wide (X) × 26 m long (Z). West edge coplanar w/ corridor.
+  // South wall (Z=-62) is coplanar with TheStation's north wall so
+  // there's no gap between the two rooms — TheGarage draws only the
+  // X∈[+10, +14] slice of that plane; X∈[-10, +10] is already the
+  // Station's north wall.
+  westX: -ROOM_WIDTH / 2, // -10 (coplanar w/ CENTRAL_CORRIDOR.eastX)
+  eastX: 14,
+  southZ: THE_STATION.northZ, // -62 (coplanar w/ TheStation north wall)
+  northZ: -88,
+  // Corridor-side entry doorway. Sits in the main-floor Z-span.
+  doorCenterZ: -77,
+  doorWidth: 2,
+  // North conference sub-room — wider than the previous version, and
+  // its west wall is coplanar with the corridor (glass).
+  conference: {
+    westX: -ROOM_WIDTH / 2, // -10 (coplanar w/ CENTRAL_CORRIDOR.eastX)
+    eastX: 14,
+    northZ: -100,
+    southZ: -88, // coplanar w/ THE_GARAGE.northZ
+    // Doorway on the shared south wall (the Garage's north wall),
+    // centered on the sub-room X midline.
+    doorCenterX: 2,
+    doorWidth: 2,
+    // Corridor-side doorway on the west wall (coplanar with the
+    // corridor east wall). Same treatment as the Garage main entry:
+    // open glass door owned by CentralCorridor.tsx.
+    westDoorCenterZ: -94,
+    westDoorWidth: 2,
+  },
+} as const
+
+// Long meeting table in the Garage's conference sub-room, oriented long
+// along X to fit the wider room. Chairs run down the north and south
+// long edges plus a head seat at the east end.
+export const THE_GARAGE_CONFERENCE_TABLE = {
+  center: [2, -94] as [number, number],
+  size: [6, 0.75, 2.4] as [number, number, number],
+}
+
+// Chair rows around the conference table. [x, z, rotationY]. Local +Z is
+// the chair's facing direction.
+export const THE_GARAGE_CONFERENCE_CHAIRS: [number, number, number][] = [
+  // South side (3 chairs, facing north)
+  [-1, -92.9, Math.PI],
+  [2, -92.9, Math.PI],
+  [5, -92.9, Math.PI],
+  // North side (3 chairs, facing south)
+  [-1, -95.1, 0],
+  [2, -95.1, 0],
+  [5, -95.1, 0],
+  // East head chair, faces west
+  [6.5, -94, -Math.PI / 2],
+]
+
+// TV on the conference sub-room's north wall, facing south (into the room).
+export const THE_GARAGE_CONFERENCE_TV = {
+  centerX: 2,
+  centerY: 1.6,
+  width: 3.2,
+  height: 1.4,
+  depth: 0.12,
+  wallZ: -100, // coplanar w/ THE_GARAGE.conference.northZ
+  facing: 1 as 1 | -1, // faces +Z (south, into the room)
+}
+
+// Two lounge/collab tables on the Garage main floor, offset so the room
+// doesn't read as a grid.
+export const THE_GARAGE_TABLES: readonly {
+  center: [number, number]
+  size: [number, number, number]
+  chairs: [number, number, number][]
+}[] = [
+  {
+    center: [-4, -72],
+    size: [1.8, 0.75, 1.8],
+    chairs: [
+      [-4, -73.9, 0],
+      [-4, -70.1, Math.PI],
+      [-5.9, -72, Math.PI / 2],
+      [-2.1, -72, -Math.PI / 2],
+    ],
+  },
+  {
+    center: [8, -82],
+    size: [1.8, 0.75, 1.8],
+    chairs: [
+      [8, -83.9, 0],
+      [8, -80.1, Math.PI],
+      [6.1, -82, Math.PI / 2],
+      [9.9, -82, -Math.PI / 2],
+    ],
+  },
+]
+
+// Whiteboard on the Garage's east wall, facing west into the room.
+export const THE_GARAGE_WHITEBOARD = {
+  centerZ: -77,
+  centerY: 1.5,
+  width: 3.5,
+  height: 1.6,
+  wallX: 14, // coplanar w/ THE_GARAGE.eastX
+  facing: -1 as 1 | -1, // faces -X (west, into the room)
+}
 
 // Future branch doorways along the corridor's east wall. Each entry is
 // where a scene like a meeting room, project office, or joke corner will
