@@ -74,8 +74,12 @@ before proposing a large migration.
   (`WallPanel`, `DoorHeader`, `DoorBlocker`, `Door`) live in
   `wallPrimitives.tsx` + `Door.tsx`. Rooms:
   `ConferenceFloor`, `ConferenceRoom`, `TheBakery`, `CentralCorridor`,
-  `EastCorridor`, `CorridorPocket`, `TheLab`, `TheStation`, `Exterior`.
+  `EastCorridor`, `CorridorPocket`, `TheLab`, `TheStation`, `TheGarage`,
+  `Exterior`.
   `TheStation` contains a sub-room (`The Boardroom`) rendered inline;
+  `TheGarage` contains a wider formal conference sub-room rendered
+  inline, sharing its west wall coplanar with the central corridor's
+  east wall (glass, like Lab/Station);
   `TheLab` and `TheStation` both carry interior alcove strips wired via
   their own constants blocks. Room-specific composites:
   `TheBakeryCabinets`, `TheLabCabinets`, `Whiteboards` (conference +
@@ -195,6 +199,23 @@ Layout beyond the conference room:
   X ∈ [−4, +5], Z ∈ [−48, −39], with a wall-mounted TV facing a
   4-seat meeting table. Two solo workstations sit against The
   Station's west (glass) wall in the main floor.
+- **`TheGarage`** — third branch room off the central corridor's east
+  wall, north of TheStation. Entry through an open glass door on the
+  corridor's east wall at Z=−77 (mirrors Lab/Station). Main floor is
+  a 24 m × 26 m rectangle (X ∈ [−10, +14], Z ∈ [−88, −62]); its
+  south wall is coplanar with TheStation's north wall so the two
+  rooms share the plane at Z=−62 with no gap between them (TheStation
+  owns X ∈ [−10, +10] on that plane; TheGarage draws only the
+  X ∈ [+10, +14] slice). Attached to the north side is a wider formal
+  conference sub-room (X ∈ [−10, +14], Z ∈ [−100, −88]) with a
+  6-chair meeting table + head seat and a wall-mounted TV on its
+  north wall. The sub-room has two entrances: one on its shared
+  south wall with TheGarage main floor (centered at X=+2), and one
+  on its west wall opening straight onto the corridor at Z=−94.
+  Both the main floor's and the sub-room's west walls are coplanar
+  with the corridor east wall (X=−10) and render as glass storefront —
+  the corridor's east wall was extended to Z=−100 to accommodate the
+  full complex.
 
 All room-to-room walls that face a walkable space render as glass
 storefront (both surfaces glass, coplanar) with `divisions={1}` so the

@@ -1,4 +1,4 @@
-import { THE_LAB, THE_STATION } from '../../constants/gameConstants'
+import { THE_GARAGE, THE_LAB, THE_STATION } from '../../constants/gameConstants'
 import type { ProximityAnchor } from './ProximityManager'
 
 // Radii in meters: how far *outside* a room's bounding rect the player
@@ -11,6 +11,7 @@ import type { ProximityAnchor } from './ProximityManager'
 // branch to smooth the final transition once the chunk parses.
 const LAB_RADIUS = 30
 const STATION_RADIUS = 30
+const GARAGE_RADIUS = 30
 
 // The Bakery is eagerly imported in OfficeWorld (spawn-adjacent, must be
 // present frame 1) so it has no proximity anchor here. Lab and Station
@@ -40,5 +41,13 @@ export const PROXIMITY_ANCHORS: readonly ProximityAnchor[] = [
     minZ: THE_STATION.northZ,
     maxZ: THE_STATION.southZ,
     radius: STATION_RADIUS,
+  },
+  {
+    id: 'the-garage',
+    minX: THE_GARAGE.westX,
+    maxX: THE_GARAGE.eastX,
+    minZ: THE_GARAGE.conference.northZ,
+    maxZ: THE_GARAGE.southZ,
+    radius: GARAGE_RADIUS,
   },
 ]

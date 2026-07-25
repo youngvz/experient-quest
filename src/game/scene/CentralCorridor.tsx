@@ -9,6 +9,7 @@ import {
   THE_BAKERY,
   THE_BAKERY_WEST_DOOR,
   THE_COMMONS,
+  THE_GARAGE,
   THE_LAB,
   THE_LIBRARY,
   THE_STATION,
@@ -56,8 +57,6 @@ export function CentralCorridor() {
     southZ,
     northZ,
     width,
-    deadEndDoorZ,
-    deadEndDoorWidth,
     southDoorWidth,
   } = CENTRAL_CORRIDOR
   const centerX = (eastX + westX) / 2
@@ -75,12 +74,6 @@ export function CentralCorridor() {
       width: THE_BAKERY_WEST_DOOR.width,
     },
     {
-      lo: deadEndDoorZ - deadEndDoorWidth / 2,
-      hi: deadEndDoorZ + deadEndDoorWidth / 2,
-      centerZ: deadEndDoorZ,
-      width: deadEndDoorWidth,
-    },
-    {
       lo: THE_LAB.doorCenterZ - THE_LAB.doorWidth / 2,
       hi: THE_LAB.doorCenterZ + THE_LAB.doorWidth / 2,
       centerZ: THE_LAB.doorCenterZ,
@@ -91,6 +84,22 @@ export function CentralCorridor() {
       hi: THE_STATION.doorCenterZ + THE_STATION.doorWidth / 2,
       centerZ: THE_STATION.doorCenterZ,
       width: THE_STATION.doorWidth,
+    },
+    {
+      lo: THE_GARAGE.doorCenterZ - THE_GARAGE.doorWidth / 2,
+      hi: THE_GARAGE.doorCenterZ + THE_GARAGE.doorWidth / 2,
+      centerZ: THE_GARAGE.doorCenterZ,
+      width: THE_GARAGE.doorWidth,
+    },
+    {
+      lo:
+        THE_GARAGE.conference.westDoorCenterZ -
+        THE_GARAGE.conference.westDoorWidth / 2,
+      hi:
+        THE_GARAGE.conference.westDoorCenterZ +
+        THE_GARAGE.conference.westDoorWidth / 2,
+      centerZ: THE_GARAGE.conference.westDoorCenterZ,
+      width: THE_GARAGE.conference.westDoorWidth,
     },
     ...BRANCH_DOORS.map((door) => ({
       lo: door.centerZ - door.width / 2,
@@ -124,6 +133,12 @@ export function CentralCorridor() {
     // stretch along Alcove A (Z: -62..-57) can render opaque separately
     // from the rest of The Station's west wall (glass).
     -57,
+    // Break at TheGarage's own Z boundaries so its glass storefront
+    // stretch and its conference sub-room's glass stretch each render
+    // as their own segments.
+    THE_GARAGE.southZ,
+    THE_GARAGE.northZ,
+    THE_GARAGE.conference.northZ,
   ]
 
   // Wall segments: subtract the union of openings + gaps from the east
@@ -180,7 +195,12 @@ export function CentralCorridor() {
         // so the alcove reads as an enclosed office.
         const inStation =
           lo >= -57 && hi <= THE_STATION.southZ
-        const isGlass = inLab || inBakery || inStation
+        // TheGarage: glass along both the main floor's Z-span AND its
+        // conference sub-room's Z-span (both share their west wall
+        // coplanar with the corridor east wall).
+        const inGarage =
+          lo >= THE_GARAGE.conference.northZ && hi <= THE_GARAGE.southZ
+        const isGlass = inLab || inBakery || inStation || inGarage
         return (
           <WallPanel
             key={`east-${i}`}
@@ -201,18 +221,11 @@ export function CentralCorridor() {
         />
       ))}
 
-      {/* Dead-end door: visible passage, physically sealed. Swap for a
-          sensor collider when the branch scene beyond it lands. */}
-      <DoorBlocker
-        position={[eastX, deadEndDoorZ]}
-        width={deadEndDoorWidth}
-        spansX={false}
-      />
-
-      {/* Branch doors: sealed the same way, but each one is paired with a
-          zone-activation rect (see BRANCH_DOORS.activationRect) so the
-          branch's <LazyBranch> mounts as the player approaches. When a
-          branch scene exists, remove that door's blocker. */}
+      {/* Branch doors: sealed placeholder doorways whose branch scenes
+          don't exist yet. Each is paired with a zone-activation rect
+          (see BRANCH_DOORS.activationRect) so the branch's
+          <LazyBranch> mounts as the player approaches. When a branch
+          scene exists, remove that door's blocker. */}
       {BRANCH_DOORS.map((door) => (
         <DoorBlocker
           key={`branch-block-${door.id}`}
@@ -235,6 +248,24 @@ export function CentralCorridor() {
       <Door
         position={[eastX, THE_STATION.doorCenterZ]}
         width={THE_STATION.doorWidth}
+        spansX={false}
+        blocking={false}
+        open
+      />
+
+      {/* TheGarage entrance — same treatment. */}
+      <Door
+        position={[eastX, THE_GARAGE.doorCenterZ]}
+        width={THE_GARAGE.doorWidth}
+        spansX={false}
+        blocking={false}
+        open
+      />
+
+      {/* TheGarage conference sub-room entrance on the corridor. */}
+      <Door
+        position={[eastX, THE_GARAGE.conference.westDoorCenterZ]}
+        width={THE_GARAGE.conference.westDoorWidth}
         spansX={false}
         blocking={false}
         open

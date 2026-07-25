@@ -27,6 +27,9 @@ const TheLab = lazy(() => import('./TheLab').then((m) => ({ default: m.TheLab })
 const TheStation = lazy(() =>
   import('./TheStation').then((m) => ({ default: m.TheStation })),
 )
+const TheGarage = lazy(() =>
+  import('./TheGarage').then((m) => ({ default: m.TheGarage })),
+)
 const Outdoor = lazy(() => import('./Outdoor').then((m) => ({ default: m.Outdoor })))
 
 interface OfficeWorldProps {
@@ -81,6 +84,11 @@ export default function OfficeWorld({ controlsDisabled }: OfficeWorldProps) {
       <ProximityBranch room="the-station">
         <FadeIn>
           <TheStation />
+        </FadeIn>
+      </ProximityBranch>
+      <ProximityBranch room="the-garage">
+        <FadeIn>
+          <TheGarage />
         </FadeIn>
       </ProximityBranch>
       {/* Outdoor stays zone-based — a trigger-style branch, not a
