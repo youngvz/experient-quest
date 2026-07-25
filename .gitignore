@@ -29,3 +29,7 @@ playwright/.cache
 *.sln
 *.sw?
 .claude/worktrees/
+
+# Backups produced by scripts/optimize-glb.mjs and scripts/optimize-png.mjs
+*.glb.bak
+*.png.bak

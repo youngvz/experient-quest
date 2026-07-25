@@ -176,6 +176,37 @@ Source or generated model
 
 Use Meshopt as the normal starting point for geometry compression. Use Draco selectively for static geometry when its size benefit justifies decode cost.
 
+`scripts/optimize-glb.mjs` (also `npm run optimize-glb` or the
+`/optimize-glb` slash command) implements the "glTF-Transform
+optimization" step — prunes unused animation clips and applies Meshopt
+or Draco compression in one pass.
+
+## 2D pixel-art raster pipeline
+
+Character portraits and other pixel-art PNGs are AI-upscaled at authoring
+time, so the source raster is usually much larger than the CSS render
+target. Resize before shipping — a 3×DPR headroom over the largest CSS
+size is plenty (portraits render into a 192-px frame today; 768 px cover
+3×DPR retina).
+
+```text
+Source PNG (any size)
+  -> nearest-neighbor resize to max side length (default 768 px)
+  -> palette quantization (indexed PNG8, 256 colors)
+  -> zlib max effort
+  -> versioned public asset path
+```
+
+Nearest-neighbor is critical — Lanczos or bicubic anti-alias the pixels
+and defeat `image-rendering: pixelated` in CSS. See `docs/performance.md`
+"Textures" section (*"Resize textures to their actual display needs"*).
+
+`scripts/optimize-png.mjs` (also `npm run optimize-png` or the
+`/optimize-png` slash command) implements this pipeline. It's path-
+agnostic — pass any `.png` and it overwrites in place with a `.png.bak`
+backup. Rerun with `--palette=off` if a specific file bands on soft
+alpha edges.
+
 ## Blender conventions
 
 - Keep scale and orientation consistent.

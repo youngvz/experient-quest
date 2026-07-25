@@ -1,0 +1,13 @@
+{
+  "name": "experient-quest-scripts",
+  "private": true,
+  "type": "module",
+  "description": "Offline tooling for experient-quest (asset pipeline etc.). Not part of the app bundle.",
+  "dependencies": {
+    "@gltf-transform/core": "^4.0.0",
+    "@gltf-transform/extensions": "^4.0.0",
+    "@gltf-transform/functions": "^4.0.0",
+    "draco3dgltf": "^1.5.7",
+    "meshoptimizer": "^0.22.0"
+  }
+}
