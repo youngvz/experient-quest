@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react'
+import { touchInput } from '../../game/input/touchInput'
 import { useGameEvent } from '../../hooks/useGameEvents'
 import './InteractionPrompt.css'
 
@@ -29,8 +30,13 @@ export function InteractionPrompt() {
   if (!prompt) return null
 
   return (
-    <div className="interaction-prompt" aria-live="polite">
+    <button
+      type="button"
+      className="interaction-prompt"
+      aria-live="polite"
+      onClick={() => touchInput.emitInteract()}
+    >
       {prompt}
-    </div>
+    </button>
   )
 }
