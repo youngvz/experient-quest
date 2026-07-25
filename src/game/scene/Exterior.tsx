@@ -6,6 +6,7 @@ import {
   ROOM_DEPTH,
   ROOM_WIDTH,
   THE_BAKERY,
+  THE_STATION,
 } from '../constants/gameConstants'
 
 interface BuildingInstance {
@@ -21,7 +22,7 @@ interface BuildingInstance {
 const BUILDING_MARGIN = 4
 const BUILDING_AABB = (() => {
   const minX = Math.min(CENTRAL_CORRIDOR.westX, -ROOM_WIDTH / 2)
-  const maxX = Math.max(EAST_CORRIDOR.eastX, ROOM_WIDTH / 2)
+  const maxX = Math.max(EAST_CORRIDOR.eastX, ROOM_WIDTH / 2, THE_STATION.eastX)
   const minZ = Math.min(CENTRAL_CORRIDOR.northZ, -ROOM_DEPTH / 2)
   const maxZ = Math.max(
     THE_BAKERY.centerX + THE_BAKERY.depth,

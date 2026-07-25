@@ -7,6 +7,7 @@ import {
   THE_BAKERY,
   THE_BAKERY_WEST_DOOR,
   THE_LAB,
+  THE_STATION,
   ROOM_DEPTH,
   WALL_HEIGHT,
   WALL_THICKNESS,
@@ -80,6 +81,12 @@ export function CentralCorridor() {
       centerZ: THE_LAB.doorCenterZ,
       width: THE_LAB.doorWidth,
     },
+    {
+      lo: THE_STATION.doorCenterZ - THE_STATION.doorWidth / 2,
+      hi: THE_STATION.doorCenterZ + THE_STATION.doorWidth / 2,
+      centerZ: THE_STATION.doorCenterZ,
+      width: THE_STATION.doorWidth,
+    },
     ...BRANCH_DOORS.map((door) => ({
       lo: door.centerZ - door.width / 2,
       hi: door.centerZ + door.width / 2,
@@ -95,15 +102,47 @@ export function CentralCorridor() {
     { lo: CORRIDOR_POCKET.northZ, hi: EAST_CORRIDOR.southZ },
   ]
 
-  // Wall segments: subtract the union of openings + gaps from the east wall.
+  // Zero-width "seams" at each adjacent room's north/south wall Z-values.
+  // These break wall segments at room boundaries so the glass predicate
+  // below (which checks whether a segment lies *inside* a room's Z-span)
+  // matches correctly. Without seams, a single segment can straddle
+  // both inside-a-room and outside-a-room stretches → predicate fails
+  // and the whole segment renders opaque.
+  const seams: number[] = [
+    THE_LAB.northZ,
+    THE_LAB.westSouthZ,
+    THE_STATION.northZ,
+    THE_STATION.southZ,
+    // Also break at The Station's Alcove A south edge so the wall
+    // stretch along Alcove A (Z: -62..-57) can render opaque separately
+    // from the rest of The Station's west wall (glass).
+    -57,
+  ]
+
+  // Wall segments: subtract the union of openings + gaps from the east
+  // wall, and also break the wall at every seam.
   const cutouts = [...openings, ...gaps].sort((a, b) => a.lo - b.lo)
+  const seamsSet = seams
+    .filter((z) => z > northZ && z < southZ)
+    .sort((a, b) => a - b)
   const wallSegments: [number, number][] = []
   let cursor = northZ
+  const pushSpan = (from: number, to: number) => {
+    if (to - from <= 0.01) return
+    let start = from
+    for (const seam of seamsSet) {
+      if (seam > start && seam < to) {
+        wallSegments.push([start, seam])
+        start = seam
+      }
+    }
+    wallSegments.push([start, to])
+  }
   for (const cutout of cutouts) {
-    if (cutout.lo - cursor > 0.01) wallSegments.push([cursor, cutout.lo])
+    if (cutout.lo - cursor > 0.01) pushSpan(cursor, cutout.lo)
     cursor = cutout.hi
   }
-  if (southZ - cursor > 0.01) wallSegments.push([cursor, southZ])
+  if (southZ - cursor > 0.01) pushSpan(cursor, southZ)
 
   return (
     <>
@@ -122,14 +161,19 @@ export function CentralCorridor() {
           exterior ring buildings north of the office don't show through
           as "huge cubes" from inside the corridor. */}
       {clipSegments(wallSegments).map(([lo, hi], i) => {
-        // Glass along TheLab's span and along TheBakery's west-wall span
-        // so the corridor's east wall reads as a storefront where it
-        // meets a room the player can occupy.
+        // Glass along the Z-spans of every room whose west boundary is
+        // shared with the corridor's east wall — reads as a storefront
+        // wherever the player can look into a room.
         const bakeryNorthZ = ROOM_DEPTH / 2
         const bakerySouthZ = bakeryNorthZ + THE_BAKERY.depth
         const inLab = lo >= THE_LAB.northZ && hi <= THE_LAB.westSouthZ
         const inBakery = lo >= bakeryNorthZ && hi <= bakerySouthZ
-        const isGlass = inLab || inBakery
+        // The Station: glass everywhere along its Z-span EXCEPT the
+        // stretch behind Alcove A (Z ∈ [-62, -57]), which stays opaque
+        // so the alcove reads as an enclosed office.
+        const inStation =
+          lo >= -57 && hi <= THE_STATION.southZ
+        const isGlass = inLab || inBakery || inStation
         return (
           <WallPanel
             key={`east-${i}`}
@@ -175,6 +219,15 @@ export function CentralCorridor() {
       <Door
         position={[eastX, THE_LAB.doorCenterZ]}
         width={THE_LAB.doorWidth}
+        spansX={false}
+        blocking={false}
+        open
+      />
+
+      {/* TheStation entrance — same treatment. */}
+      <Door
+        position={[eastX, THE_STATION.doorCenterZ]}
+        width={THE_STATION.doorWidth}
         spansX={false}
         blocking={false}
         open

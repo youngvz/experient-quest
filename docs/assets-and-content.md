@@ -41,30 +41,72 @@ Building blocks (all in `src/game/scene/`):
 - Reusable prop primitives (singular): `<Desk>`, `<Chair>`, `<Laptop>`,
   `<Monitor>`, `<Paper>`, `<Television>`, `<Whiteboard>`.
 - Room-specific composites (plural or `[Room][Plural]`):
-  `<TheBakeryCabinets>`, `<Whiteboards>` (conference + alcove),
-  `<Televisions>` (main + alcove), `<ConferenceChairs>`,
+  `<TheBakeryCabinets>`, `<TheLabCabinets>`, `<Whiteboards>` (conference
+  + alcove), `<Televisions>` (main + alcove), `<ConferenceChairs>`,
   `<ConferenceLaptops>`, `<ConferenceTable>`.
+- Reusable composite: `<CabinetRow>` — kitchen-style base cabinets +
+  optional sink; both `<TheBakeryCabinets>` and `<TheLabCabinets>`
+  wrap it with a config picking wall side, count, and sink index.
 - `<Employee>` — rigged NPC that loads a GLB, autofits height, plays one
   looping clip (regex-picked via `clipPatterns`), and stands as a fixed
   collider. Callers pass a floor-level `y` (typically `0`).
 - Room-level containers: `<ConferenceFloor>`, `<ConferenceRoom>`,
   `<TheBakery>`, `<CentralCorridor>`, `<EastCorridor>`,
-  `<CorridorPocket>`, `<Exterior>`.
+  `<CorridorPocket>`, `<TheLab>`, `<TheStation>`, `<Exterior>`.
+  `<TheStation>` also renders The Boardroom (an inline sub-room) and
+  the two east-strip alcoves; `<TheLab>` renders its three east-strip
+  alcoves inline.
 
 Layout beyond the conference room:
 
-- `<TheBakery>` — The Bakery (Z ≈ 7..20) with desks, kitchen,
-  alcoves.
+- `<TheBakery>` — The Bakery (Z ∈ [+7, +20]) with desks, kitchen, and
+  two NE alcove offices.
 - `<CentralCorridor>` — long N–S corridor west of the office
-  (X ∈ [−13, −10], Z ∈ [−70, +20]) reached through the The Bakery's
-  west doorway. Its east wall has parametric openings for
-  `THE_BAKERY_WEST_DOOR`, the dead-end door, `BRANCH_DOORS`, and
-  full-height gaps for `CORRIDOR_POCKET` (no lintel).
-- `<CorridorPocket>` — 6×6 open pocket bulging east off the central corridor
-  (X ∈ [−10, −4], Z ∈ [−16, −10]); houses a workbench + stools.
+  (X ∈ [−13, −10], Z ∈ [−70, +20]) reached through The Bakery's west
+  doorway. Its south door is where the player spawns. East wall has
+  parametric openings for `THE_BAKERY_WEST_DOOR`, the dead-end door,
+  `THE_LAB.doorCenterZ`, `THE_STATION.doorCenterZ`, and `BRANCH_DOORS`,
+  plus a full-height gap for `CORRIDOR_POCKET`. Segments that lie
+  inside an adjacent room's Z-span render as glass so the wall reads
+  as a continuous storefront wherever the corridor meets a room. The
+  wall is broken at "seams" (each room's north/south wall Z-values)
+  so the glass-vs-opaque predicate matches cleanly on each segment.
+- `<CorridorPocket>` — 6×6 open pocket bulging east off the central
+  corridor (X ∈ [−10, −4], Z ∈ [−16, −10]); houses a workbench + stools
+  and Distasi.
 - `<EastCorridor>` — east-running corridor above the conference room
   (X ∈ [−10, +10], Z ∈ [−10, −7]) reached through the pocket. Its west
-  end and the pocket's south side are one continuous open span.
+  end and the pocket's south side are one continuous open span. North
+  wall doubles as `<TheLab>`'s south boundary; a doorway there opens
+  into TheLab at X=+3.
+- `<TheLab>` — first branch room, L-shaped, X ∈ [−10, +10], Z ∈
+  [−32, ...]. Corridor doorway at Z=−24. Interior east strip has three
+  alcoves (A / B / C, each 5 m deep) with west-facing doorways; A and B
+  are furnished workstations. Kitchen row `<TheLabCabinets>` sits
+  against Alcove A's outside (west) partition.
+- `<TheStation>` — second branch room, L-shaped (NE corner clipped),
+  X ∈ [−10, +14], Z ∈ [−62, −39]. Corridor doorway at Z=−42. Three
+  north-side alcoves (A / B / C, A and B furnished with south-facing
+  workstations, glass south walls; C empty and opaque). Three
+  east-side alcoves (D / E / F, west-facing doorways, D and E and F
+  all furnished; F is expanded west to reach The Boardroom). Two solo
+  workstations against the west (glass) wall.
+- **The Boardroom** — enclosed sub-room inside TheStation at
+  X ∈ [−4, +5], Z ∈ [−48, −39], rendered inline by `<TheStation>`.
+  West wall glass with an open door at Z=−42; north and east walls
+  opaque. Wall-mounted TV on the north wall faces a 4-seat brown
+  meeting table.
+
+Zone ids (registered in `Player.tsx`): `office` (fallback),
+`central-corridor`, `the-lab`, `the-station`, `the-boardroom`. Zones
+are registered most-specific-first so The Boardroom wins on
+first-match over TheStation.
+
+Glass storefront pattern: wherever a walkable room meets another
+walkable space, both surfaces on the shared plane render as glass
+with `divisions={1}`. Perimeter walls facing the exterior stay
+opaque. `WallPanel` auto-inserts vertical mullions in glass panes
+every ~4 m; pass `divisions={1}` to skip them for clean panes.
 
 Recipe — add a new room:
 

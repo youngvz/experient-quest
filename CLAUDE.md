@@ -67,11 +67,16 @@ before proposing a large migration.
   (`WallPanel`, `DoorHeader`, `DoorBlocker`, `Door`) live in
   `wallPrimitives.tsx` + `Door.tsx`. Rooms:
   `ConferenceFloor`, `ConferenceRoom`, `TheBakery`, `CentralCorridor`,
-  `EastCorridor`, `CorridorPocket`, `Exterior`. Room-specific composites:
-  `TheBakeryCabinets`, `Whiteboards` (conference + alcove),
-  `Televisions` (main + alcove), `ConferenceChairs`, `ConferenceLaptops`,
-  `ConferenceTable`. Reusable prop primitives (singular): `Chair`, `Desk`,
-  `Laptop`, `Monitor`, `Paper`, `Whiteboard`, `Television`. Characters:
+  `EastCorridor`, `CorridorPocket`, `TheLab`, `TheStation`, `Exterior`.
+  `TheStation` contains a sub-room (`The Boardroom`) rendered inline;
+  `TheLab` and `TheStation` both carry interior alcove strips wired via
+  their own constants blocks. Room-specific composites:
+  `TheBakeryCabinets`, `TheLabCabinets`, `Whiteboards` (conference +
+  alcove), `Televisions` (main + alcove), `ConferenceChairs`,
+  `ConferenceLaptops`, `ConferenceTable`. Kitchen-style cabinet rows
+  share the reusable `CabinetRow` component. Reusable prop primitives
+  (singular): `Chair`, `Desk`, `Laptop`, `Monitor`, `Paper`, `Whiteboard`,
+  `Television`. Characters:
   `Player` (dynamic Rapier RigidBody + rigged GLB from
   `public/assets/player/youngvz.glb`), `Employee` (fixed collider
   NPC that loads a GLB and loops a configurable animation clip; e.g.
@@ -95,16 +100,20 @@ before proposing a large migration.
 Naming conventions in `src/game/scene/`:
 
 - **Rooms end in the space type**: `ConferenceRoom`, `TheBakery`,
-  `CentralCorridor`, `EastCorridor`, `CorridorPocket`. Walking spaces are
-  "corridors", not "hallways".
+  `CentralCorridor`, `EastCorridor`, `CorridorPocket`, `TheLab`,
+  `TheStation`. Walking spaces are "corridors", not "hallways".
+  Themed / named rooms use `The[Name]` (`TheBakery`, `TheLab`,
+  `TheStation`, and sub-rooms like The Boardroom).
 - **Primitives are singular** (`Chair`, `Desk`, `Whiteboard`, `Television`);
   **room-specific bundled sets are named `[Room][Plural]`**
   (`ConferenceChairs`, `ConferenceLaptops`, `TheBakeryCabinets`,
-  `Whiteboards` and `Televisions` when the set spans multiple rooms).
+  `TheLabCabinets`, `Whiteboards` and `Televisions` when the set spans
+  multiple rooms).
 - **String IDs are kebab-case with no `kind-` prefix**. Presentation-stop
-  ids: `events-tv`, `distasi`. Zone ids: `central-corridor`, `office`
-  (fallback), `branch-alpha`. Quest ids: `weekly-status-meeting`. The
-  container each id lives in already disambiguates its type.
+  ids: `events-tv`, `distasi`. Zone ids: `office` (fallback),
+  `central-corridor`, `the-lab`, `the-station`, `the-boardroom`.
+  Quest ids: `weekly-status-meeting`. The container each id lives in
+  already disambiguates its type.
 
 Player controller notes: it's a **dynamic** RigidBody with Y-translation and
 all rotations **locked** and `gravityScale=0` — driven with
@@ -128,13 +137,44 @@ collider); the interior conference-room doorway stays open. When adding
 level transitions, swap `DoorBlocker` for a sensor collider that emits a
 `gameEvents` message.
 
-Layout beyond the conference room: the south hallway's west doorway opens
-into the long `CentralCorridor` (X ∈ [−13, −10]). Near the top of that
-corridor a 6×6 pocket (`CORRIDOR_POCKET`) bulges east, and from that
-pocket the `EastCorridor` runs east along the top of the conference room.
-Pocket and east corridor share their boundary — the wall is carved out so
-they read as one continuous L-shaped space. The east corridor's east
-doorway stands open (no blocker).
+Layout beyond the conference room:
+
+- **`TheBakery`** — south of the conference room (Z ∈ [+7, +20]) with
+  desks, kitchen (`TheBakeryCabinets`), and NE alcoves. Player spawn
+  door is on the west corridor's south wall; the bakery's own south
+  door is sealed.
+- **`CentralCorridor`** — long N–S corridor west of the office
+  (X ∈ [−13, −10], Z ∈ [−70, +20]). Player spawn sits just south of
+  its south door. East wall renders as glass along every room's
+  Z-span (bakery / lab / station); each room's own west wall is also
+  glass on the same plane, so both surfaces read as storefront from
+  either side. Alcove A in TheStation (Z ∈ [−62, −57]) is the one
+  exception — its west stretch is opaque.
+- **`CorridorPocket`** — 6×6 open T-junction (X ∈ [−10, −4], Z ∈
+  [−16, −10]) that flows south into `EastCorridor`. Distasi lives here.
+- **`EastCorridor`** — east-running corridor above the conference room
+  (X ∈ [−10, +10], Z ∈ [−10, −7]) reached through the pocket. Its
+  east door is open; north wall shared with `TheLab`'s south boundary.
+- **`TheLab`** — first branch room off the central corridor at Z=−24.
+  L-shaped (SW corner bitten out by the pocket + east corridor), 20 m
+  wide × 22 m long. Interior east strip has three alcoves (A / B / C);
+  A and B are furnished workstations; C is empty. `TheLabCabinets`
+  is a kitchen row against Alcove A's west partition.
+- **`TheStation`** — second branch room at Z=−42. L-shaped (NE corner
+  clipped), 24 m wide × 23 m long. Three north-side alcoves (A / B / C,
+  A and B furnished with south-facing workstations, C empty) and three
+  east-side alcoves (D / E / F, all furnished with west-facing
+  workstations). F is expanded west to share its west wall with
+  **The Boardroom** — an enclosed sub-room inside TheStation at
+  X ∈ [−4, +5], Z ∈ [−48, −39], with a wall-mounted TV facing a
+  4-seat meeting table. Two solo workstations sit against The
+  Station's west (glass) wall in the main floor.
+
+All room-to-room walls that face a walkable space render as glass
+storefront (both surfaces glass, coplanar) with `divisions={1}` so the
+panes are unbroken. Opaque perimeter walls face the exterior. Room
+components own their own floor slabs; `ConferenceFloor` is the only
+one currently split into its own file.
 
 Adding NPCs: use `<Employee url=... position=[x,0,z] rotationY={r}
 clipPatterns={[/wave/i, ...]} />`. The component auto-fits the GLB to
@@ -176,6 +216,7 @@ Load only the documents relevant to the current task.
 | Overall structure, new modules, refactors, folder placement | `docs/architecture.md` |
 | Player movement, interactions, camera, input, NPCs, animations | `docs/gameplay-systems.md` |
 | Office maps, GLB files, Blender, sprites, billboards, asset imports, AI asset tools | `docs/assets-and-content.md` |
+| Building a new room, editing an existing room, placing furniture / walls / doors via ASCII grid | `docs/room-authoring.md` |
 | FPS, draw calls, memory, mobile devices, quality settings | `docs/performance.md` |
 | Unit tests, E2E tests, acceptance criteria, regression coverage | `docs/testing.md` |
 | Hosting, CDN, headers, CORS, CSP, caching, release checks | `docs/deployment-and-security.md` |
