@@ -1,32 +1,21 @@
-import {
-  ROOM_DEPTH,
-  THE_BAKERY,
-  THE_LAB,
-  THE_STATION,
-} from '../../constants/gameConstants'
+import { THE_LAB, THE_STATION } from '../../constants/gameConstants'
 import type { ProximityAnchor } from './ProximityManager'
 
 // Radii in meters: how far *outside* a room's bounding rect the player
-// can be before the room mounts. Sized so the chunk starts fetching
-// before the player reaches the room — enough headroom for the ~50-500ms
-// network round-trip even at run speed (PLAYER_RUN_SPEED = 16.25 m/s).
-const BAKERY_RADIUS = 10
-const LAB_RADIUS = 15
-const STATION_RADIUS = 15
+// can be before the room mounts. Sized generously so the chunk fetches,
+// parses, and *renders* well before the room enters the player's sight
+// line — the branch rooms are visible through glass storefront walls
+// from the central corridor, so a pop-in inside the radius still reads
+// as stark. At PLAYER_RUN_SPEED (16.25 m/s) these give ~2-3s of
+// headroom past the nearest glass line-of-sight. FadeIn wraps each
+// branch to smooth the final transition once the chunk parses.
+const LAB_RADIUS = 30
+const STATION_RADIUS = 30
 
-// Spawn is at Z=21, just 1m south of THE_BAKERY.southZ (=20). The 10m
-// buffer here means the Bakery chunk is already fetching as the shell
-// paints — matches the user's request that the spawn-adjacent room load
-// immediately while further rooms stay dormant.
+// The Bakery is eagerly imported in OfficeWorld (spawn-adjacent, must be
+// present frame 1) so it has no proximity anchor here. Lab and Station
+// stream in as the player walks north.
 export const PROXIMITY_ANCHORS: readonly ProximityAnchor[] = [
-  {
-    id: 'the-bakery',
-    minX: THE_BAKERY.centerX - THE_BAKERY.width / 2,
-    maxX: THE_BAKERY.centerX + THE_BAKERY.width / 2,
-    minZ: ROOM_DEPTH / 2,
-    maxZ: ROOM_DEPTH / 2 + THE_BAKERY.depth,
-    radius: BAKERY_RADIUS,
-  },
   // TheLab is L-shaped — register both rects under one id.
   {
     id: 'the-lab',

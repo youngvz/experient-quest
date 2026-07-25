@@ -9,11 +9,13 @@ import { ConferenceRoom } from './ConferenceRoom'
 import { ConferenceTable } from './ConferenceTable'
 import { CorridorPocket } from './CorridorPocket'
 import { EastCorridor } from './EastCorridor'
+import { FadeIn } from './FadeIn'
 import { LazyBranch } from './LazyBranch'
 import { NorthEastCorridor } from './NorthEastCorridor'
 import { Player } from './Player'
 import { ProximityBranch } from './ProximityBranch'
 import { CentralCorridor } from './CentralCorridor'
+import { TheBakery } from './TheBakery'
 import { Televisions } from './Televisions'
 import { TheArchive } from './TheArchive'
 import { TheAtrium } from './TheAtrium'
@@ -25,7 +27,6 @@ const TheLab = lazy(() => import('./TheLab').then((m) => ({ default: m.TheLab })
 const TheStation = lazy(() =>
   import('./TheStation').then((m) => ({ default: m.TheStation })),
 )
-const TheBakery = lazy(() => import('./TheBakery').then((m) => ({ default: m.TheBakery })))
 const Outdoor = lazy(() => import('./Outdoor').then((m) => ({ default: m.Outdoor })))
 
 interface OfficeWorldProps {
@@ -63,23 +64,31 @@ export default function OfficeWorld({ controlsDisabled }: OfficeWorldProps) {
       <TheAtrium />
       <TheArchive />
 
+      {/* The Bakery is adjacent to the spawn point — eagerly imported
+          so it's on-screen from frame 1 with no pop-in through the
+          conference room's glass. */}
+      <TheBakery />
+
       {/* Branch rooms mount by *distance* from the player (see
-          proximity/anchors.ts for radii). Bakery has a big radius so
-          it's loading from spawn; Lab and Station stream in as the
-          player walks north up the corridor. */}
-      <ProximityBranch room="the-bakery">
-        <TheBakery />
-      </ProximityBranch>
+          proximity/anchors.ts for radii). Lab and Station stream in
+          as the player walks north up the corridor; FadeIn smooths
+          the transition once each chunk finishes parsing. */}
       <ProximityBranch room="the-lab">
-        <TheLab />
+        <FadeIn>
+          <TheLab />
+        </FadeIn>
       </ProximityBranch>
       <ProximityBranch room="the-station">
-        <TheStation />
+        <FadeIn>
+          <TheStation />
+        </FadeIn>
       </ProximityBranch>
       {/* Outdoor stays zone-based — a trigger-style branch, not a
           proximity one. Real outdoor doorway will replace this. */}
       <LazyBranch zone="outdoor">
-        <Outdoor />
+        <FadeIn>
+          <Outdoor />
+        </FadeIn>
       </LazyBranch>
 
       <Suspense fallback={null}>
