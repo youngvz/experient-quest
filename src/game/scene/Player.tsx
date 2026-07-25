@@ -21,6 +21,8 @@ import {
   PLAYER_SPAWN_FACING,
   PLAYER_SPEED,
   CENTRAL_CORRIDOR,
+  ROOM_DEPTH,
+  THE_BAKERY,
   THE_BOARDROOM,
   THE_LAB,
   THE_STATION,
@@ -36,7 +38,6 @@ import { useGameStore } from '../state/gameStore'
 import { ZoneManager } from '../zones/ZoneManager'
 
 const PLAYER_MODEL_URL = CHARACTERS.youngvz.glbUrl
-useGLTF.preload(PLAYER_MODEL_URL)
 
 interface PlayerProps {
   controlsDisabled: boolean
@@ -257,6 +258,25 @@ export function Player({ controlsDisabled }: PlayerProps) {
       maxX: THE_STATION.eastX,
       minZ: THE_STATION.northZ,
       maxZ: THE_STATION.southZ,
+    })
+    // The Bakery — south of the conference room. Rect matches the
+    // room's floor slab (ROOM_DEPTH/2 to that + THE_BAKERY.depth).
+    z.registerZone({
+      id: 'the-bakery',
+      minX: THE_BAKERY.centerX - THE_BAKERY.width / 2,
+      maxX: THE_BAKERY.centerX + THE_BAKERY.width / 2,
+      minZ: ROOM_DEPTH / 2,
+      maxZ: ROOM_DEPTH / 2 + THE_BAKERY.depth,
+    })
+    // Outdoor scaffold — far south of the bakery so the current spawn
+    // (Z=21, just south of the corridor exit) stays in the `office`
+    // fallback. Tighten this rect once a real outdoor doorway exists.
+    z.registerZone({
+      id: 'outdoor',
+      minX: -200,
+      maxX: 200,
+      minZ: ROOM_DEPTH / 2 + THE_BAKERY.depth + 10,
+      maxZ: 500,
     })
     // Zone covers the whole central corridor floor. `office` is the
     // fallback so anything not in the corridor or a room defaults to it.

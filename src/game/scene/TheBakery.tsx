@@ -8,6 +8,7 @@ import {
   THE_BAKERY_DESKS,
   THE_BAKERY_DESK_CHAIRS,
   THE_BAKERY_DESK_SIZE,
+  THE_BAKERY_EAST_CABINETS,
   THE_BAKERY_KITCHEN_TABLE,
   THE_BAKERY_SOUTH_DOOR,
   THE_BAKERY_SOUTH_WINDOWS,
@@ -17,6 +18,7 @@ import {
   WALL_HEIGHT,
   WALL_THICKNESS,
 } from '../constants/gameConstants'
+import { CabinetRow } from './CabinetRow'
 import { Chair } from './Chair'
 import { Desk } from './Desk'
 import { Door } from './Door'
@@ -349,6 +351,7 @@ export function TheBakery() {
           color={i === 0 ? '#ede8dc' : undefined}
         />
       ))}
+      <CabinetRow config={THE_BAKERY_EAST_CABINETS} />
     </>
   )
 }
