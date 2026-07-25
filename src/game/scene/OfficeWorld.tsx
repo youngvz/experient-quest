@@ -10,10 +10,12 @@ import { ConferenceTable } from './ConferenceTable'
 import { CorridorPocket } from './CorridorPocket'
 import { EastCorridor } from './EastCorridor'
 import { LazyBranch } from './LazyBranch'
+import { NorthEastCorridor } from './NorthEastCorridor'
 import { Player } from './Player'
 import { ProximityBranch } from './ProximityBranch'
 import { CentralCorridor } from './CentralCorridor'
 import { Televisions } from './Televisions'
+import { TheArchive } from './TheArchive'
 import { TheAtrium } from './TheAtrium'
 import { TheCommons } from './TheCommons'
 import { TheLibrary } from './TheLibrary'
@@ -45,6 +47,7 @@ export default function OfficeWorld({ controlsDisabled }: OfficeWorldProps) {
       <CentralCorridor />
       <EastCorridor />
       <CorridorPocket />
+      <NorthEastCorridor />
       <Whiteboards />
       <Televisions />
       <ConferenceTable />
@@ -58,6 +61,7 @@ export default function OfficeWorld({ controlsDisabled }: OfficeWorldProps) {
       <TheCommons />
       <TheLibrary />
       <TheAtrium />
+      <TheArchive />
 
       {/* Branch rooms mount by *distance* from the player (see
           proximity/anchors.ts for radii). Bakery has a big radius so
