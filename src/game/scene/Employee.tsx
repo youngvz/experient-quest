@@ -40,6 +40,9 @@ export function Employee({
         const mesh = obj as THREE.Mesh
         mesh.castShadow = true
         mesh.receiveShadow = false
+        // See Player.tsx — SkinnedMesh's frustum culling can drop
+        // outlying meshes (hair, hands) mid-animation.
+        if ((mesh as THREE.SkinnedMesh).isSkinnedMesh) mesh.frustumCulled = false
       }
     })
     clone.updateWorldMatrix(true, true)

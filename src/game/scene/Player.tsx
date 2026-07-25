@@ -108,6 +108,11 @@ export function Player({ controlsDisabled }: PlayerProps) {
         const mesh = obj as THREE.Mesh
         mesh.castShadow = true
         mesh.receiveShadow = false
+        // SkinnedMesh's frustum culling uses the un-skinned bounding box,
+        // so outlying bones (hair, hands) can drift outside it during
+        // animation and get culled for a frame even when clearly on-screen.
+        // Character meshes are cheap enough to always render.
+        if ((mesh as THREE.SkinnedMesh).isSkinnedMesh) mesh.frustumCulled = false
       }
     })
 
