@@ -1,5 +1,7 @@
-import { Environment, Instance, Instances } from '@react-three/drei'
-import { useMemo } from 'react'
+import { Instance, Instances } from '@react-three/drei'
+import { Suspense, lazy, useMemo } from 'react'
+
+const ExteriorEnvironment = lazy(() => import('./ExteriorEnvironment'))
 import {
   CENTRAL_CORRIDOR,
   EAST_CORRIDOR,
@@ -91,7 +93,9 @@ export function Exterior() {
 
   return (
     <>
-      <Environment preset="sunset" background={false} />
+      <Suspense fallback={null}>
+        <ExteriorEnvironment />
+      </Suspense>
 
       <mesh position={[0, groundY - 0.1, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <circleGeometry args={[groundRadius, 64]} />

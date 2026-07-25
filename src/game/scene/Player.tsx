@@ -21,6 +21,8 @@ import {
   PLAYER_SPAWN_FACING,
   PLAYER_SPEED,
   CENTRAL_CORRIDOR,
+  ROOM_DEPTH,
+  THE_BAKERY,
   THE_BOARDROOM,
   THE_LAB,
   THE_STATION,
@@ -34,9 +36,10 @@ import { presentationStops } from '../interactions/interactionTypes'
 import { getStopZoneRect } from './interactionZones'
 import { useGameStore } from '../state/gameStore'
 import { ZoneManager } from '../zones/ZoneManager'
+import { PROXIMITY_ANCHORS } from './proximity/anchors'
+import { ProximityManager } from './proximity/ProximityManager'
 
 const PLAYER_MODEL_URL = CHARACTERS.youngvz.glbUrl
-useGLTF.preload(PLAYER_MODEL_URL)
 
 interface PlayerProps {
   controlsDisabled: boolean
@@ -258,6 +261,25 @@ export function Player({ controlsDisabled }: PlayerProps) {
       minZ: THE_STATION.northZ,
       maxZ: THE_STATION.southZ,
     })
+    // The Bakery — south of the conference room. Rect matches the
+    // room's floor slab (ROOM_DEPTH/2 to that + THE_BAKERY.depth).
+    z.registerZone({
+      id: 'the-bakery',
+      minX: THE_BAKERY.centerX - THE_BAKERY.width / 2,
+      maxX: THE_BAKERY.centerX + THE_BAKERY.width / 2,
+      minZ: ROOM_DEPTH / 2,
+      maxZ: ROOM_DEPTH / 2 + THE_BAKERY.depth,
+    })
+    // Outdoor scaffold — far south of the bakery so the current spawn
+    // (Z=21, just south of the corridor exit) stays in the `office`
+    // fallback. Tighten this rect once a real outdoor doorway exists.
+    z.registerZone({
+      id: 'outdoor',
+      minX: -200,
+      maxX: 200,
+      minZ: ROOM_DEPTH / 2 + THE_BAKERY.depth + 10,
+      maxZ: 500,
+    })
     // Zone covers the whole central corridor floor. `office` is the
     // fallback so anything not in the corridor or a room defaults to it.
     z.registerZone({
@@ -269,6 +291,21 @@ export function Player({ controlsDisabled }: PlayerProps) {
     })
     return z
   }, [])
+
+  // Proximity manager: fires setNearbyRooms whenever the set of rooms
+  // within their radius of the player changes. Independent of zones —
+  // a room can be "nearby" (mounted) without being the active zone.
+  const proximity = useMemo(() => {
+    const setNearbyRooms = useGameStore.getState().setNearbyRooms
+    return new ProximityManager({ onChange: setNearbyRooms })
+  }, [])
+
+  useEffect(() => {
+    for (const anchor of PROXIMITY_ANCHORS) {
+      proximity.registerAnchor(anchor)
+    }
+    return () => proximity.clearAnchors()
+  }, [proximity])
 
   useEffect(() => {
     if (controlsDisabled) manager.disable()
@@ -381,6 +418,8 @@ export function Player({ controlsDisabled }: PlayerProps) {
     manager.update({ x: pos.x, y: pos.z })
     // Zone tracking runs off the same XZ point.
     zones.update(pos.x, pos.z)
+    // Proximity tracking for range-based scene mounting.
+    proximity.update(pos.x, pos.z)
 
     if (!controlsDisabled && !locked && consumeInteract()) {
       manager.trigger()

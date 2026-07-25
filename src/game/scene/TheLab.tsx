@@ -3,9 +3,11 @@ import {
   COLORS,
   THE_LAB,
   THE_LAB_ALCOVES,
+  THE_LAB_CABINETS,
   WALL_HEIGHT,
   WALL_THICKNESS,
 } from '../constants/gameConstants'
+import { CabinetRow } from './CabinetRow'
 import { Chair } from './Chair'
 import { Desk } from './Desk'
 import { Laptop } from './Laptop'
@@ -382,6 +384,7 @@ export function TheLab() {
           </group>
         )
       })}
+      <CabinetRow config={THE_LAB_CABINETS} />
     </>
   )
 }

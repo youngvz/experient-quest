@@ -12,6 +12,27 @@ const base = process.env.DEPLOY_BASE ?? '/experient-quest/'
 export default defineConfig({
   base,
   plugins: [react()],
+  build: {
+    chunkSizeWarningLimit: 1600,
+    rollupOptions: {
+      output: {
+        entryFileNames: 'assets/[name]-[hash].js',
+        chunkFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash][extname]',
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return
+          if (id.includes('@react-three/rapier') || id.includes('@dimforge/rapier3d-compat')) {
+            return 'rapier'
+          }
+          if (id.includes('@react-three/fiber')) return 'r3f'
+          if (id.includes('@react-three/drei')) return 'drei'
+          if (id.includes('three-stdlib') || /[\\/]three[\\/]/.test(id)) return 'three'
+          if (id.includes('zustand')) return 'state'
+          if (/[\\/](react|react-dom|scheduler)[\\/]/.test(id)) return 'react'
+        },
+      },
+    },
+  },
   test: {
     environment: 'jsdom',
     globals: false,
