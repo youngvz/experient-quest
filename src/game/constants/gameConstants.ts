@@ -284,6 +284,224 @@ export const THE_STATION_F_EXPANSION = {
   },
 } as const
 
+// West-side "storefront" rooms hanging off the central corridor. All
+// three sit at X ∈ [westX, CENTRAL_CORRIDOR.westX] — 6 m deep — with
+// their east wall coplanar with the corridor's west wall (rendered as
+// glass from both sides so the corridor reads as a real interior
+// street). None have a corridor-side doorway: they exist purely to
+// enrich sightlines. Z-spans are intentionally offset from the east-
+// side rooms' seams so the two sides feel like they evolved
+// independently rather than mirroring each other.
+export const WEST_ROOM_WEST_X = CENTRAL_CORRIDOR.westX - 6 // -19
+
+// The Commons — open breakout / collab room south of center. Sits
+// mostly behind The Bakery's north edge and the conference room's
+// west wall, with a 2 m offset so its north and south seams don't
+// line up with the east-side rooms.
+export const THE_COMMONS = {
+  westX: WEST_ROOM_WEST_X, // -19
+  eastX: CENTRAL_CORRIDOR.westX, // -13
+  northZ: 2,
+  southZ: 18,
+  // Corridor-side doorway centered on the room's Z midline.
+  doorCenterZ: 10,
+  doorWidth: 2,
+} as const
+
+// Two square meeting tables inside The Commons, spaced along Z. Each
+// table has 4 chairs (one on each cardinal side, facing in). Chair
+// tuples are [x, z, rotationY]. Chair.tsx: local +Z is the facing
+// direction. rotationY = 0 faces +Z; +Math.PI/2 faces +X.
+export const THE_COMMONS_TABLES: readonly {
+  center: [number, number]
+  size: [number, number, number]
+  chairs: [number, number, number][]
+}[] = [
+  {
+    center: [-16, 6.5],
+    size: [1.8, 0.75, 1.8],
+    chairs: [
+      [-16, 4.6, 0], // north side, faces +Z (south, toward table)
+      [-16, 8.4, Math.PI], // south side, faces -Z (north)
+      [-17.9, 6.5, Math.PI / 2], // west side, faces +X (east)
+      [-14.1, 6.5, -Math.PI / 2], // east side, faces -X (west)
+    ],
+  },
+  {
+    center: [-16, 13.5],
+    size: [1.8, 0.75, 1.8],
+    chairs: [
+      [-16, 11.6, 0],
+      [-16, 15.4, Math.PI],
+      [-17.9, 13.5, Math.PI / 2],
+      [-14.1, 13.5, -Math.PI / 2],
+    ],
+  },
+]
+
+// Whiteboard on The Commons' north wall (Z = northZ = +2), facing south.
+export const THE_COMMONS_WHITEBOARD = {
+  centerX: -16,
+  centerY: 1.5,
+  width: 3.5,
+  height: 1.6,
+  wallZ: THE_COMMONS.northZ,
+  facing: 1 as 1 | -1, // faces +Z (south, into the room)
+}
+
+// TV on The Commons' south wall (Z = southZ = +18), facing north.
+export const THE_COMMONS_TV = {
+  centerX: -16,
+  centerY: 1.6,
+  width: 3.2,
+  height: 1.4,
+  depth: 0.12,
+  wallZ: THE_COMMONS.southZ,
+  facing: -1 as 1 | -1, // faces -Z (north, into the room)
+}
+
+// The Library — quiet focus room. Straddles the conference room's
+// north edge and the start of TheLab, deliberately offset from the
+// east-side seams (which sit at Z=-7 and Z=-16).
+export const THE_LIBRARY = {
+  westX: WEST_ROOM_WEST_X, // -19
+  eastX: CENTRAL_CORRIDOR.westX, // -13
+  northZ: -22,
+  southZ: -4,
+  // Corridor-side doorway. Placed off-center (toward the south end,
+  // near the conference room's north edge) so the storefront reads
+  // as asymmetric next to the east-side rooms.
+  doorCenterZ: -8,
+  doorWidth: 2,
+} as const
+
+// Six individual focus desks along The Library's west wall (X≈-18),
+// facing east toward the corridor. Chair on the +X (east) side of
+// each desk facing west, so occupants face -X toward the wall.
+// Desks tile Z ∈ [-21, -5] with a 3 m spacing.
+export const THE_LIBRARY_DESKS: readonly {
+  deskCenter: [number, number]
+  deskSize: [number, number, number]
+  chair: [number, number, number]
+  hasMonitor: boolean
+}[] = [
+  { deskCenter: [-18, -19.5], deskSize: [1.6, 0.75, 1.4], chair: [-16.6, -19.5, -Math.PI / 2], hasMonitor: false },
+  { deskCenter: [-18, -16.5], deskSize: [1.6, 0.75, 1.4], chair: [-16.6, -16.5, -Math.PI / 2], hasMonitor: true },
+  { deskCenter: [-18, -13.5], deskSize: [1.6, 0.75, 1.4], chair: [-16.6, -13.5, -Math.PI / 2], hasMonitor: false },
+  { deskCenter: [-18, -10.5], deskSize: [1.6, 0.75, 1.4], chair: [-16.6, -10.5, -Math.PI / 2], hasMonitor: true },
+  { deskCenter: [-18, -7.5], deskSize: [1.6, 0.75, 1.4], chair: [-16.6, -7.5, -Math.PI / 2], hasMonitor: false },
+]
+
+// Whiteboards on The Library's north (Z=-22) and south (Z=-4) walls.
+export const THE_LIBRARY_WHITEBOARDS: readonly {
+  centerX: number
+  centerY: number
+  width: number
+  height: number
+  wallZ: number
+  facing: 1 | -1
+}[] = [
+  { centerX: -16, centerY: 1.5, width: 3, height: 1.5, wallZ: -22, facing: 1 }, // north wall, faces south
+  { centerX: -16, centerY: 1.5, width: 3, height: 1.5, wallZ: -4, facing: -1 }, // south wall, faces north
+]
+
+// The Atrium — two-zone room: conference nook at south, 4-desk pod
+// at north, with a whiteboard between them. Bridges what would be
+// the gap between TheLab (Z-span [-32, -16]) and TheStation (Z-span
+// [-62, -39]) on the east side, but on the west and with different
+// seams.
+export const THE_ATRIUM = {
+  westX: WEST_ROOM_WEST_X, // -19
+  eastX: CENTRAL_CORRIDOR.westX, // -13
+  northZ: -55,
+  southZ: -28,
+  // Corridor-side doorway. Offset from TheStation's door (Z=-42) on
+  // the east side so the two doorways don't line up across the
+  // corridor — keeps the seam offset story consistent.
+  doorCenterZ: -45,
+  doorWidth: 2,
+} as const
+
+// Conference nook in the south half of The Atrium (Z ∈ [-55, -45]).
+// One long table with 4 chairs around it, plus a TV on the west wall.
+export const THE_ATRIUM_CONFERENCE = {
+  table: {
+    center: [-16, -50] as [number, number],
+    size: [2.4, 0.75, 3.2] as [number, number, number],
+  },
+  chairs: [
+    [-14.3, -50, -Math.PI / 2], // east side, facing west
+    [-17.7, -50, Math.PI / 2], // west side, facing east
+    [-16, -48, Math.PI], // north side, facing south
+    [-16, -52, 0], // south side, facing north
+  ] as [number, number, number][],
+  tv: {
+    centerZ: -50,
+    centerY: 1.6,
+    width: 2.6,
+    height: 1.4,
+    depth: 0.12,
+    wallX: WEST_ROOM_WEST_X, // -19 (west wall of the room)
+    facing: 1 as 1 | -1, // faces +X (east, into the room)
+  },
+}
+
+// Whiteboard on The Atrium's west wall between the conference and
+// pod zones, at Z≈-42.
+export const THE_ATRIUM_WHITEBOARD_WEST = {
+  centerY: 1.5,
+  width: 3.5,
+  height: 1.6,
+  wallX: WEST_ROOM_WEST_X, // -19
+  centerZ: -42,
+  facing: 1 as 1 | -1, // faces +X (east, into the room)
+}
+
+// North-half desk pod in The Atrium (Z ∈ [-42, -28]). 2×2 arrangement
+// of individual desks. West column faces east (chairs on +X side of
+// their desks), east column faces west. Rough symmetry, but staggered
+// Z so the two columns don't line up.
+export const THE_ATRIUM_POD_DESKS: readonly {
+  deskCenter: [number, number]
+  deskSize: [number, number, number]
+  chair: [number, number, number]
+  screenFacing: number // rotationY for laptop/monitor screens
+}[] = [
+  {
+    deskCenter: [-17.4, -37],
+    deskSize: [1.4, 0.75, 1.6],
+    chair: [-16.3, -37, -Math.PI / 2],
+    screenFacing: Math.PI / 2,
+  },
+  {
+    deskCenter: [-14.6, -35],
+    deskSize: [1.4, 0.75, 1.6],
+    chair: [-15.7, -35, Math.PI / 2],
+    screenFacing: -Math.PI / 2,
+  },
+  {
+    deskCenter: [-17.4, -31],
+    deskSize: [1.4, 0.75, 1.6],
+    chair: [-16.3, -31, -Math.PI / 2],
+    screenFacing: Math.PI / 2,
+  },
+  {
+    deskCenter: [-14.6, -30],
+    deskSize: [1.4, 0.75, 1.6],
+    chair: [-15.7, -30, Math.PI / 2],
+    screenFacing: -Math.PI / 2,
+  },
+]
+
+// List of west-side rooms — used by CentralCorridor.tsx to know which
+// Z-spans of the west wall should render as glass storefront. Order
+// doesn't matter; spans are disjoint.
+export const WEST_SIDE_ROOMS: readonly { id: string; northZ: number; southZ: number }[] = [
+  { id: 'the-commons', northZ: THE_COMMONS.northZ, southZ: THE_COMMONS.southZ },
+  { id: 'the-library', northZ: THE_LIBRARY.northZ, southZ: THE_LIBRARY.southZ },
+  { id: 'the-atrium', northZ: THE_ATRIUM.northZ, southZ: THE_ATRIUM.southZ },
+] as const
+
 // Row of base cabinets backed against the OUTSIDE (west-facing) face of
 // Alcove A's west partition wall. Cabinets sit in TheLab's main open
 // floor, fronts facing west into the room. Northmost cabinet holds a

@@ -4,13 +4,17 @@ import {
   COLORS,
   CORRIDOR_POCKET,
   EAST_CORRIDOR,
+  THE_ATRIUM,
   THE_BAKERY,
   THE_BAKERY_WEST_DOOR,
+  THE_COMMONS,
   THE_LAB,
+  THE_LIBRARY,
   THE_STATION,
   ROOM_DEPTH,
   WALL_HEIGHT,
   WALL_THICKNESS,
+  WEST_SIDE_ROOMS,
   CENTRAL_CORRIDOR,
 } from '../constants/gameConstants'
 import { Door } from './Door'
@@ -233,11 +237,109 @@ export function CentralCorridor() {
         open
       />
 
-      {/* west wall — solid full length */}
-      <WallPanel
-        position={[westX, y, centerZ]}
-        size={[WALL_THICKNESS, WALL_HEIGHT, length]}
-      />
+      {/* west wall — split around each west-side room's Z-span AND each
+          room's doorway. Segments inside a room render as coplanar
+          glass storefront (auto-divisions so mullions match the east
+          side). Doorways get a lintel + open glass door slab, matching
+          the east-side entrances (TheLab / TheStation). */}
+      {(() => {
+        const rooms = [...WEST_SIDE_ROOMS].sort((a, b) => a.northZ - b.northZ)
+        // `closed` matches the bakery south-wall door — a visible glass
+        // slab that seals the opening (blocking, not `open`). Open doors
+        // on this wall default to swinging `outward` (toward -X, into
+        // the room) rather than into the corridor.
+        const westOpenings: {
+          id: string
+          centerZ: number
+          width: number
+          closed: boolean
+          openDirection?: 'inward' | 'outward'
+        }[] = [
+          {
+            id: 'the-commons',
+            centerZ: THE_COMMONS.doorCenterZ,
+            width: THE_COMMONS.doorWidth,
+            closed: true,
+          },
+          {
+            id: 'the-library',
+            centerZ: THE_LIBRARY.doorCenterZ,
+            width: THE_LIBRARY.doorWidth,
+            closed: false,
+            openDirection: 'outward',
+          },
+          {
+            id: 'the-atrium',
+            centerZ: THE_ATRIUM.doorCenterZ,
+            width: THE_ATRIUM.doorWidth,
+            closed: true,
+          },
+        ]
+        const cutouts = westOpenings
+          .map((o) => ({ lo: o.centerZ - o.width / 2, hi: o.centerZ + o.width / 2 }))
+          .sort((a, b) => a.lo - b.lo)
+        // Break wall at every room boundary AND at every doorway edge.
+        const seams = new Set<number>([northZ, southZ])
+        for (const r of rooms) {
+          if (r.northZ > northZ && r.northZ < southZ) seams.add(r.northZ)
+          if (r.southZ > northZ && r.southZ < southZ) seams.add(r.southZ)
+        }
+        const seamList = [...seams].sort((a, b) => a - b)
+        // Carve doorways out of the wall (skip those spans entirely).
+        const segments: [number, number][] = []
+        let cursor = northZ
+        const pushSpan = (from: number, to: number) => {
+          if (to - from <= 0.01) return
+          let start = from
+          for (const seam of seamList) {
+            if (seam > start && seam < to) {
+              segments.push([start, seam])
+              start = seam
+            }
+          }
+          segments.push([start, to])
+        }
+        for (const cut of cutouts) {
+          if (cut.lo - cursor > 0.01) pushSpan(cursor, cut.lo)
+          cursor = cut.hi
+        }
+        if (southZ - cursor > 0.01) pushSpan(cursor, southZ)
+
+        return (
+          <>
+            {segments.map(([lo, hi], i) => {
+              const isGlass = rooms.some((r) => lo >= r.northZ && hi <= r.southZ)
+              return (
+                <WallPanel
+                  key={`west-${i}`}
+                  position={[westX, y, (lo + hi) / 2]}
+                  size={[WALL_THICKNESS, WALL_HEIGHT, hi - lo]}
+                  glass={isGlass}
+                />
+              )
+            })}
+            {westOpenings.map((o) => (
+              <DoorHeader
+                key={`west-header-${o.id}`}
+                position={[westX, o.centerZ]}
+                width={o.width}
+                spansX={false}
+              />
+            ))}
+            {westOpenings.map((o) => (
+              <Door
+                key={`west-door-${o.id}`}
+                position={[westX, o.centerZ]}
+                width={o.width}
+                spansX={false}
+                blocking={o.closed}
+                open={!o.closed}
+                openDirection={o.openDirection}
+              />
+            ))}
+          </>
+        )
+      })()}
 
       {/* south wall — split around the south doorway (player entrance) */}
       <WallPanel

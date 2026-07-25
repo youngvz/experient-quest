@@ -14,6 +14,9 @@ import { Player } from './Player'
 import { ProximityBranch } from './ProximityBranch'
 import { CentralCorridor } from './CentralCorridor'
 import { Televisions } from './Televisions'
+import { TheAtrium } from './TheAtrium'
+import { TheCommons } from './TheCommons'
+import { TheLibrary } from './TheLibrary'
 import { Whiteboards } from './Whiteboards'
 
 const TheLab = lazy(() => import('./TheLab').then((m) => ({ default: m.TheLab })))
@@ -47,6 +50,14 @@ export default function OfficeWorld({ controlsDisabled }: OfficeWorldProps) {
       <ConferenceTable />
       <ConferenceLaptops />
       <ConferenceChairs />
+
+      {/* West-side storefront rooms — always mounted so their glass
+          facades are visible from the moment the player enters the
+          corridor. Non-explorable (no doors) so their footprint is
+          fixed and small enough to justify skipping ProximityBranch. */}
+      <TheCommons />
+      <TheLibrary />
+      <TheAtrium />
 
       {/* Branch rooms mount by *distance* from the player (see
           proximity/anchors.ts for radii). Bakery has a big radius so
