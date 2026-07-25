@@ -109,9 +109,12 @@ export function Player({ controlsDisabled }: PlayerProps) {
       }
     })
 
-    // Bound the visible geometry only. Object3D.setFromObject would include
-    // skeleton bone tails, which can extend far past the mesh and yield a
-    // wildly wrong height.
+    // Bound the visible geometry only. Walk meshes and use setFromObject
+    // with precise=true — reads vertices through BufferAttribute.getX/Y/Z
+    // so KHR_mesh_quantization / EXT_meshopt_compression's `normalized`
+    // int16 POSITION accessors are decoded correctly. The plain
+    // geometry.boundingBox path returns int16-range values on quantized
+    // GLBs and blows up the auto-fit.
     clone.updateWorldMatrix(true, true)
     const box = new THREE.Box3()
     const meshBox = new THREE.Box3()
@@ -119,10 +122,8 @@ export function Player({ controlsDisabled }: PlayerProps) {
     clone.traverse((obj) => {
       const mesh = obj as THREE.Mesh
       if (!mesh.isMesh || !mesh.geometry) return
-      mesh.geometry.computeBoundingBox()
-      const geoBox = mesh.geometry.boundingBox
-      if (!geoBox) return
-      meshBox.copy(geoBox).applyMatrix4(mesh.matrixWorld)
+      meshBox.makeEmpty().setFromObject(mesh, true)
+      if (meshBox.isEmpty()) return
       if (hasMesh) box.union(meshBox)
       else {
         box.copy(meshBox)

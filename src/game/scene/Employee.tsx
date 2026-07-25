@@ -44,16 +44,19 @@ export function Employee({
     })
     clone.updateWorldMatrix(true, true)
 
+    // Use setFromObject(precise=true) so KHR_mesh_quantization /
+    // EXT_meshopt_compression's normalized int16 POSITION accessors are
+    // decoded correctly. The raw geometry.boundingBox path returns the
+    // quantization envelope on Meshopt-compressed GLBs and blows up the
+    // auto-fit.
     const box = new THREE.Box3()
     const meshBox = new THREE.Box3()
     let hasMesh = false
     clone.traverse((obj) => {
       const mesh = obj as THREE.Mesh
       if (!mesh.isMesh || !mesh.geometry) return
-      mesh.geometry.computeBoundingBox()
-      const geoBox = mesh.geometry.boundingBox
-      if (!geoBox) return
-      meshBox.copy(geoBox).applyMatrix4(mesh.matrixWorld)
+      meshBox.makeEmpty().setFromObject(mesh, true)
+      if (meshBox.isEmpty()) return
       if (hasMesh) box.union(meshBox)
       else {
         box.copy(meshBox)
