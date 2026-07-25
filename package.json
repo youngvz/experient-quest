@@ -14,7 +14,9 @@
     "lint": "oxlint",
     "format": "prettier --write .",
     "optimize-glb": "node scripts/optimize-glb.mjs",
-    "optimize-png": "node scripts/optimize-png.mjs"
+    "optimize-png": "node scripts/optimize-png.mjs",
+    "backlog:sync": "node scripts/backlog-sync.mjs",
+    "backlog:check": "node scripts/backlog-sync.mjs --check"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.7",

@@ -45,6 +45,8 @@ npm run lint           # oxlint (not eslint)
 npm run format         # prettier --write .
 npm run optimize-glb   # scripts/optimize-glb.mjs — prune clips + Meshopt/Draco compress a GLB
 npm run optimize-png   # scripts/optimize-png.mjs — resize + palette-quantize a pixel-art PNG
+npm run backlog:sync   # regenerate features/backlog/README.md index from item frontmatter
+npm run backlog:check  # verify the backlog index is up to date (CI-friendly, exits non-zero on drift)
 ```
 
 Slash commands `/optimize-glb` and `/optimize-png` drive the scripts
