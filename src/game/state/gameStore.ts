@@ -14,17 +14,25 @@ export interface GameState {
   // activeZone: a room can be "nearby" without the player being inside it.
   // Scene branches subscribe via useIsRoomNearby(id) to mount at range.
   nearbyRooms: ReadonlySet<string>
-  // Quests the player has unlocked, in unlock order.
+  // Quests the player has unlocked, in unlock order. A quest is added here
+  // ONLY when the player accepts it via the QuestUnlockedModal — presenting
+  // the modal alone doesn't commit anything.
   unlockedQuestIds: readonly string[]
   // Tasks the player has checked off. Keys are `${questId}:${taskId}`.
   completedTaskIds: ReadonlySet<string>
   // Quest whose "New Quest Unlocked!" modal is currently showing (or null).
+  // Being non-null does NOT mean the quest is unlocked — it's a preview
+  // that becomes real when acceptQuestUnlock() is called.
   pendingUnlockQuestId: string | null
+  // Stop that triggered the pending unlock. Marked completed only when the
+  // player accepts (so a dismissed modal replays the original dialogue).
+  pendingUnlockStopId: string | null
   setActiveStop: (id: string | null) => void
   markCompleted: (id: string) => void
   setActiveZone: (zone: ZoneId) => void
   setNearbyRooms: (rooms: ReadonlySet<string>) => void
-  unlockQuest: (questId: string) => void
+  presentQuestUnlock: (questId: string, sourceStopId: string) => void
+  acceptQuestUnlock: () => void
   dismissUnlock: () => void
   toggleTask: (questId: string, taskId: string) => void
   reset: () => void
@@ -47,6 +55,7 @@ export const useGameStore = create<GameState>((set) => ({
   unlockedQuestIds: [],
   completedTaskIds: new Set<string>(),
   pendingUnlockQuestId: null,
+  pendingUnlockStopId: null,
   setActiveStop: (id) => set({ activeStopId: id }),
   markCompleted: (id) =>
     set((state) => {
@@ -60,15 +69,39 @@ export const useGameStore = create<GameState>((set) => ({
     set((state) => (state.activeZone === zone ? state : { activeZone: zone })),
   setNearbyRooms: (rooms) =>
     set((state) => (setsEqual(state.nearbyRooms, rooms) ? state : { nearbyRooms: rooms })),
-  unlockQuest: (questId) =>
+  presentQuestUnlock: (questId, sourceStopId) =>
     set((state) => {
+      // Already unlocked → don't re-show the modal.
       if (state.unlockedQuestIds.includes(questId)) return state
+      return { pendingUnlockQuestId: questId, pendingUnlockStopId: sourceStopId }
+    }),
+  acceptQuestUnlock: () =>
+    set((state) => {
+      const questId = state.pendingUnlockQuestId
+      if (!questId) return state
+      const alreadyUnlocked = state.unlockedQuestIds.includes(questId)
+      const unlockedQuestIds = alreadyUnlocked
+        ? state.unlockedQuestIds
+        : [...state.unlockedQuestIds, questId]
+      // Mark the source stop completed on accept so the repeat dialogue only
+      // plays after the player has committed. Dismiss (no accept) leaves the
+      // stop uncompleted, so the intro dialogue replays on re-approach.
+      const sourceStopId = state.pendingUnlockStopId
+      let completedStopIds = state.completedStopIds
+      if (sourceStopId && !completedStopIds.has(sourceStopId)) {
+        const next = new Set(completedStopIds)
+        next.add(sourceStopId)
+        completedStopIds = next
+      }
       return {
-        unlockedQuestIds: [...state.unlockedQuestIds, questId],
-        pendingUnlockQuestId: questId,
+        unlockedQuestIds,
+        completedStopIds,
+        pendingUnlockQuestId: null,
+        pendingUnlockStopId: null,
       }
     }),
-  dismissUnlock: () => set({ pendingUnlockQuestId: null }),
+  dismissUnlock: () =>
+    set({ pendingUnlockQuestId: null, pendingUnlockStopId: null }),
   toggleTask: (questId, taskId) =>
     set((state) => {
       const key = taskKey(questId, taskId)
@@ -86,6 +119,7 @@ export const useGameStore = create<GameState>((set) => ({
       unlockedQuestIds: [],
       completedTaskIds: new Set<string>(),
       pendingUnlockQuestId: null,
+      pendingUnlockStopId: null,
     }),
 }))
 

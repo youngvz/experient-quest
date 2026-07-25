@@ -5,12 +5,12 @@ import './QuestUnlockedModal.css'
 
 export function QuestUnlockedModal() {
   const pendingUnlockQuestId = useGameStore((s) => s.pendingUnlockQuestId)
+  const acceptQuestUnlock = useGameStore((s) => s.acceptQuestUnlock)
   const dismissUnlock = useGameStore((s) => s.dismissUnlock)
   const closeButtonRef = useRef<HTMLButtonElement | null>(null)
   const previouslyFocusedRef = useRef<HTMLElement | null>(null)
 
-  const handleClose = useCallback(() => {
-    dismissUnlock()
+  const restoreFocus = useCallback(() => {
     const previous = previouslyFocusedRef.current
     if (previous && typeof previous.focus === 'function') {
       previous.focus()
@@ -18,27 +18,49 @@ export function QuestUnlockedModal() {
       document.getElementById('game-container')?.focus()
     }
     previouslyFocusedRef.current = null
-  }, [dismissUnlock])
+  }, [])
+
+  // Accept commits the quest: adds it to unlockedQuestIds AND marks the
+  // triggering stop completed. This is the only path that flips state — the
+  // preceding dialogue no longer does so, so re-approaching an un-accepted
+  // stop replays the original script.
+  const handleAccept = useCallback(() => {
+    acceptQuestUnlock()
+    restoreFocus()
+  }, [acceptQuestUnlock, restoreFocus])
+
+  // Dismiss (Escape) leaves the quest un-accepted: nothing is added to
+  // unlockedQuestIds and the source stop stays uncompleted, so the intro
+  // dialogue replays next time the player re-approaches the NPC.
+  const handleDismiss = useCallback(() => {
+    dismissUnlock()
+    restoreFocus()
+  }, [dismissUnlock, restoreFocus])
 
   useEffect(() => {
     if (!pendingUnlockQuestId) return
     previouslyFocusedRef.current = document.activeElement as HTMLElement | null
     closeButtonRef.current?.focus()
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' || event.key === 'Enter' || event.key === ' ') {
+      if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault()
-        handleClose()
+        handleAccept()
+      } else if (event.key === 'Escape') {
+        event.preventDefault()
+        handleDismiss()
       }
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [pendingUnlockQuestId, handleClose])
+  }, [pendingUnlockQuestId, handleAccept, handleDismiss])
 
   if (!pendingUnlockQuestId) return null
   const quest = getQuest(pendingUnlockQuestId)
 
   return (
-    <div className="quest-unlocked" role="presentation" onClick={handleClose}>
+    // Backdrop click dismisses without accepting — same semantics as
+    // Escape. The player must press "Got it" (or Enter/Space) to commit.
+    <div className="quest-unlocked" role="presentation" onClick={handleDismiss}>
       <div
         className="quest-unlocked__panel"
         role="dialog"
@@ -60,7 +82,7 @@ export function QuestUnlockedModal() {
             ref={closeButtonRef}
             type="button"
             className="quest-unlocked__close"
-            onClick={handleClose}
+            onClick={handleAccept}
           >
             Got it
           </button>

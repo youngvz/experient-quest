@@ -46,18 +46,18 @@ export function DialogueOverlay() {
     ),
   )
 
-  const handleClose = useCallback(() => {
+  // Called only when the script has been read to its end. If the stop
+  // unlocks a quest, present the accept modal INSTEAD of marking completed
+  // here — the store's acceptQuestUnlock() commits both on "Got it". Stops
+  // without a questUnlock complete immediately.
+  const handleFinish = useCallback(() => {
     if (activeStopId) {
       const stop = findStop(activeStopId)
-      // Unlock BEFORE marking completed — unlockQuest() is a no-op if the
-      // quest is already unlocked, so the ordering only matters for the
-      // "first close" path. Firing before markCompleted keeps the mental
-      // model "closing revealed the quest" intact even if a future stop
-      // ever reads completedStopIds inside its own unlock hook.
       if (stop?.questUnlock) {
-        useGameStore.getState().unlockQuest(stop.questUnlock)
+        useGameStore.getState().presentQuestUnlock(stop.questUnlock, activeStopId)
+      } else {
+        markCompleted(activeStopId)
       }
-      markCompleted(activeStopId)
     }
     setActiveStop(null)
     gameEvents.emit('overlay:closed', undefined)
@@ -84,34 +84,41 @@ export function DialogueOverlay() {
     contentKey,
   })
 
+  // Enter / ArrowRight / clicking the panel all do the same thing: advance
+  // to the next page-of-line, then next line, and only finish when the
+  // script's last page is showing. There is no mid-dialogue dismissal —
+  // Escape and backdrop clicks are intentionally ignored so the player
+  // can't half-start a conversation (which used to leave state in a
+  // weird "seen once → repeat script" limbo).
   const advance = useCallback(() => {
     if (!script) return
     if (hasNext) {
       next()
       return
     }
-    if (lineIndex >= script.length - 1) handleClose()
+    if (lineIndex >= script.length - 1) handleFinish()
     else setLineIndex((i) => i + 1)
-  }, [script, hasNext, next, lineIndex, handleClose])
+  }, [script, hasNext, next, lineIndex, handleFinish])
 
   useEffect(() => {
     if (!script) return
     panelRef.current?.focus()
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        event.preventDefault()
-        handleClose()
-      } else if (event.key === 'Enter' || event.key === 'ArrowRight') {
+      if (event.key === 'Enter' || event.key === 'ArrowRight' || event.key === ' ') {
         event.preventDefault()
         advance()
       } else if (event.key === 'ArrowLeft') {
         event.preventDefault()
         if (hasPrev) prev()
+      } else if (event.key === 'Escape') {
+        // Swallow Escape so the browser doesn't do anything unexpected,
+        // but do NOT close — the player must read to the end.
+        event.preventDefault()
       }
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [script, advance, handleClose, hasPrev, prev])
+  }, [script, advance, hasPrev, prev])
 
   if (!script || !line) return null
   const speaker = getCharacter(line.speakerId)
@@ -121,7 +128,10 @@ export function DialogueOverlay() {
   const visibleSet = new Set(visibleIndexes)
 
   return (
-    <div className="dialogue-overlay" role="presentation" onClick={handleClose}>
+    // Backdrop click ADVANCES the dialogue rather than dismissing it. The
+    // player must read to the end to leave — see the keydown handler above
+    // for the rationale.
+    <div className="dialogue-overlay" role="presentation" onClick={advance}>
       <div
         ref={panelRef}
         className="dialogue-overlay__panel"
