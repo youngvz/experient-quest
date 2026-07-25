@@ -524,6 +524,17 @@ export const MOUSE_LOOK_SENSITIVITY = 0.005
 export const TRACKPAD_LOOK_SENSITIVITY = 0.003
 // Radians per second while Q/E is held.
 export const KEY_LOOK_SPEED = 2.2
+// Radians of camera yaw per pixel of horizontal touch-drag on the look pad.
+// Slightly hotter than MOUSE_LOOK_SENSITIVITY because thumbs cover less distance
+// than a mouse; tune on-device.
+export const TOUCH_LOOK_SENSITIVITY = 0.006
+// Virtual joystick pixel dimensions. Also mirrored into CSS custom properties
+// (see TouchControls.css) so tuning stays centralized here.
+export const TOUCH_JOYSTICK_BASE_RADIUS = 60
+export const TOUCH_JOYSTICK_STICK_RADIUS = 24
+// Fraction of the base radius under which the stick reports zero — prevents
+// jitter from a resting thumb.
+export const TOUCH_JOYSTICK_DEADZONE = 0.12
 
 export const COLORS = {
   floor: '#2f3540',

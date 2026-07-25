@@ -30,6 +30,7 @@ import {
 import { CHARACTERS } from '../characters/characters'
 import { useKeyboard } from '../../hooks/useKeyboard'
 import { useMouseLook } from '../../hooks/useMouseLook'
+import { touchInput } from '../input/touchInput'
 import { gameEvents } from '../events/GameEventBus'
 import { InteractionManager } from '../interactions/InteractionManager'
 import { presentationStops } from '../interactions/interactionTypes'
@@ -330,11 +331,15 @@ export function Player({ controlsDisabled }: PlayerProps) {
       // direction instead.
       if (s.yawLeft) yaw.current -= KEY_LOOK_SPEED * delta
       if (s.yawRight) yaw.current += KEY_LOOK_SPEED * delta
+      // Touch look pad — drain the accumulated yaw delta from the last frame.
+      yaw.current += touchInput.consumeYawDelta()
 
       // +/- zoom. Multiplicative so successive presses feel consistent at any
       // current scale. "+" pulls the camera in (smaller multiplier).
       if (s.zoomIn) zoomRef.current /= Math.pow(CAMERA_ZOOM_RATE, delta)
       if (s.zoomOut) zoomRef.current *= Math.pow(CAMERA_ZOOM_RATE, delta)
+      // Touch pinch — multiply in the accumulated factor (defaults to 1).
+      zoomRef.current *= touchInput.consumeZoomFactor()
       if (zoomRef.current < CAMERA_ZOOM_MIN) zoomRef.current = CAMERA_ZOOM_MIN
       if (zoomRef.current > CAMERA_ZOOM_MAX) zoomRef.current = CAMERA_ZOOM_MAX
     }
@@ -392,6 +397,11 @@ export function Player({ controlsDisabled }: PlayerProps) {
       if (s.back) iz += 1
       if (s.left) ix -= 1
       if (s.right) ix += 1
+      // Touch joystick — analog stick already normalized to the unit disc
+      // (clamped in TouchControls). Add on top of WASD so both work together.
+      const tm = touchInput.getMove()
+      ix += tm.x
+      iz += tm.z
       isRunning = s.running
 
       const len = Math.hypot(ix, iz)
@@ -421,7 +431,7 @@ export function Player({ controlsDisabled }: PlayerProps) {
     // Proximity tracking for range-based scene mounting.
     proximity.update(pos.x, pos.z)
 
-    if (!controlsDisabled && !locked && consumeInteract()) {
+    if (!controlsDisabled && !locked && (consumeInteract() || touchInput.consumeInteract())) {
       manager.trigger()
     }
 
