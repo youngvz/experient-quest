@@ -16,6 +16,7 @@ import { Door } from './Door'
 import { Laptop } from './Laptop'
 import { Monitor } from './Monitor'
 import { Paper } from './Paper'
+import { Sofa } from './Sofa'
 import { Television } from './Television'
 import { DoorHeader, WallPanel } from './wallPrimitives'
 
@@ -665,6 +666,21 @@ export function TheStation() {
           </group>
         )
       })}
+
+      {/* Lounge sofa on the exterior north face of The Boardroom, on The
+          Station's main floor. Back flush against the Boardroom's north
+          wall (Z=THE_BOARDROOM.northZ = -48), facing north toward
+          alcoves A and B. Boardroom north wall is at X ∈ [-4, +5];
+          center the sofa on that span. Sofa's local +Z is the sitter's
+          gaze direction, so rotationY = π flips it to face -Z (north). */}
+      <Sofa
+        position={[
+          (THE_BOARDROOM.westX + THE_BOARDROOM.eastX) / 2,
+          THE_BOARDROOM.northZ - WALL_THICKNESS / 2 - 0.45,
+        ]}
+        rotationY={Math.PI}
+        seatCount={4}
+      />
     </>
   )
 }

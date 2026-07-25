@@ -7,6 +7,7 @@ import {
   WALL_THICKNESS,
 } from '../constants/gameConstants'
 import { Door } from './Door'
+import { Sofa } from './Sofa'
 import { DoorHeader, WallPanel } from './wallPrimitives'
 
 // East-running corridor branching off the central corridor between TheLab
@@ -93,6 +94,25 @@ export function NorthEastCorridor() {
         spansX={false}
         blocking={false}
         open
+      />
+
+      {/* Two 3-seat sofas forming an L in the pocket's SE corner. One
+          backs against the south wall (Z=-32, TheLab-owned) facing north;
+          the other backs against the east step wall (X=-4, Z ∈ [-36, -32])
+          facing west. Sofa depth = 0.9, wall thickness = 0.4, so
+          wall-inner-face + 0.45 seats the backrest against the wall. */}
+      <Sofa
+        position={[pocketCenterX, NORTH_EAST_POCKET.southZ - WALL_THICKNESS / 2 - 0.45]}
+        rotationY={Math.PI}
+        seatCount={3}
+      />
+      <Sofa
+        position={[
+          NORTH_EAST_CORRIDOR.westX - WALL_THICKNESS / 2 - 0.45,
+          (NORTH_EAST_CORRIDOR.southZ + NORTH_EAST_POCKET.southZ) / 2,
+        ]}
+        rotationY={-Math.PI / 2}
+        seatCount={3}
       />
     </>
   )
