@@ -13,6 +13,8 @@ import {
   CAMERA_ZOOM_MIN,
   CAMERA_ZOOM_RATE,
   KEY_LOOK_SPEED,
+  NORTH_EAST_CORRIDOR,
+  NORTH_EAST_POCKET,
   PLAYER_HEIGHT,
   PLAYER_MODEL_SCALE,
   PLAYER_RADIUS,
@@ -281,6 +283,24 @@ export function Player({ controlsDisabled }: PlayerProps) {
       maxX: 200,
       minZ: ROOM_DEPTH / 2 + THE_BAKERY.depth + 10,
       maxZ: 500,
+    })
+    // North-east corridor — L-shaped (pocket rect + narrow rect), sits
+    // east of the central corridor between TheLab and TheStation.
+    // Registered before `central-corridor` so first-match wins for
+    // points east of X = CENTRAL_CORRIDOR.eastX.
+    z.registerZone({
+      id: 'north-east-corridor',
+      minX: NORTH_EAST_POCKET.westX,
+      maxX: NORTH_EAST_POCKET.eastX,
+      minZ: NORTH_EAST_POCKET.northZ,
+      maxZ: NORTH_EAST_POCKET.southZ,
+    })
+    z.registerZone({
+      id: 'north-east-corridor',
+      minX: NORTH_EAST_CORRIDOR.westX,
+      maxX: NORTH_EAST_CORRIDOR.eastX,
+      minZ: NORTH_EAST_CORRIDOR.northZ,
+      maxZ: NORTH_EAST_CORRIDOR.southZ,
     })
     // Zone covers the whole central corridor floor. `office` is the
     // fallback so anything not in the corridor or a room defaults to it.

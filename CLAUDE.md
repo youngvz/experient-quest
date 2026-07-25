@@ -162,6 +162,20 @@ Layout beyond the conference room:
 - **`EastCorridor`** — east-running corridor above the conference room
   (X ∈ [−10, +10], Z ∈ [−10, −7]) reached through the pocket. Its
   east door is open; north wall shared with `TheLab`'s south boundary.
+- **`NorthEastCorridor`** — second east-running corridor threading the
+  gap between `TheLab` and `TheStation`. Enters the central corridor
+  through a 6×7 pocket (X ∈ [−10, −4], Z ∈ [−39, −32]) coplanar with
+  both rooms' walls, then narrows to a 3 m corridor (X ∈ [−4, +20],
+  Z ∈ [−39, −36]) pulled flush against `TheStation`'s south wall.
+  The 4 m strip between the corridor's south edge (Z=−36) and
+  `TheLab`'s north wall (Z=−32) is intentional dead space for future
+  content. Ends at an open, passable glass door at X=+20.
+- **`TheArchive`** — small non-enterable storefront filling the gap
+  in the north-east corridor's north wall east of `TheStation`
+  (X ∈ [+14, +20], Z ∈ [−45, −39]). Closed glass storefront door on
+  the corridor-facing south wall; desk + laptop + papers + whiteboard
+  visible through the glass. West wall is coplanar with `TheStation`'s
+  east strip and owned by that component.
 - **`TheLab`** — first branch room off the central corridor at Z=−24.
   L-shaped (SW corner bitten out by the pocket + east corridor), 20 m
   wide × 22 m long. Interior east strip has three alcoves (A / B / C);

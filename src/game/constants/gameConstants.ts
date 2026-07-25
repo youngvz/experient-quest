@@ -114,6 +114,68 @@ export const CORRIDOR_POCKET = {
   southZ: -ROOM_DEPTH / 2 - 3, // -10 (coplanar w/ east corridor north wall)
 }
 
+// 6×7 open pocket at the mouth of the north-east corridor. Fills the full
+// gap between TheStation's south face (Z = THE_STATION.southZ = -39, the
+// north side of the pocket) and TheLab's north face (Z = THE_LAB.northZ =
+// -32, the south side of the pocket). Convention across this file:
+// northZ < southZ numerically since -Z is north. North and south walls
+// are coplanar with those room walls (opaque, owned by TheStation.tsx /
+// TheLab.tsx — NOT re-rendered here). West side is a full-height cutout
+// in the central corridor's east wall (see the `gaps` array in
+// CentralCorridor.tsx). East side opens into NORTH_EAST_CORRIDOR.
+export const NORTH_EAST_POCKET = {
+  westX: -ROOM_WIDTH / 2, // -10 (coplanar w/ central corridor east wall)
+  eastX: -ROOM_WIDTH / 2 + 6, // -4
+  northZ: -39, // coplanar with TheStation south face (THE_STATION.southZ)
+  southZ: -32, // coplanar with TheLab north face (THE_LAB.northZ)
+} as const
+
+// The Archive — small non-enterable storefront north of the north-east
+// corridor, filling the gap in the corridor's north wall east of
+// TheStation (X ∈ [+14, +20]). Closed glass storefront door on the
+// corridor-facing south wall; the player sees inside but can't enter.
+// West wall is coplanar with TheStation's east-strip east wall (Z ∈
+// [-57, -39] at X=+14 — owned by TheStation.tsx, NOT re-rendered here).
+export const THE_ARCHIVE = {
+  westX: 14, // coplanar w/ TheStation east strip
+  eastX: 20, // coplanar w/ NORTH_EAST_CORRIDOR.eastX
+  northZ: -45,
+  southZ: -39, // coplanar w/ north-east corridor's north wall
+  doorCenterX: 17,
+  doorWidth: 1.4,
+  // Single desk + chair inside, whiteboard on the north wall.
+  desk: {
+    center: [17, -42] as [number, number],
+    size: [1.6, 0.75, 1.4] as [number, number, number],
+  },
+  chair: [17, -43.4, 0] as [number, number, number], // north side of desk, faces +Z (south)
+  whiteboard: {
+    centerX: 17,
+    centerY: 1.5,
+    width: 3,
+    height: 1.5,
+    wallZ: -45,
+    facing: 1 as 1 | -1, // +Z (south, into the room)
+  },
+} as const
+
+// East-running corridor east of NORTH_EAST_POCKET. 3 m N–S wide (matches
+// CENTRAL_CORRIDOR / EAST_CORRIDOR). Pulled flush against TheStation's
+// south wall: the corridor's north wall IS TheStation's south wall (at
+// Z = -39) — coplanar and NOT re-rendered here. The corridor's own south
+// wall (Z = -36) sits 4 m north of TheLab's north wall (Z = -32); the
+// strip between them is intentional dead space to be filled later. Ends
+// at a sealed dead-end door mirroring CENTRAL_CORRIDOR's deadEndDoor.
+export const NORTH_EAST_CORRIDOR = {
+  width: 3,
+  westX: -ROOM_WIDTH / 2 + 6, // -4 (coplanar w/ NORTH_EAST_POCKET.eastX)
+  eastX: 20,
+  northZ: -39, // coplanar with TheStation south face (owned by TheStation.tsx)
+  southZ: -36,
+  eastDoorZ: -37.5,
+  eastDoorWidth: 1.6,
+} as const
+
 // TheLab — first branch room off the central corridor's east wall.
 // L-shaped: full width matches the east corridor's length (20 m along X).
 // Its south boundary reuses the *existing* north walls of CORRIDOR_POCKET

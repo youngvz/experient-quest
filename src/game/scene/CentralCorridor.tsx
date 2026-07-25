@@ -4,6 +4,7 @@ import {
   COLORS,
   CORRIDOR_POCKET,
   EAST_CORRIDOR,
+  NORTH_EAST_POCKET,
   THE_ATRIUM,
   THE_BAKERY,
   THE_BAKERY_WEST_DOOR,
@@ -104,6 +105,8 @@ export function CentralCorridor() {
   // corridor's west end so the whole L reads as continuous space.
   const gaps: { lo: number; hi: number }[] = [
     { lo: CORRIDOR_POCKET.northZ, hi: EAST_CORRIDOR.southZ },
+    // Mouth of the north-east corridor pocket between TheLab and TheStation.
+    { lo: NORTH_EAST_POCKET.northZ, hi: NORTH_EAST_POCKET.southZ },
   ]
 
   // Zero-width "seams" at each adjacent room's north/south wall Z-values.
