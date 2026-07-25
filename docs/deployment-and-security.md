@@ -8,6 +8,108 @@ Do not use `vite preview` as a production server.
 
 Use Next.js only when the surrounding product requires server features or a broader full-stack shell.
 
+## Base path
+
+Vite bakes the asset prefix into `dist/` at build time. Set it per target via
+the `DEPLOY_BASE` environment variable (read in `vite.config.ts`):
+
+| Target                                         | `DEPLOY_BASE`         | Serves at                              |
+| ---------------------------------------------- | --------------------- | -------------------------------------- |
+| GitHub Pages project site (default)            | _(unset)_             | `https://<user>.github.io/<repo>/`     |
+| GitHub Pages with a custom domain (CNAME file) | `/`                   | `https://quest.example.com/`           |
+| S3 + CloudFront + Route 53                     | `/`                   | `https://quest.example.com/`           |
+| Any other subpath deployment                   | `'/<subpath>/'`       | `https://host/<subpath>/`              |
+
+The default in `vite.config.ts` (`'/experient-quest/'`) targets the current
+GitHub Pages repo. Anything served from the root **must** build with
+`DEPLOY_BASE=/`, or asset URLs 404.
+
+All code that references public assets must use `import.meta.env.BASE_URL` as
+a prefix (see `src/game/characters/characters.ts`). Never hardcode a leading
+`/assets/...` — it will break under a subpath deployment.
+
+## Deployment targets
+
+### GitHub Pages (current)
+
+- Source: **GitHub Actions** (Settings → Pages → Source).
+- Workflow: `.github/workflows/deploy.yml` runs on push to `main`, builds with
+  the default base, and publishes `dist/`.
+- `public/.nojekyll` prevents Jekyll from stripping `_`-prefixed files.
+- Private repos require a paid GitHub plan for Pages.
+
+To move GitHub Pages to a custom domain instead of a subpath:
+
+1. Add a `CNAME` file to `public/` containing the apex or subdomain.
+2. Set `DEPLOY_BASE=/` in the workflow's build step.
+3. Point DNS at GitHub Pages per their custom-domain docs.
+
+### S3 + CloudFront + Route 53
+
+Build once with `DEPLOY_BASE=/ npm run build`, sync `dist/` to the bucket,
+then invalidate CloudFront.
+
+**Bucket setup**
+
+- Private bucket + CloudFront **Origin Access Control** (preferred over the
+  legacy "static website hosting" endpoint — OAC gives HTTPS, signed URLs if
+  needed later, and blocks direct S3 access).
+- Bucket policy grants `s3:GetObject` only to the CloudFront distribution.
+
+**CloudFront distribution**
+
+- Default root object: `index.html`.
+- **SPA fallback**: add custom error responses mapping both `403` and `404`
+  to `/index.html` with response code `200`. Without this, refreshing a deep
+  link or hitting a mistyped path returns S3's XML error instead of the app.
+  The app has no client-side routes today, but keep the fallback in place so
+  future routing "just works."
+- Compression: enable Gzip and Brotli.
+- Viewer protocol policy: redirect HTTP → HTTPS.
+- Certificate: ACM cert for the domain in `us-east-1` (CloudFront
+  requirement).
+
+**Route 53**
+
+- Alias A/AAAA record for the domain → CloudFront distribution.
+
+**Cache headers** — set at upload time (S3 metadata) so CloudFront and
+browsers cache correctly:
+
+| Path            | `Cache-Control`                       |
+| --------------- | ------------------------------------- |
+| `/index.html`   | `no-cache`                            |
+| `/assets/*`     | `public, max-age=31536000, immutable` |
+| `/favicon.svg`  | `public, max-age=86400`               |
+
+Vite hashes asset filenames, so `/assets/*` is safe to freeze. `index.html`
+must revalidate — otherwise CloudFront serves stale HTML pointing at deleted
+asset hashes after a deploy.
+
+**Content types** — S3 usually infers these correctly, but verify:
+
+- `.glb` → `model/gltf-binary`
+- `.gltf` → `model/gltf+json`
+- `.ktx2` → `image/ktx2`
+- `.wasm` → `application/wasm`
+
+Wrong MIME on `.wasm` breaks Rapier physics silently in some browsers.
+
+**Deploy sequence**
+
+```bash
+DEPLOY_BASE=/ npm run build
+aws s3 sync dist/ s3://<bucket>/ --delete \
+  --cache-control "public, max-age=31536000, immutable" \
+  --exclude "index.html" --exclude "*.html"
+aws s3 cp dist/index.html s3://<bucket>/index.html \
+  --cache-control "no-cache"
+aws cloudfront create-invalidation \
+  --distribution-id <id> --paths "/index.html"
+```
+
+Only invalidate `/index.html` — hashed assets are new URLs, not overwrites.
+
 ## Caching
 
 Use content-hashed file names.

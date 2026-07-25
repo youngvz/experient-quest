@@ -9,18 +9,20 @@ export interface Character {
   portraitUrl: string
 }
 
+const BASE = import.meta.env.BASE_URL
+
 export const CHARACTERS = {
   youngvz: {
     id: 'youngvz',
     name: 'Youngvz',
-    glbUrl: '/assets/player/youngvz.glb',
-    portraitUrl: '/assets/player/youngvz.png',
+    glbUrl: `${BASE}assets/player/youngvz.glb`,
+    portraitUrl: `${BASE}assets/player/youngvz.png`,
   },
   distasi: {
     id: 'distasi',
     name: 'Distasi',
-    glbUrl: '/assets/employees/distasi.glb',
-    portraitUrl: '/assets/employees/distasi.png',
+    glbUrl: `${BASE}assets/employees/distasi.glb`,
+    portraitUrl: `${BASE}assets/employees/distasi.png`,
   },
 } as const satisfies Record<string, Character>
 
