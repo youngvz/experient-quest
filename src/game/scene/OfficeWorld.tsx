@@ -18,6 +18,7 @@ import { SouthApron } from './SouthApron'
 import { SouthApronBushes } from './SouthApronBushes'
 import { SouthApronFlowers } from './SouthApronFlowers'
 import { SouthApronGrass } from './SouthApronGrass'
+import { SouthFacade } from './SouthFacade'
 import { TheBakery } from './TheBakery'
 import { Televisions } from './Televisions'
 import { TheArchive } from './TheArchive'
@@ -78,6 +79,7 @@ export default function OfficeWorld({ controlsDisabled }: OfficeWorldProps) {
           inside — must live inside <Physics> because grass slabs carry
           RigidBody colliders. */}
       <SouthApron />
+      <SouthFacade />
       <Suspense fallback={null}>
         <SouthApronBushes />
       </Suspense>
