@@ -10,6 +10,7 @@ README is the index.
 | Status | Item | Depends on |
 |---|---|---|
 | backlog | [Lazy-load Rapier behind the title screen](./lazy-load-rapier-behind-title-screen.md) | title-screen |
+| backlog | [Non-primitive decor props (GLBs + billboards)](./non-primitive-decor-props.md) | — |
 | backlog | [TheGarage floor plan refinement](./thegarage-floor-plan-refinement.md) | — |
 <!-- BACKLOG:END -->
 
