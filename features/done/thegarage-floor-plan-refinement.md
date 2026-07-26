@@ -1,7 +1,8 @@
 ---
 id: thegarage-floor-plan-refinement
-status: backlog
+status: done
 created: 2026-07-25
+completed: 2026-07-26
 owner: unassigned
 ---
 

@@ -91,16 +91,6 @@ export function CentralCorridor() {
       centerZ: THE_GARAGE.doorCenterZ,
       width: THE_GARAGE.doorWidth,
     },
-    {
-      lo:
-        THE_GARAGE.conference.westDoorCenterZ -
-        THE_GARAGE.conference.westDoorWidth / 2,
-      hi:
-        THE_GARAGE.conference.westDoorCenterZ +
-        THE_GARAGE.conference.westDoorWidth / 2,
-      centerZ: THE_GARAGE.conference.westDoorCenterZ,
-      width: THE_GARAGE.conference.westDoorWidth,
-    },
     ...BRANCH_DOORS.map((door) => ({
       lo: door.centerZ - door.width / 2,
       hi: door.centerZ + door.width / 2,
@@ -134,11 +124,9 @@ export function CentralCorridor() {
     // from the rest of The Station's west wall (glass).
     -57,
     // Break at TheGarage's own Z boundaries so its glass storefront
-    // stretch and its conference sub-room's glass stretch each render
-    // as their own segments.
+    // stretch renders as its own segment.
     THE_GARAGE.southZ,
     THE_GARAGE.northZ,
-    THE_GARAGE.conference.northZ,
   ]
 
   // Wall segments: subtract the union of openings + gaps from the east
@@ -195,11 +183,9 @@ export function CentralCorridor() {
         // so the alcove reads as an enclosed office.
         const inStation =
           lo >= -57 && hi <= THE_STATION.southZ
-        // TheGarage: glass along both the main floor's Z-span AND its
-        // conference sub-room's Z-span (both share their west wall
-        // coplanar with the corridor east wall).
+        // TheGarage: glass along the whole 12 m Z-span of its west wall.
         const inGarage =
-          lo >= THE_GARAGE.conference.northZ && hi <= THE_GARAGE.southZ
+          lo >= THE_GARAGE.northZ && hi <= THE_GARAGE.southZ
         const isGlass = inLab || inBakery || inStation || inGarage
         return (
           <WallPanel
@@ -257,15 +243,6 @@ export function CentralCorridor() {
       <Door
         position={[eastX, THE_GARAGE.doorCenterZ]}
         width={THE_GARAGE.doorWidth}
-        spansX={false}
-        blocking={false}
-        open
-      />
-
-      {/* TheGarage conference sub-room entrance on the corridor. */}
-      <Door
-        position={[eastX, THE_GARAGE.conference.westDoorCenterZ]}
-        width={THE_GARAGE.conference.westDoorWidth}
         spansX={false}
         blocking={false}
         open
