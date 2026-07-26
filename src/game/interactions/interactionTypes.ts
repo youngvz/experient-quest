@@ -73,6 +73,27 @@ export const presentationStops: PresentationStop[] = [
     content: { type: 'events', events: [] },
   },
   {
+    id: 'jacquelyn',
+    label: 'Jacquelyn',
+    prompt: 'Press F to talk to Jacquelyn',
+    overlayTitle: 'Jacquelyn',
+    // Jacquelyn stands on the south sidewalk in front of the 5256 door.
+    // Zone spans the sidewalk approach so the prompt fires as the player
+    // walks north from spawn toward the building.
+    // Zone rect: X ∈ [-13, -6], Z ∈ [21, 30].
+    position: [-9.5, 0, 25.5],
+    interactionZone: { size: [7, 9] },
+    content: {
+      type: 'dialogue',
+      script: [
+        {
+          speakerId: 'jacquelyn',
+          text: 'Hey youngvz! I think John was looking for you!',
+        },
+      ],
+    },
+  },
+  {
     id: 'distasi',
     label: 'Distasi',
     prompt: 'Press F to talk to Distasi',
@@ -90,7 +111,7 @@ export const presentationStops: PresentationStop[] = [
       script: [
         {
           speakerId: 'distasi',
-          text: "Youngvz!! So glad you're here,\nwe need you to run this week's\nstatus meeting ASAP!",
+          text: "Youngvz!! So glad you're here.\nWe need you to run this week's\nstatus meeting ASAP!",
         },
         {
           speakerId: 'youngvz',

@@ -1,7 +1,8 @@
 import { useGLTF } from '@react-three/drei'
 import { Physics } from '@react-three/rapier'
-import { Suspense, lazy, useEffect } from 'react'
+import { Suspense, lazy, useEffect, useMemo } from 'react'
 import { CHARACTERS } from '../characters/characters'
+import { useGameStore } from '../state/gameStore'
 import { ConferenceChairs } from './ConferenceChairs'
 import { ConferenceFloor } from './ConferenceFloor'
 import { ConferenceLaptops } from './ConferenceLaptops'
@@ -9,6 +10,7 @@ import { ConferenceRoom } from './ConferenceRoom'
 import { ConferenceTable } from './ConferenceTable'
 import { CorridorPocket } from './CorridorPocket'
 import { EastCorridor } from './EastCorridor'
+import { Employee } from './Employee'
 import { FadeIn } from './FadeIn'
 import { NorthEastCorridor } from './NorthEastCorridor'
 import { Player } from './Player'
@@ -18,6 +20,7 @@ import { SouthApron } from './SouthApron'
 import { SouthApronBushes } from './SouthApronBushes'
 import { SouthApronFlowers } from './SouthApronFlowers'
 import { SouthApronGrass } from './SouthApronGrass'
+import { SouthFacade } from './SouthFacade'
 import { TheBakery } from './TheBakery'
 import { Televisions } from './Televisions'
 import { TheArchive } from './TheArchive'
@@ -25,6 +28,27 @@ import { TheAtrium } from './TheAtrium'
 import { TheCommons } from './TheCommons'
 import { TheLibrary } from './TheLibrary'
 import { Whiteboards } from './Whiteboards'
+
+// Wave clips vs idle-only clips. Swapping the array identity re-runs the
+// Employee's animation effect, which stops the wave and starts the idle.
+const JACQUELYN_WAVE = [/wave/i, /greet/i, /hello/i]
+const JACQUELYN_IDLE = [/idle/i, /stand/i, /breath/i]
+
+function Jacquelyn() {
+  const hasSpoken = useGameStore((s) => s.completedStopIds.has('jacquelyn'))
+  const clipPatterns = useMemo(
+    () => (hasSpoken ? JACQUELYN_IDLE : JACQUELYN_WAVE),
+    [hasSpoken],
+  )
+  return (
+    <Employee
+      url={CHARACTERS.jacquelyn.glbUrl}
+      position={[-9.5, 0, 22]}
+      rotationY={0}
+      clipPatterns={clipPatterns}
+    />
+  )
+}
 
 const TheLab = lazy(() => import('./TheLab').then((m) => ({ default: m.TheLab })))
 const TheStation = lazy(() =>
@@ -41,6 +65,7 @@ export default function OfficeWorld({ controlsDisabled }: OfficeWorldProps) {
   useEffect(() => {
     useGLTF.preload(CHARACTERS.youngvz.glbUrl)
     useGLTF.preload(CHARACTERS.distasi.glbUrl)
+    useGLTF.preload(CHARACTERS.jacquelyn.glbUrl)
   }, [])
 
   return (
@@ -78,6 +103,12 @@ export default function OfficeWorld({ controlsDisabled }: OfficeWorldProps) {
           inside — must live inside <Physics> because grass slabs carry
           RigidBody colliders. */}
       <SouthApron />
+      <SouthFacade />
+      {/* Jacquelyn — greeter on the south sidewalk in front of the 5256
+          door, waving at the incoming player until they talk to her. */}
+      <Suspense fallback={null}>
+        <Jacquelyn />
+      </Suspense>
       <Suspense fallback={null}>
         <SouthApronBushes />
       </Suspense>
