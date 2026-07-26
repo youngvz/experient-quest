@@ -1,5 +1,6 @@
 import { RigidBody } from '@react-three/rapier'
-import type { ReactElement } from 'react'
+import { Suspense, useMemo, type ReactElement } from 'react'
+import { CHARACTERS } from '../characters/characters'
 import {
   THE_BAKERY_ALCOVE_DESKS,
   THE_BAKERY_ALCOVE_DESK_SIZE,
@@ -18,10 +19,12 @@ import {
   WALL_HEIGHT,
   WALL_THICKNESS,
 } from '../constants/gameConstants'
+import { useGameStore } from '../state/gameStore'
 import { CabinetRow } from './CabinetRow'
 import { Chair } from './Chair'
 import { Desk } from './Desk'
 import { Door } from './Door'
+import { Employee } from './Employee'
 import { FaxMachine } from './FaxMachine'
 import { Laptop } from './Laptop'
 import { Monitor } from './Monitor'
@@ -30,6 +33,26 @@ import { Painting } from './Painting'
 import { Paper } from './Paper'
 import { WaterCooler } from './WaterCooler'
 import { DoorHeader, WallPanel } from './wallPrimitives'
+
+// Waves until the player finishes talking to Sarah, then swaps to idle.
+const SARAH_WAVE = [/wave/i, /greet/i, /hello/i]
+const SARAH_IDLE = [/idle/i, /stand/i, /breath/i]
+
+function Sarah({ position }: { position: [number, number, number] }) {
+  const hasSpoken = useGameStore((s) => s.completedStopIds.has('sarah'))
+  const clipPatterns = useMemo(
+    () => (hasSpoken ? SARAH_IDLE : SARAH_WAVE),
+    [hasSpoken],
+  )
+  return (
+    <Employee
+      url={CHARACTERS.sarah.glbUrl}
+      position={position}
+      rotationY={-Math.PI / 2}
+      clipPatterns={clipPatterns}
+    />
+  )
+}
 
 // Build alternating opaque + glass segments along an axis to render a wall
 // with windows cut into it. Returns an array of <WallPanel /> elements. Any
@@ -357,9 +380,10 @@ export function TheBakery() {
       ))}
       <CabinetRow config={THE_BAKERY_EAST_CABINETS} />
 
-      {/* Kitchen-area water cooler tucked against the south wall west of
-          the doorway, spigot facing north into the room. */}
-      <WaterCooler position={[-9, 19.4]} rotationY={Math.PI / 2} />
+      {/* Kitchen-area water cooler tucked against the south wall in
+          the opaque strip between the two east glass panes, spigot
+          facing north into the room. */}
+      <WaterCooler position={[0, 19.4]} rotationY={Math.PI / 2} />
 
       {/* Mugs on the long prep table — a small cluster for texture. */}
       <Mug
@@ -399,6 +423,13 @@ export function TheBakery() {
         size={[1.4, 1.0]}
         color="#c99a3f"
       />
+
+      {/* Sarah — standing just west of the kitchen table in the open
+          floor between the desks and the kitchen. Facing west toward
+          the desks / west door. Waves until the player talks to her. */}
+      <Suspense fallback={null}>
+        <Sarah position={[2.5, 0, 17]} />
+      </Suspense>
     </>
   )
 }

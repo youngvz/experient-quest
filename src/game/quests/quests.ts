@@ -31,3 +31,24 @@ export function getQuest(id: string): Quest {
   if (!q) throw new Error(`Unknown quest id: ${id}`)
   return q
 }
+
+// Derived task rules: a task completes when EVERY listed stop id is in
+// `completedStopIds`. Evaluated by the store's markCompleted /
+// acceptQuestUnlock reducers, so a stop can indirectly tick multiple
+// tasks. For direct 1:1 mappings, prefer `questTaskComplete` on the
+// PresentationStop itself.
+export interface DerivedTaskCompletion {
+  questId: string
+  taskId: string
+  requiresStops: readonly string[]
+}
+
+export const DERIVED_TASK_COMPLETIONS: readonly DerivedTaskCompletion[] = [
+  {
+    questId: 'weekly-status-meeting',
+    taskId: 'joke-of-week',
+    // The player collects joke fragments (or vibes) from three NPCs;
+    // once all three have been visited, the task ticks itself.
+    requiresStops: ['juan', 'sarah', 'tenant'],
+  },
+]

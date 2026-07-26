@@ -1,0 +1,74 @@
+.quest-toast-stack {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+  align-items: center;
+}
+
+.quest-toast {
+  min-width: 240px;
+  max-width: min(420px, calc(100vw - 32px));
+  padding: 10px 16px;
+  background: rgba(232, 208, 137, 0.96);
+  color: #2a2013;
+  border: 3px solid #2a2013;
+  border-radius: 4px;
+  box-shadow:
+    0 0 0 2px #d9b667 inset,
+    0 4px 0 rgba(0, 0, 0, 0.25);
+  font-family: 'Press Start 2P', ui-monospace, monospace;
+  image-rendering: pixelated;
+  text-align: center;
+  animation: quest-toast-in 0.22s ease-out both, quest-toast-out 0.32s ease-in 2.28s both;
+}
+
+.quest-toast__label {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  margin-bottom: 10px;
+  text-decoration: underline;
+  text-underline-offset: 6px;
+  text-decoration-thickness: 2px;
+}
+
+.quest-toast__task {
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+@keyframes quest-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes quest-toast-out {
+  to {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+@media (max-width: 640px) {
+  .quest-toast {
+    padding: 8px 12px;
+    min-width: 180px;
+  }
+  .quest-toast__label {
+    font-size: 10px;
+  }
+  .quest-toast__task {
+    font-size: 9px;
+  }
+}

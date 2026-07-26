@@ -4,7 +4,7 @@ import { useCoarsePointer } from '../../hooks/useCoarsePointer'
 import { useGameEvent } from '../../hooks/useGameEvents'
 import './InteractionPrompt.css'
 
-// Rewrites "Press F to X" / "Press E to X" → "Tap to X" for touch users.
+// Rewrites "Press Enter to X" / "Press E to X" → "Tap to X" for touch users.
 // The prompts are authored in the presentation stops with keyboard verbs
 // as the default; a coarse pointer has no keys to press, so we swap the
 // verb here rather than duplicating every prompt string in the data.

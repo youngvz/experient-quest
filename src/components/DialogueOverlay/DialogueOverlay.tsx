@@ -49,10 +49,17 @@ export function DialogueOverlay() {
   // Called only when the script has been read to its end. If the stop
   // unlocks a quest, present the accept modal INSTEAD of marking completed
   // here — the store's acceptQuestUnlock() commits both on "Got it". Stops
-  // without a questUnlock complete immediately.
+  // without a questUnlock complete immediately. Independently, if the
+  // stop declares `questTaskComplete`, tick that task now — it's
+  // idempotent, so replaying the dialogue is a no-op.
   const handleFinish = useCallback(() => {
     if (activeStopId) {
       const stop = findStop(activeStopId)
+      if (stop?.questTaskComplete) {
+        useGameStore
+          .getState()
+          .completeTask(stop.questTaskComplete.questId, stop.questTaskComplete.taskId)
+      }
       if (stop?.questUnlock) {
         useGameStore.getState().presentQuestUnlock(stop.questUnlock, activeStopId)
       } else {

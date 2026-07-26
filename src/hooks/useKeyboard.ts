@@ -25,7 +25,7 @@ const FORWARD_KEYS = new Set(['KeyW'])
 const BACK_KEYS = new Set(['KeyS'])
 const LEFT_KEYS = new Set(['KeyA'])
 const RIGHT_KEYS = new Set(['KeyD'])
-const INTERACT_KEYS = new Set(['KeyF'])
+const INTERACT_KEYS = new Set(['Enter'])
 const RUN_TOGGLE_KEYS = new Set(['KeyR'])
 const ROLL_KEYS = new Set(['Space'])
 const WAVE_KEYS = new Set(['KeyC'])
@@ -94,7 +94,18 @@ export function useKeyboard(): {
       else if (LEFT_KEYS.has(event.code)) s.left = true
       else if (RIGHT_KEYS.has(event.code)) s.right = true
       else if (INTERACT_KEYS.has(event.code)) {
-        if (!s.interactConsumed) s.interactPressed = true
+        // Swallow the interact key while a dialogue / quest-unlock modal
+        // is on-screen. Enter is BOTH the "open dialogue" and "advance /
+        // close dialogue" key, so a keypress that closes the overlay
+        // would otherwise latch an interact edge here; then when
+        // `controlsDisabled` flips back to false a frame later, the
+        // Player would consume it and immediately re-open the same
+        // dialogue. Reading the store synchronously (same trick as the
+        // arrowKeyMode branch above) keeps this cheap.
+        const store = useGameStore.getState()
+        const overlayOpen =
+          store.activeStopId !== null || store.pendingUnlockQuestId !== null
+        if (!overlayOpen && !s.interactConsumed) s.interactPressed = true
       }
       else if (RUN_TOGGLE_KEYS.has(event.code)) s.running = !s.running
       else if (ROLL_KEYS.has(event.code)) {

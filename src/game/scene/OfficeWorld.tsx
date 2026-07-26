@@ -66,6 +66,10 @@ export default function OfficeWorld({ controlsDisabled }: OfficeWorldProps) {
     useGLTF.preload(CHARACTERS.youngvz.glbUrl)
     useGLTF.preload(CHARACTERS.distasi.glbUrl)
     useGLTF.preload(CHARACTERS.jacquelyn.glbUrl)
+    useGLTF.preload(CHARACTERS.catherine.glbUrl)
+    useGLTF.preload(CHARACTERS.juan.glbUrl)
+    useGLTF.preload(CHARACTERS.tenant.glbUrl)
+    useGLTF.preload(CHARACTERS.sarah.glbUrl)
   }, [])
 
   return (

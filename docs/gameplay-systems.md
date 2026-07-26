@@ -48,7 +48,7 @@ Current bindings:
 | --- | --- | --- |
 | Move | `WASD` | continuous (`state.current.{forward,back,left,right}`) |
 | Run (toggle) | `R` | toggle (`state.current.running`) |
-| Interact | `F` | edge-triggered (`consumeInteract()`) |
+| Interact | `Enter` | edge-triggered (`consumeInteract()`) |
 | Roll | `Space` | edge-triggered (`consumeRoll()`) |
 | Wave | `C` | edge-triggered (`consumeWave()`) |
 | Orbit camera | `Q` / `E` | continuous (`state.current.{yawLeft,yawRight}`) |
@@ -123,7 +123,7 @@ through `getStopZoneRect` and registers them with an `InteractionManager`.
 Each frame, `Player.tsx` calls `manager.update(x, z)` with the player's XZ
 position; the manager emits `interaction:available` / `unavailable`
 events via `gameEvents` when the active zone changes, and `trigger()`
-fires `interaction:triggered` when the player presses `F`.
+fires `interaction:triggered` when the player presses `Enter`.
 
 Only one zone is active at a time (first-match wins). Approach paths
 matter: if an interactable NPC has a physics collider, its own capsule
@@ -136,7 +136,7 @@ their stopping distance.
 {
   id: 'distasi',
   label: 'Distasi',
-  prompt: 'Press F to talk to Distasi',
+  prompt: 'Press Enter to talk to Distasi',
   overlayTitle: 'Distasi',
   intro: '…',
   position: [-8, 0, -13],           // XZ rect center

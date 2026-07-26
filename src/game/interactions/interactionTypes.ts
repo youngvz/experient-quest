@@ -57,6 +57,12 @@ export interface PresentationStop {
   // If present, the given quest is unlocked the first time the player
   // finishes this stop's overlay. Handled by the overlay's close path.
   questUnlock?: string
+  // If present, the given quest task is marked complete when this stop's
+  // overlay closes. Idempotent — completing an already-checked task is a
+  // no-op. Fires whether or not the quest is currently unlocked, so a
+  // task completed pre-unlock will read as done the moment the player
+  // accepts the quest.
+  questTaskComplete?: { questId: string; taskId: string }
 }
 
 export const presentationStops: PresentationStop[] = [
@@ -75,7 +81,7 @@ export const presentationStops: PresentationStop[] = [
   {
     id: 'jacquelyn',
     label: 'Jacquelyn',
-    prompt: 'Press F to talk to Jacquelyn',
+    prompt: 'Press Enter to talk to Jacquelyn',
     overlayTitle: 'Jacquelyn',
     // Jacquelyn stands on the south sidewalk in front of the 5256 door.
     // Zone spans the sidewalk approach so the prompt fires as the player
@@ -94,9 +100,121 @@ export const presentationStops: PresentationStop[] = [
     },
   },
   {
+    id: 'juan',
+    label: 'Juan',
+    prompt: 'Press Enter to talk to Juan',
+    overlayTitle: 'Juan',
+    // Juan stands in TheLab's main lobby near the L's inner corner, in
+    // the open floor between the west doorway and the south clusters.
+    // Zone rect: X ∈ [-7, +1], Z ∈ [-24, -16].
+    position: [-3, 0, -20],
+    interactionZone: { size: [8, 8] },
+    content: {
+      type: 'dialogue',
+      script: [
+        {
+          speakerId: 'juan',
+          text: 'Why did the fried chicken join a band?',
+        },
+        {
+          speakerId: 'juan',
+          text: 'Because it had the drumsticks!',
+        },
+        {
+          speakerId: 'youngvz',
+          text: "...",
+        }
+      ],
+    },
+  },
+  {
+    id: 'catherine',
+    label: 'Catherine',
+    prompt: 'Press Enter to talk to Catherine',
+    overlayTitle: 'Catherine',
+    // Talking to Catherine counts as the "Get Company Updates" task on
+    // the weekly-status-meeting quest.
+    questTaskComplete: {
+      questId: 'weekly-status-meeting',
+      taskId: 'company-updates',
+    },
+    // Catherine stands on TheStation's main floor, east of the west-side
+    // workstations. Zone covers her approach from the west (glass) door.
+    // Zone rect: X ∈ [-7, -1], Z ∈ [-53, -47].
+    position: [-4, 0, -50],
+    interactionZone: { size: [6, 6] },
+    content: {
+      type: 'dialogue',
+      script: [
+        {
+          speakerId: 'catherine',
+          text: "Hey Youngvz! Here are the updates for the status meeting.",
+        },
+        {
+          speakerId: 'youngvz',
+          text: "Thanks Catherine! John will be happy to see these.",
+        }
+      ],
+    },
+  },
+  {
+    id: 'sarah',
+    label: 'Sarah',
+    prompt: 'Press Enter to talk to Sarah',
+    overlayTitle: 'Sarah',
+    // Sarah hangs out near The Bakery's kitchen table, in the open floor
+    // between the desk clusters and the sink cabinets. Zone covers her
+    // approach from the west corridor door and the desk area.
+    // Zone rect: X ∈ [+1, +9], Z ∈ [+15, +21].
+    position: [5, 0, 18],
+    interactionZone: { size: [8, 6] },
+    content: {
+      type: 'dialogue',
+      script: [
+        {
+          speakerId: 'sarah',
+          text: "I hate standing here trying to think of a good watercooler joke.",
+        },
+        {
+          speakerId: 'youngvz',
+          text: "...",
+        }
+      ],
+    },
+  },
+  {
+    id: 'tenant',
+    label: 'Tenant',
+    prompt: 'Press Enter to talk to Tenant',
+    overlayTitle: 'Tenant',
+    // Tenant stands in front of the north-wall whiteboard, facing it.
+    // Zone covers the north half of TheLibrary so the prompt fires as
+    // the player approaches from the corridor doorway.
+    // Zone rect: X ∈ [-18, -13], Z ∈ [-22, -14].
+    position: [-15.5, 0, -18],
+    interactionZone: { size: [5, 8] },
+    content: {
+      type: 'dialogue',
+      script: [
+        {
+          speakerId: 'tenant',
+          text: 'Of all the inventions in the last 100 years...',
+        },
+        {
+          speakerId: 'tenant',
+          text: 'the whiteboard has to be the most re-MARKable.',
+        },
+        {
+          speakerId: 'youngvz',
+          text: "...",
+        }
+      ],
+    },
+  },
+  {
     id: 'distasi',
     label: 'Distasi',
-    prompt: 'Press F to talk to Distasi',
+    prompt: 'Press Enter to talk to Distasi',
     overlayTitle: 'Distasi',
     questUnlock: 'weekly-status-meeting',
     // Zone extends beyond the pocket into the central corridor and the west

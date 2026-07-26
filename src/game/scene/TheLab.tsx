@@ -1,4 +1,6 @@
 import { RigidBody } from '@react-three/rapier'
+import { Suspense, useMemo } from 'react'
+import { CHARACTERS } from '../characters/characters'
 import {
   COLORS,
   THE_LAB,
@@ -7,13 +9,35 @@ import {
   WALL_HEIGHT,
   WALL_THICKNESS,
 } from '../constants/gameConstants'
+import { useGameStore } from '../state/gameStore'
 import { CabinetRow } from './CabinetRow'
 import { Chair } from './Chair'
 import { Desk } from './Desk'
+import { Employee } from './Employee'
 import { Laptop } from './Laptop'
 import { Monitor } from './Monitor'
 import { Paper } from './Paper'
 import { DoorHeader, WallPanel } from './wallPrimitives'
+
+// Waves until the player finishes talking to Juan, then swaps to idle.
+const JUAN_WAVE = [/wave/i, /greet/i, /hello/i]
+const JUAN_IDLE = [/idle/i, /stand/i, /breath/i]
+
+function Juan({ position }: { position: [number, number, number] }) {
+  const hasSpoken = useGameStore((s) => s.completedStopIds.has('juan'))
+  const clipPatterns = useMemo(
+    () => (hasSpoken ? JUAN_IDLE : JUAN_WAVE),
+    [hasSpoken],
+  )
+  return (
+    <Employee
+      url={CHARACTERS.juan.glbUrl}
+      position={position}
+      rotationY={(5 * Math.PI) / 4}
+      clipPatterns={clipPatterns}
+    />
+  )
+}
 
 // Alcove desk metrics — 3m wide (along Z) × 2m deep (along X). Placed
 // against the east wall so the desk's back edge is at the wall and its
@@ -385,6 +409,13 @@ export function TheLab() {
         )
       })}
       <CabinetRow config={THE_LAB_CABINETS} />
+
+      {/* Juan — greeter in TheLab's main lobby, near the L's inner
+          corner between the west doorway and the south desk clusters.
+          Waves until the player talks to him. */}
+      <Suspense fallback={null}>
+        <Juan position={[-3, 0, -20]} />
+      </Suspense>
     </>
   )
 }

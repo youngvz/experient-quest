@@ -457,7 +457,14 @@ export function Player({ controlsDisabled }: PlayerProps) {
     // Proximity tracking for range-based scene mounting.
     proximity.update(pos.x, pos.z)
 
-    if (!controlsDisabled && !locked && (consumeInteract() || touchInput.consumeInteract())) {
+    if (controlsDisabled) {
+      // Drain any interact edge that arrived while a modal was open. Enter
+      // is now both the open- and close-interact key, so the same keydown
+      // that dismisses a dialogue would otherwise stay latched and
+      // re-trigger the interaction the moment controls re-enable.
+      consumeInteract()
+      touchInput.consumeInteract()
+    } else if (!locked && (consumeInteract() || touchInput.consumeInteract())) {
       manager.trigger()
     }
 

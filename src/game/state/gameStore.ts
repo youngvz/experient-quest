@@ -1,4 +1,6 @@
 import { create } from 'zustand'
+import { gameEvents } from '../events/GameEventBus'
+import { DERIVED_TASK_COMPLETIONS, getQuest } from '../quests/quests'
 
 // A "zone" is a named region of the world. The player is in exactly one at
 // a time (defaulting to the office). Scene branches subscribe to the active
@@ -41,17 +43,67 @@ export interface GameState {
   acceptQuestUnlock: () => void
   dismissUnlock: () => void
   toggleTask: (questId: string, taskId: string) => void
+  completeTask: (questId: string, taskId: string) => void
   setArrowKeyMode: (mode: ArrowKeyMode) => void
   reset: () => void
 }
 
 const taskKey = (questId: string, taskId: string) => `${questId}:${taskId}`
 
+// Fire the "task just completed" toast event for every task that turned
+// on between `prev` and `next`. Emitted from the reducer so every path
+// that flips a task (direct completeTask, derived rules, toggleTask on)
+// gets one toast per fresh completion.
+function emitFreshTaskCompletions(
+  prev: ReadonlySet<string>,
+  next: ReadonlySet<string>,
+): void {
+  if (prev === next) return
+  for (const key of next) {
+    if (prev.has(key)) continue
+    const [questId, taskId] = key.split(':') as [string, string]
+    let label = taskId
+    try {
+      const task = getQuest(questId).tasks.find((t) => t.id === taskId)
+      if (task) label = task.label
+    } catch {
+      // Unknown quest — fall back to the task id.
+    }
+    gameEvents.emit('quest:task-completed', { questId, taskId, label })
+  }
+}
+
 function setsEqual(a: ReadonlySet<string>, b: ReadonlySet<string>): boolean {
   if (a === b) return true
   if (a.size !== b.size) return false
   for (const x of a) if (!b.has(x)) return false
   return true
+}
+
+// Walk the derived-task rules against a proposed `completedStopIds` set
+// and return an updated `completedTaskIds` set (or the input unchanged
+// if nothing fired). Idempotent — called from every place that grows
+// completedStopIds.
+function applyDerivedTaskCompletions(
+  completedStopIds: ReadonlySet<string>,
+  completedTaskIds: ReadonlySet<string>,
+): ReadonlySet<string> {
+  let next: Set<string> | null = null
+  for (const rule of DERIVED_TASK_COMPLETIONS) {
+    const key = taskKey(rule.questId, rule.taskId)
+    if (completedTaskIds.has(key)) continue
+    let allMet = true
+    for (const stopId of rule.requiresStops) {
+      if (!completedStopIds.has(stopId)) {
+        allMet = false
+        break
+      }
+    }
+    if (!allMet) continue
+    if (!next) next = new Set(completedTaskIds)
+    next.add(key)
+  }
+  return next ?? completedTaskIds
 }
 
 export const useGameStore = create<GameState>((set) => ({
@@ -68,9 +120,13 @@ export const useGameStore = create<GameState>((set) => ({
   markCompleted: (id) =>
     set((state) => {
       if (state.completedStopIds.has(id)) return state
-      const next = new Set(state.completedStopIds)
-      next.add(id)
-      return { completedStopIds: next }
+      const nextStops = new Set(state.completedStopIds)
+      nextStops.add(id)
+      const nextTasks = applyDerivedTaskCompletions(nextStops, state.completedTaskIds)
+      emitFreshTaskCompletions(state.completedTaskIds, nextTasks)
+      const patch: Partial<GameState> = { completedStopIds: nextStops }
+      if (nextTasks !== state.completedTaskIds) patch.completedTaskIds = nextTasks
+      return patch
     }),
   setActiveZone: (zone) =>
     // No-op if unchanged so subscribers don't re-render on every frame.
@@ -101,9 +157,15 @@ export const useGameStore = create<GameState>((set) => ({
         next.add(sourceStopId)
         completedStopIds = next
       }
+      const completedTaskIds = applyDerivedTaskCompletions(
+        completedStopIds,
+        state.completedTaskIds,
+      )
+      emitFreshTaskCompletions(state.completedTaskIds, completedTaskIds)
       return {
         unlockedQuestIds,
         completedStopIds,
+        completedTaskIds,
         pendingUnlockQuestId: null,
         pendingUnlockStopId: null,
       }
@@ -116,6 +178,16 @@ export const useGameStore = create<GameState>((set) => ({
       const next = new Set(state.completedTaskIds)
       if (next.has(key)) next.delete(key)
       else next.add(key)
+      emitFreshTaskCompletions(state.completedTaskIds, next)
+      return { completedTaskIds: next }
+    }),
+  completeTask: (questId, taskId) =>
+    set((state) => {
+      const key = taskKey(questId, taskId)
+      if (state.completedTaskIds.has(key)) return state
+      const next = new Set(state.completedTaskIds)
+      next.add(key)
+      emitFreshTaskCompletions(state.completedTaskIds, next)
       return { completedTaskIds: next }
     }),
   setArrowKeyMode: (mode) =>
