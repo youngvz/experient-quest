@@ -77,9 +77,10 @@ before proposing a large migration.
   `EastCorridor`, `CorridorPocket`, `TheLab`, `TheStation`, `TheGarage`,
   `Exterior`.
   `TheStation` contains a sub-room (`The Boardroom`) rendered inline;
-  `TheGarage` contains a wider formal conference sub-room rendered
-  inline, sharing its west wall coplanar with the central corridor's
-  east wall (glass, like Lab/Station);
+  `TheGarage` is a 54 × 12 m room whose west wall is coplanar with the
+  central corridor's east wall (glass, like Lab/Station) and whose
+  interior is split into a north strip, an east–west circulation aisle,
+  and a south strip by vertical partition walls;
   `TheLab` and `TheStation` both carry interior alcove strips wired via
   their own constants blocks. Room-specific composites:
   `TheBakeryCabinets`, `TheLabCabinets`, `Whiteboards` (conference +
@@ -200,22 +201,20 @@ Layout beyond the conference room:
   4-seat meeting table. Two solo workstations sit against The
   Station's west (glass) wall in the main floor.
 - **`TheGarage`** — third branch room off the central corridor's east
-  wall, north of TheStation. Entry through an open glass door on the
-  corridor's east wall at Z=−77 (mirrors Lab/Station). Main floor is
-  a 24 m × 26 m rectangle (X ∈ [−10, +14], Z ∈ [−88, −62]); its
-  south wall is coplanar with TheStation's north wall so the two
-  rooms share the plane at Z=−62 with no gap between them (TheStation
-  owns X ∈ [−10, +10] on that plane; TheGarage draws only the
-  X ∈ [+10, +14] slice). Attached to the north side is a wider formal
-  conference sub-room (X ∈ [−10, +14], Z ∈ [−100, −88]) with a
-  6-chair meeting table + head seat and a wall-mounted TV on its
-  north wall. The sub-room has two entrances: one on its shared
-  south wall with TheGarage main floor (centered at X=+2), and one
-  on its west wall opening straight onto the corridor at Z=−94.
-  Both the main floor's and the sub-room's west walls are coplanar
-  with the corridor east wall (X=−10) and render as glass storefront —
-  the corridor's east wall was extended to Z=−100 to accommodate the
-  full complex.
+  wall, north of TheStation. 54 m × 12 m rectangle (X ∈ [−10, +44],
+  Z ∈ [−74, −62]). Entry through an open glass door on the corridor's
+  east wall at Z=−65.5; a dead-end door on the east perimeter at
+  Z=−67.5 opens into the aisle but leads nowhere yet. South wall is
+  coplanar with TheStation's north wall (TheStation owns X ∈ [−10,
+  +14]; TheGarage draws only the X ∈ [+14, +44] slice). Interior
+  layout: a **north strip** (Z ∈ [−74, −69]) whose west portion
+  (X ∈ [−10, +5]) is one enclosed office with a south-facing 2 m
+  door at X=−1.5; a **3 m E–W circulation aisle** (Z ∈ [−69, −66])
+  open across the full 54 m; and a **south strip** (Z ∈ [−66, −62]).
+  Three vertical partition walls at X=+14, +23, +32 cut through both
+  strips (but not the aisle), creating cubicle bays. The corridor's
+  east wall was shortened from Z=−100 to Z=−74 (the old wider Garage
+  + conference sub-room was replaced by this layout).
 
 All room-to-room walls that face a walkable space render as glass
 storefront (both surfaces glass, coplanar) with `divisions={1}` so the

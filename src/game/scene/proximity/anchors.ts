@@ -46,7 +46,7 @@ export const PROXIMITY_ANCHORS: readonly ProximityAnchor[] = [
     id: 'the-garage',
     minX: THE_GARAGE.westX,
     maxX: THE_GARAGE.eastX,
-    minZ: THE_GARAGE.conference.northZ,
+    minZ: THE_GARAGE.northZ,
     maxZ: THE_GARAGE.southZ,
     radius: GARAGE_RADIUS,
   },
