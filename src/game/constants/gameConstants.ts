@@ -626,7 +626,7 @@ export const THE_LAB_ALCOVES = {
 // at Z=-67.5 (2 m, open — leads nowhere yet).
 export const THE_GARAGE = {
   westX: -ROOM_WIDTH / 2, // -10 (coplanar w/ CENTRAL_CORRIDOR.eastX)
-  eastX: 44,
+  eastX: 41,
   southZ: THE_STATION.northZ, // -62 (coplanar w/ TheStation north wall)
   northZ: -74,
   // Corridor-side entry doorway on the west (glass) wall. Sits in the
@@ -655,8 +655,15 @@ export const THE_GARAGE = {
   },
   // Vertical partition walls (opaque, run N-S) shared by the north and
   // south strips. Each stops at the aisle boundary; the aisle itself is
-  // open E-W. `bays` describes the resulting E-side cubicle columns
-  // (each ~8 m wide) between the partitions and against the east wall.
+  // open E-W. Column grid west→east:
+  //   NW office            (X ∈ [-10, +5])    ← 15 m (north strip only)
+  //   Bay 1                (X ∈ [+5, +14])    ← 9 m
+  //   Alcove A             (X ∈ [+14, +23])   ← 9 m
+  //   Alcove B             (X ∈ [+23, +32])   ← 9 m
+  //   Bay 4                (X ∈ [+32, +41])   ← 9 m
+  // The south strip's west end (X ∈ [-10, +14]) is one open 24 m lobby
+  // that contains the corridor entry door; only the alcove/bay
+  // partitions (X=+14, +23, +32) subdivide it.
   partitions: [
     { x: 14 },
     { x: 23 },

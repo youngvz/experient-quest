@@ -23,11 +23,19 @@ import { DoorHeader, WallPanel } from './wallPrimitives'
 // panoramic proportion reads better.
 const LANDSCAPE_PAINTING_SIZE: [number, number] = [1.8, 1.4]
 
-// The Garage — 54 m × 12 m room east of the central corridor. Interior
+// The Garage — 51 m × 12 m room east of the central corridor. Interior
 // split into three Z-strips (north 5 m, aisle 3 m, south 4 m) with three
 // vertical partition walls at X=+14, +23, +32 that cut through both
-// strips but not the aisle. The whole X ∈ [-10, +5] portion of the north
-// strip is one enclosed office with a single south-facing doorway.
+// strips but not the aisle. Column grid west→east:
+//   NW office (N strip only)  X ∈ [-10, +5]    15 m  (open on south strip)
+//   Bay 1                     X ∈ [+5, +14]     9 m
+//   Alcove A                  X ∈ [+14, +23]    9 m
+//   Alcove B                  X ∈ [+23, +32]    9 m
+//   Bay 4                     X ∈ [+32, +41]    9 m
+// The south strip's west end (X ∈ [-10, +14]) is one open 24 m foyer
+// holding the corridor entry door. Alcoves A and B (both strips) have
+// glass front walls opening onto the aisle. Outer bays (1, 4) stay
+// fully open onto the aisle.
 //
 // TheGarage renders:
 //   - floor slab
@@ -236,13 +244,14 @@ export function TheGarage() {
             - North strip: 2 alcoves along Z=aisle.northZ
             - South strip: 2 alcoves along Z=aisle.southZ
           The outer bays on both strips (X ∈ [nwOffice.eastX, +14] and
-          [+32, +44]) and the south strip's westernmost lobby stay
-          open onto the aisle. */}
+          [+32, eastX]) stay open onto the aisle, as does the SW
+          lobby (X ∈ [westX, nwOffice.eastX]) which contains the
+          corridor entry door. */}
       {(() => {
-        const partitionXs = partitions.map((p) => p.x)
         const alcoveDoorWidth = 2
-        // Bays that get glass fronts + doors: the two middle columns
-        // bounded by the partition Xs.
+        // Alcove bays are the two middle columns bounded by the three
+        // partitions (X=+14, +23, +32).
+        const partitionXs = partitions.map((p) => p.x)
         const alcoveBays = partitionXs
           .slice(0, -1)
           .map((wx, i) => ({ westX: wx, eastX: partitionXs[i + 1]! }))

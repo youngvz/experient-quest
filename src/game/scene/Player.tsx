@@ -26,6 +26,7 @@ import {
   ROOM_DEPTH,
   THE_BAKERY,
   THE_BOARDROOM,
+  THE_GARAGE,
   THE_LAB,
   THE_STATION,
 } from '../constants/gameConstants'
@@ -293,6 +294,14 @@ export function Player({ controlsDisabled }: PlayerProps) {
       maxX: THE_STATION.eastX,
       minZ: THE_STATION.northZ,
       maxZ: THE_STATION.southZ,
+    })
+    // TheGarage — third room off the central corridor, north of Station.
+    z.registerZone({
+      id: 'the-garage',
+      minX: THE_GARAGE.westX,
+      maxX: THE_GARAGE.eastX,
+      minZ: THE_GARAGE.northZ,
+      maxZ: THE_GARAGE.southZ,
     })
     // The Bakery — south of the conference room. Rect matches the
     // room's floor slab (ROOM_DEPTH/2 to that + THE_BAKERY.depth).
