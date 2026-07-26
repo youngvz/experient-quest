@@ -1,5 +1,7 @@
 /// <reference types="vitest/config" />
-import { defineConfig } from 'vite'
+import { readdir, rm } from 'node:fs/promises'
+import path from 'node:path'
+import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
@@ -9,9 +11,43 @@ import react from '@vitejs/plugin-react'
 // See docs/deployment-and-security.md for the full matrix.
 const base = process.env.DEPLOY_BASE ?? '/experient-quest/'
 
+// scripts/optimize-{glb,png}.mjs stash pre-optimization backups next to
+// their inputs as *.bak. Those live in public/ so the scripts can find
+// them for rollback, but Vite copies public/ verbatim into dist/ — this
+// plugin evicts them from the built output.
+function stripBackupsFromDist(): Plugin {
+  return {
+    name: 'strip-backup-files',
+    apply: 'build',
+    async closeBundle() {
+      const outDir = path.resolve(__dirname, 'dist')
+      const removed: string[] = []
+      async function walk(dir: string) {
+        const entries = await readdir(dir, { withFileTypes: true })
+        for (const entry of entries) {
+          const full = path.join(dir, entry.name)
+          if (entry.isDirectory()) await walk(full)
+          else if (entry.name.endsWith('.bak')) {
+            await rm(full)
+            removed.push(path.relative(outDir, full))
+          }
+        }
+      }
+      try {
+        await walk(outDir)
+      } catch {
+        return
+      }
+      if (removed.length) {
+        this.info?.(`strip-backup-files: removed ${removed.length} .bak file(s) from dist/`)
+      }
+    },
+  }
+}
+
 export default defineConfig({
   base,
-  plugins: [react()],
+  plugins: [react(), stripBackupsFromDist()],
   build: {
     chunkSizeWarningLimit: 1600,
     rollupOptions: {
