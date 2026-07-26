@@ -234,7 +234,26 @@ Use `useGLTF` or `useLoader` so assets participate in loader caching.
 
 Use `gltfjsx` for important reusable models when typed node access, material replacement, animation access, or conditional meshes improve maintainability.
 
-Preload only critical assets:
+### Asset URLs must prefix with `import.meta.env.BASE_URL`
+
+`vite.config.ts` sets `base: '/experient-quest/'` by default (GitHub Pages
+subpath). The dev server, preview server, and production build all serve
+`public/` assets under that prefix. Anything under `public/assets/…` must
+be referenced through `import.meta.env.BASE_URL` — a hardcoded
+`/assets/foo.glb` 404s in dev the moment you load it.
+
+```ts
+const BASE = import.meta.env.BASE_URL
+
+useGLTF.preload(`${BASE}assets/props/Bush_Common.glb`)
+<Bush url={`${BASE}assets/props/Bush_Common.glb`} />
+```
+
+`src/game/characters/characters.ts` is the canonical example. The
+deployment-time consequence lives in `docs/deployment-and-security.md`
+(subpath vs root builds).
+
+### Preload only critical assets
 
 - Office shell
 - Player model

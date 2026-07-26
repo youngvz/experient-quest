@@ -10,11 +10,14 @@ import { ConferenceTable } from './ConferenceTable'
 import { CorridorPocket } from './CorridorPocket'
 import { EastCorridor } from './EastCorridor'
 import { FadeIn } from './FadeIn'
-import { LazyBranch } from './LazyBranch'
 import { NorthEastCorridor } from './NorthEastCorridor'
 import { Player } from './Player'
 import { ProximityBranch } from './ProximityBranch'
 import { CentralCorridor } from './CentralCorridor'
+import { SouthApron } from './SouthApron'
+import { SouthApronBushes } from './SouthApronBushes'
+import { SouthApronFlowers } from './SouthApronFlowers'
+import { SouthApronGrass } from './SouthApronGrass'
 import { TheBakery } from './TheBakery'
 import { Televisions } from './Televisions'
 import { TheArchive } from './TheArchive'
@@ -30,8 +33,6 @@ const TheStation = lazy(() =>
 const TheGarage = lazy(() =>
   import('./TheGarage').then((m) => ({ default: m.TheGarage })),
 )
-const Outdoor = lazy(() => import('./Outdoor').then((m) => ({ default: m.Outdoor })))
-
 interface OfficeWorldProps {
   controlsDisabled: boolean
 }
@@ -72,6 +73,21 @@ export default function OfficeWorld({ controlsDisabled }: OfficeWorldProps) {
           conference room's glass. */}
       <TheBakery />
 
+      {/* Outdoor terrain south of the building. Always-on so the grass
+          and sidewalk are visible through The Bakery's south glass from
+          inside — must live inside <Physics> because grass slabs carry
+          RigidBody colliders. */}
+      <SouthApron />
+      <Suspense fallback={null}>
+        <SouthApronBushes />
+      </Suspense>
+      <Suspense fallback={null}>
+        <SouthApronGrass />
+      </Suspense>
+      <Suspense fallback={null}>
+        <SouthApronFlowers />
+      </Suspense>
+
       {/* Branch rooms mount by *distance* from the player (see
           proximity/anchors.ts for radii). Lab and Station stream in
           as the player walks north up the corridor; FadeIn smooths
@@ -91,14 +107,6 @@ export default function OfficeWorld({ controlsDisabled }: OfficeWorldProps) {
           <TheGarage />
         </FadeIn>
       </ProximityBranch>
-      {/* Outdoor stays zone-based — a trigger-style branch, not a
-          proximity one. Real outdoor doorway will replace this. */}
-      <LazyBranch zone="outdoor">
-        <FadeIn>
-          <Outdoor />
-        </FadeIn>
-      </LazyBranch>
-
       <Suspense fallback={null}>
         <Player controlsDisabled={controlsDisabled} />
       </Suspense>

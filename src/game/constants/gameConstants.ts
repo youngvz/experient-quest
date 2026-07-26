@@ -754,6 +754,24 @@ export const THE_BAKERY_SOUTH_WINDOWS: [number, number][] = [
   [6.5, 4],
 ]
 
+// Outdoor terrain patches south of the building. First-pass layout — solid
+// tinted slabs (grass / sidewalk / gravel), no PBR textures. Rendered as
+// always-on geometry (not inside the outdoor LazyBranch) so the terrain is
+// visible through The Bakery's south glass from inside. See
+// /Users/virajshah/.claude/plans/i-want-to-start-smooth-waffle.md for the
+// authored grid and coordinate rationale.
+export const SOUTH_APRON = {
+  grass: [
+    { westX: -13, eastX: 10, northZ: 20, southZ: 32 },
+    { westX: -19, eastX: -13, northZ: 18, southZ: 32 },
+  ],
+  sidewalk: [
+    { westX: -13, eastX: -6.5, northZ: 20, southZ: 24 },
+    { westX: -13, eastX: 10, northZ: 23, southZ: 26 },
+    { westX: -13, eastX: -10.5, northZ: 25, southZ: 32 },
+  ],
+} as const
+
 // NE alcove: two small offices stacked north-south, entered from the The Bakery
 // via their west walls. The alcove's east wall coincides with the The Bakery's
 // east wall (opaque, already exists). The alcove's north wall coincides with
@@ -961,6 +979,8 @@ export const COLORS = {
   sofaFrame: '#3a3f47',
   sofaCushion: '#556170',
   paintingFrame: '#241a12',
+  grass: '#3f5a35',
+  sidewalk: '#8a7a5c',
 } as const
 
 // Shared texture atlas for wall paintings. Ships as a single WebP whose
