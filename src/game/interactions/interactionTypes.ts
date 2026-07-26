@@ -217,6 +217,28 @@ export const presentationStops: PresentationStop[] = [
     },
   },
   {
+    id: 'logan',
+    label: 'Logan',
+    prompt: 'Press Enter to talk to Logan',
+    overlayTitle: 'Logan',
+    // Logan stands in Alcove A of TheLab facing the smoking kitchen
+    // station. Zone covers the approach from the alcove doorway (west)
+    // through his position — the KitchenStation itself blocks the east
+    // side so we don't need to gate that edge.
+    // Zone rect: X ∈ [+5, +9], Z ∈ [-29, -25].
+    position: [7, 0, -27],
+    interactionZone: { size: [4, 4] },
+    content: {
+      type: 'dialogue',
+      script: [
+        {
+          speakerId: 'logan',
+          text: 'This was not what I had in mind when Scott asked me to put out some fires..',
+        },
+      ],
+    },
+  },
+  {
     id: 'bakery-laptop',
     label: 'Laptop',
     prompt: 'Press Enter to use the laptop',

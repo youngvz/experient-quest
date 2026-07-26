@@ -54,6 +54,12 @@ export const CHARACTERS = {
     glbUrl: `${BASE}assets/employees/sarah.glb`,
     portraitUrl: `${BASE}assets/employees/sarah.png`,
   },
+  logan: {
+    id: 'logan',
+    name: 'Logan',
+    glbUrl: `${BASE}assets/employees/logan.glb`,
+    portraitUrl: `${BASE}assets/employees/logan.png`,
+  },
 } as const satisfies Record<string, Character>
 
 export type CharacterId = keyof typeof CHARACTERS

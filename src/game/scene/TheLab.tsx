@@ -203,6 +203,14 @@ export function TheLab() {
           wide × 0.7 m deep — back face flush at X ≈ 9.8. */}
       <KitchenStation position={[9.45, -27]} rotationY={-Math.PI / 2} smoke />
 
+      {/* Logan stands ~1.5 m west of the kitchen station, facing east
+          (+X) so he's looking straight at the smoking cooktop. */}
+      <Employee
+        url={CHARACTERS.logan.glbUrl}
+        position={[7.5, 0, -27]}
+        rotationY={Math.PI / 2}
+      />
+
       {/* Bay B and C furnishings: desk + chair against the east wall,
           chair facing west (toward the doorway), monitor at the desk's
           back edge, laptop nearer the chair. */}
