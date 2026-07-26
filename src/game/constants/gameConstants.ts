@@ -13,12 +13,13 @@ export const PLAYER_RADIUS = 0.4375
 export const PLAYER_HEIGHT = 2.0
 export const PLAYER_SPEED = 6
 export const PLAYER_RUN_SPEED = 16.25
-// Spawn just south of the central corridor's south doorway (exterior side),
-// centered on the corridor's X midline. The corridor's south wall is at
-// Z = CENTRAL_CORRIDOR.southZ (=20) with WALL_THICKNESS=0.4 (south face at
-// 20.2). Player radius is 0.35 — Z=21 keeps the capsule clear of the wall
-// on the outside, facing north through the doorway into the corridor.
-export const PLAYER_SPAWN: [number, number, number] = [-11.5, PLAYER_HEIGHT / 2 + 0.05, 21]
+// Spawn at the south end of the South Apron sidewalk — the visitor's
+// approach to the building. `SOUTH_APRON.sidewalk` includes a south-running
+// strip at X ∈ [-13, -10.5], Z ∈ [+25, +32] that leads north to the
+// corridor's south doorway. Spawn on that strip near the south edge
+// (invisible apron wall at Z=+32.2), centered at X=-11.75, facing north
+// so the player walks up the sidewalk toward the entrance.
+export const PLAYER_SPAWN: [number, number, number] = [-11.75, PLAYER_HEIGHT / 2 + 0.05, 31]
 
 // Initial facing (radians around Y). 0 = +Z (south); Math.PI = -Z (north,
 // into the corridor through the south doorway).

@@ -1,5 +1,5 @@
 import { RigidBody } from '@react-three/rapier'
-import { Suspense } from 'react'
+import { Suspense, useMemo } from 'react'
 import { CHARACTERS } from '../characters/characters'
 import {
   COLORS,
@@ -7,9 +7,31 @@ import {
   WALL_HEIGHT,
   WALL_THICKNESS,
 } from '../constants/gameConstants'
+import { useGameStore } from '../state/gameStore'
 import { Desk } from './Desk'
 import { Employee } from './Employee'
 import { WallPanel } from './wallPrimitives'
+
+// Wave clips vs idle-only clips. Swapping the array identity re-runs the
+// Employee's animation effect, which stops the wave and starts the idle.
+const DISTASI_WAVE = [/wave/i, /greet/i, /hello/i]
+const DISTASI_IDLE = [/idle/i, /stand/i, /breath/i]
+
+function Distasi({ position }: { position: [number, number, number] }) {
+  const hasSpoken = useGameStore((s) => s.completedStopIds.has('distasi'))
+  const clipPatterns = useMemo(
+    () => (hasSpoken ? DISTASI_IDLE : DISTASI_WAVE),
+    [hasSpoken],
+  )
+  return (
+    <Employee
+      url={CHARACTERS.distasi.glbUrl}
+      position={position}
+      rotationY={0}
+      clipPatterns={clipPatterns}
+    />
+  )
+}
 
 // Narrow workbench + backless stools that live in the middle of the pocket.
 // Long axis runs along Z so seating fits on the east and west sides.
@@ -121,14 +143,9 @@ export function CorridorPocket() {
 
       {/* Distasi — stationed against the pocket's west wall, facing south so
           he greets anyone coming up the central corridor or south from the
-          east corridor. */}
+          east corridor. Waves until the player talks to him. */}
       <Suspense fallback={null}>
-        <Employee
-          url={CHARACTERS.distasi.glbUrl}
-          position={[westX + 0.5, 0, centerZ + 1]}
-          rotationY={0}
-          clipPatterns={[/wave/i, /greet/i, /hello/i]}
-        />
+        <Distasi position={[westX + 0.5, 0, centerZ + 1]} />
       </Suspense>
     </>
   )
