@@ -1,4 +1,6 @@
 import { RigidBody } from '@react-three/rapier'
+import { Suspense } from 'react'
+import { CHARACTERS } from '../characters/characters'
 import {
   COLORS,
   THE_LIBRARY,
@@ -9,6 +11,7 @@ import {
 } from '../constants/gameConstants'
 import { Chair } from './Chair'
 import { Desk } from './Desk'
+import { Employee } from './Employee'
 import { FilingCabinet } from './FilingCabinet'
 import { Laptop } from './Laptop'
 import { Monitor } from './Monitor'
@@ -18,6 +21,10 @@ import { Paper } from './Paper'
 import { Telephone } from './Telephone'
 import { Whiteboard } from './Whiteboard'
 import { DoorHeader, WallPanel } from './wallPrimitives'
+
+// Idle-only — Tenant doesn't wave; keeps a resting pose whether or not
+// the player has talked to him.
+const TENANT_IDLE = [/idle/i, /stand/i, /breath/i]
 
 // Quiet focus room on the west side of the central corridor.
 // Non-explorable. A row of individual focus desks along the west wall,
@@ -170,14 +177,18 @@ export function TheLibrary() {
         size={[1.1, 0.8]}
         color="#3b7a5c"
       />
-      <Painting
-        centerX={-18}
-        wallZ={THE_LIBRARY.southZ}
-        facing={-1}
-        centerY={1.7}
-        size={[1.3, 0.9]}
-        color="#7f5390"
-      />
+
+      {/* Tenant — standing in front of the north-wall whiteboard next
+          to the filing cabinets, facing it (rotationY = π faces -Z).
+          Idle only (no wave). */}
+      <Suspense fallback={null}>
+        <Employee
+          url={CHARACTERS.tenant.glbUrl}
+          position={[-15, 0, -20]}
+          rotationY={Math.PI}
+          clipPatterns={TENANT_IDLE}
+        />
+      </Suspense>
     </>
   )
 }

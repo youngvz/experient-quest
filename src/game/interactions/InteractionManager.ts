@@ -11,6 +11,9 @@ export interface InteractionManagerEvents {
   onAvailable: (stop: PresentationStop) => void
   onUnavailable: () => void
   onTriggered: (stop: PresentationStop) => void
+  // Optional gate. Returning false hides the stop as if the player were
+  // outside its zone. Called every update — must be cheap.
+  isStopAvailable?: (stop: PresentationStop) => boolean
 }
 
 interface RegisteredZone {
@@ -96,6 +99,7 @@ export class InteractionManager {
   }
 
   private findActiveZone(point: { x: number; y: number }): RegisteredZone | null {
+    const gate = this.events.isStopAvailable
     for (const registered of this.zones.values()) {
       const { zone } = registered
       if (
@@ -104,6 +108,7 @@ export class InteractionManager {
         point.y >= zone.y &&
         point.y <= zone.y + zone.height
       ) {
+        if (gate && !gate(registered.stop)) continue
         return registered
       }
     }

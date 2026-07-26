@@ -14,6 +14,7 @@ import './GameCanvas.css'
 export function GameCanvas() {
   const [overlayOpen, setOverlayOpen] = useState(false)
   const pendingUnlockQuestId = useGameStore((s) => s.pendingUnlockQuestId)
+  const pendingReadyQuestId = useGameStore((s) => s.pendingReadyQuestId)
 
   useGameEvent(
     'interaction:triggered',
@@ -24,7 +25,8 @@ export function GameCanvas() {
     useCallback(() => setOverlayOpen(false), []),
   )
 
-  const controlsDisabled = overlayOpen || pendingUnlockQuestId !== null
+  const controlsDisabled =
+    overlayOpen || pendingUnlockQuestId !== null || pendingReadyQuestId !== null
 
   return (
     <div className="game-canvas">

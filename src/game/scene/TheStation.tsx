@@ -1,4 +1,6 @@
 import { RigidBody } from '@react-three/rapier'
+import { Suspense, useMemo } from 'react'
+import { CHARACTERS } from '../characters/characters'
 import {
   COLORS,
   THE_BOARDROOM,
@@ -10,15 +12,37 @@ import {
   WALL_HEIGHT,
   WALL_THICKNESS,
 } from '../constants/gameConstants'
+import { useGameStore } from '../state/gameStore'
 import { Chair } from './Chair'
 import { Desk } from './Desk'
 import { Door } from './Door'
+import { Employee } from './Employee'
 import { Laptop } from './Laptop'
 import { Monitor } from './Monitor'
 import { Paper } from './Paper'
 import { Sofa } from './Sofa'
 import { Television } from './Television'
 import { DoorHeader, WallPanel } from './wallPrimitives'
+
+// Waves until the player finishes talking to Catherine, then swaps to idle.
+const CATHERINE_WAVE = [/wave/i, /greet/i, /hello/i]
+const CATHERINE_IDLE = [/idle/i, /stand/i, /breath/i]
+
+function Catherine({ position }: { position: [number, number, number] }) {
+  const hasSpoken = useGameStore((s) => s.completedStopIds.has('catherine'))
+  const clipPatterns = useMemo(
+    () => (hasSpoken ? CATHERINE_IDLE : CATHERINE_WAVE),
+    [hasSpoken],
+  )
+  return (
+    <Employee
+      url={CHARACTERS.catherine.glbUrl}
+      position={position}
+      rotationY={-Math.PI / 2}
+      clipPatterns={clipPatterns}
+    />
+  )
+}
 
 // Bay workstation desk — 3m wide (X) × 2m deep (Z). Sits against the
 // north wall so the sitter (south side of desk) faces the south-facing
@@ -681,6 +705,13 @@ export function TheStation() {
         rotationY={Math.PI}
         seatCount={4}
       />
+
+      {/* Catherine — greeter on TheStation's main floor, east of the
+          west workstations, facing the west (glass) doorway. Waves
+          until the player talks to her. */}
+      <Suspense fallback={null}>
+        <Catherine position={[-4, 0, -50]} />
+      </Suspense>
     </>
   )
 }

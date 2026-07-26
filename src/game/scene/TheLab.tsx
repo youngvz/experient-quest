@@ -1,4 +1,6 @@
 import { RigidBody } from '@react-three/rapier'
+import { Suspense, useMemo } from 'react'
+import { CHARACTERS } from '../characters/characters'
 import {
   COLORS,
   THE_LAB,
@@ -7,13 +9,36 @@ import {
   WALL_HEIGHT,
   WALL_THICKNESS,
 } from '../constants/gameConstants'
+import { useGameStore } from '../state/gameStore'
 import { CabinetRow } from './CabinetRow'
 import { Chair } from './Chair'
 import { Desk } from './Desk'
+import { Employee } from './Employee'
+import { KitchenStation } from './KitchenStation'
 import { Laptop } from './Laptop'
 import { Monitor } from './Monitor'
 import { Paper } from './Paper'
 import { DoorHeader, WallPanel } from './wallPrimitives'
+
+// Waves until the player finishes talking to Juan, then swaps to idle.
+const JUAN_WAVE = [/wave/i, /greet/i, /hello/i]
+const JUAN_IDLE = [/idle/i, /stand/i, /breath/i]
+
+function Juan({ position }: { position: [number, number, number] }) {
+  const hasSpoken = useGameStore((s) => s.completedStopIds.has('juan'))
+  const clipPatterns = useMemo(
+    () => (hasSpoken ? JUAN_IDLE : JUAN_WAVE),
+    [hasSpoken],
+  )
+  return (
+    <Employee
+      url={CHARACTERS.juan.glbUrl}
+      position={position}
+      rotationY={(5 * Math.PI) / 4}
+      clipPatterns={clipPatterns}
+    />
+  )
+}
 
 // Alcove desk metrics — 3m wide (along Z) × 2m deep (along X). Placed
 // against the east wall so the desk's back edge is at the wall and its
@@ -173,10 +198,22 @@ export function TheLab() {
         )
       })}
 
+      {/* Bay A gets a smoking kitchen station against its east (back)
+          wall, facing west toward the alcove doorway. Station is 1.2 m
+          wide × 0.7 m deep — back face flush at X ≈ 9.8. */}
+      <KitchenStation position={[9.45, -27]} rotationY={-Math.PI / 2} smoke />
+
+      {/* Logan stands ~1.5 m west of the kitchen station, facing east
+          (+X) so he's looking straight at the smoking cooktop. */}
+      <Employee
+        url={CHARACTERS.logan.glbUrl}
+        position={[7.5, 0, -27]}
+        rotationY={Math.PI / 2}
+      />
+
       {/* Bay B and C furnishings: desk + chair against the east wall,
           chair facing west (toward the doorway), monitor at the desk's
-          back edge, laptop nearer the chair. Bay A intentionally left
-          empty for now. */}
+          back edge, laptop nearer the chair. */}
       {bays
         .filter((b) => b.id === 'b' || b.id === 'c')
         .map((b) => {
@@ -385,6 +422,22 @@ export function TheLab() {
         )
       })}
       <CabinetRow config={THE_LAB_CABINETS} />
+
+      {/* Two kitchen holding stations against TheLab's north wall
+          (Z = northZ = -32), facing south into the room. Placed east
+          of the north desk clusters, west of Alcove A's west wall at
+          X=5. Each station is 1.2 m wide × 0.7 m deep; back face flush
+          with the wall's interior at Z ≈ -31.8. */}
+      <KitchenStation position={[1, -31.45]} rotationY={0} />
+      <KitchenStation position={[2.8, -31.45]} rotationY={0} />
+
+
+      {/* Juan — greeter in TheLab's main lobby, near the L's inner
+          corner between the west doorway and the south desk clusters.
+          Waves until the player talks to him. */}
+      <Suspense fallback={null}>
+        <Juan position={[-3, 0, -20]} />
+      </Suspense>
     </>
   )
 }

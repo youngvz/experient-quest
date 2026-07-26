@@ -1,7 +1,7 @@
 import { useAnimations, useGLTF } from '@react-three/drei'
 import { useFrame, useThree } from '@react-three/fiber'
 import { CapsuleCollider, RigidBody, type RapierRigidBody } from '@react-three/rapier'
-import { useEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { SkeletonUtils } from 'three-stdlib'
 import {
@@ -37,6 +37,7 @@ import { gameEvents } from '../events/GameEventBus'
 import { InteractionManager } from '../interactions/InteractionManager'
 import { presentationStops } from '../interactions/interactionTypes'
 import { getStopZoneRect } from './interactionZones'
+import { useGameEvent } from '../../hooks/useGameEvents'
 import { useGameStore } from '../state/gameStore'
 import { ZoneManager } from '../zones/ZoneManager'
 import { PROXIMITY_ANCHORS } from './proximity/anchors'
@@ -174,6 +175,22 @@ export function Player({ controlsDisabled }: PlayerProps) {
     if (meshRef.current) meshRef.current.rotation.y = PLAYER_SPAWN_FACING
   }, [])
 
+  // Teleport the player back to spawn on `player:respawn`. Used by the
+  // "Try Again" flow from the meeting-failure overlay.
+  useGameEvent(
+    'player:respawn',
+    useCallback(() => {
+      const body = bodyRef.current
+      if (!body) return
+      body.setTranslation(
+        { x: PLAYER_SPAWN[0], y: PLAYER_SPAWN[1], z: PLAYER_SPAWN[2] },
+        true,
+      )
+      body.setLinvel({ x: 0, y: 0, z: 0 }, true)
+      if (meshRef.current) meshRef.current.rotation.y = PLAYER_SPAWN_FACING
+    }, []),
+  )
+
   useEffect(() => {
     const { idleName, walkName, runName, rollName, waveName } = clipRefs
     const idle = idleName ? actions[idleName] : null
@@ -209,6 +226,13 @@ export function Player({ controlsDisabled }: PlayerProps) {
       onTriggered: (stop) => {
         if (import.meta.env.DEV) console.info('[interaction] triggered:', stop.id)
         gameEvents.emit('interaction:triggered', { stopId: stop.id })
+      },
+      // Hide stops whose gate quest isn't unlocked yet. Read directly from
+      // the store so we don't have to re-subscribe or re-register zones
+      // when the quest state changes.
+      isStopAvailable: (stop) => {
+        if (!stop.requiresQuest) return true
+        return useGameStore.getState().unlockedQuestIds.includes(stop.requiresQuest)
       },
     })
   }, [])
@@ -457,7 +481,14 @@ export function Player({ controlsDisabled }: PlayerProps) {
     // Proximity tracking for range-based scene mounting.
     proximity.update(pos.x, pos.z)
 
-    if (!controlsDisabled && !locked && (consumeInteract() || touchInput.consumeInteract())) {
+    if (controlsDisabled) {
+      // Drain any interact edge that arrived while a modal was open. Enter
+      // is now both the open- and close-interact key, so the same keydown
+      // that dismisses a dialogue would otherwise stay latched and
+      // re-trigger the interaction the moment controls re-enable.
+      consumeInteract()
+      touchInput.consumeInteract()
+    } else if (!locked && (consumeInteract() || touchInput.consumeInteract())) {
       manager.trigger()
     }
 

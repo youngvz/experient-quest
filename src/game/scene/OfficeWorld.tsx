@@ -8,6 +8,7 @@ import { ConferenceFloor } from './ConferenceFloor'
 import { ConferenceLaptops } from './ConferenceLaptops'
 import { ConferenceRoom } from './ConferenceRoom'
 import { ConferenceTable } from './ConferenceTable'
+import { CommonTree } from './CommonTree'
 import { CorridorPocket } from './CorridorPocket'
 import { EastCorridor } from './EastCorridor'
 import { Employee } from './Employee'
@@ -66,6 +67,10 @@ export default function OfficeWorld({ controlsDisabled }: OfficeWorldProps) {
     useGLTF.preload(CHARACTERS.youngvz.glbUrl)
     useGLTF.preload(CHARACTERS.distasi.glbUrl)
     useGLTF.preload(CHARACTERS.jacquelyn.glbUrl)
+    useGLTF.preload(CHARACTERS.catherine.glbUrl)
+    useGLTF.preload(CHARACTERS.juan.glbUrl)
+    useGLTF.preload(CHARACTERS.tenant.glbUrl)
+    useGLTF.preload(CHARACTERS.sarah.glbUrl)
   }, [])
 
   return (
@@ -117,6 +122,14 @@ export default function OfficeWorld({ controlsDisabled }: OfficeWorldProps) {
       </Suspense>
       <Suspense fallback={null}>
         <SouthApronFlowers />
+      </Suspense>
+      {/* Two trees flanking the south sidewalk (X=-13..-10.5) that leads
+          up to the corridor doorway. West tree sits in the pocket grass;
+          east tree in the main-strip grass. Trunk colliders keep the
+          player on the sidewalk; canopies read as a park-style entrance. */}
+      <Suspense fallback={null}>
+        <CommonTree position={[-15.7, 30]} rotationY={0.4} />
+        <CommonTree position={[-7.5, 30]} rotationY={-0.8} />
       </Suspense>
 
       {/* Branch rooms mount by *distance* from the player (see

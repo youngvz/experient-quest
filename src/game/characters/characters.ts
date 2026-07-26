@@ -30,6 +30,36 @@ export const CHARACTERS = {
     glbUrl: `${BASE}assets/employees/jacquelyn.glb`,
     portraitUrl: `${BASE}assets/employees/jacquelyn.png`,
   },
+  catherine: {
+    id: 'catherine',
+    name: 'Catherine',
+    glbUrl: `${BASE}assets/employees/catherine.glb`,
+    portraitUrl: `${BASE}assets/employees/catherine.png`,
+  },
+  juan: {
+    id: 'juan',
+    name: 'Juan',
+    glbUrl: `${BASE}assets/employees/juan.glb`,
+    portraitUrl: `${BASE}assets/employees/juan.png`,
+  },
+  tenant: {
+    id: 'tenant',
+    name: 'Tenant',
+    glbUrl: `${BASE}assets/employees/tenant.glb`,
+    portraitUrl: `${BASE}assets/employees/tenant.png`,
+  },
+  sarah: {
+    id: 'sarah',
+    name: 'Sarah',
+    glbUrl: `${BASE}assets/employees/sarah.glb`,
+    portraitUrl: `${BASE}assets/employees/sarah.png`,
+  },
+  logan: {
+    id: 'logan',
+    name: 'Logan',
+    glbUrl: `${BASE}assets/employees/logan.glb`,
+    portraitUrl: `${BASE}assets/employees/logan.png`,
+  },
 } as const satisfies Record<string, Character>
 
 export type CharacterId = keyof typeof CHARACTERS

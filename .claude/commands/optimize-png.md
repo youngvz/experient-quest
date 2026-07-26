@@ -84,7 +84,7 @@ Surface:
   saved
 - Where backups landed
 - One-line verify tip: `npm run dev`, open any dialogue (walk up to
-  Distasi in the corridor pocket and press F) to eyeball a portrait.
+  Distasi in the corridor pocket and press Enter) to eyeball a portrait.
   Look for banding on soft alpha edges — if visible, offer to re-run
   the affected file with `--palette=off`.
 
