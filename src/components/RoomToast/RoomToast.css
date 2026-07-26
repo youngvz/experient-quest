@@ -1,0 +1,71 @@
+.room-toast-stack {
+  position: fixed;
+  bottom: 96px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  pointer-events: none;
+}
+
+.room-toast {
+  min-width: 200px;
+  max-width: min(420px, calc(100vw - 32px));
+  padding: 10px 20px;
+  background: rgba(20, 26, 38, 0.92);
+  color: #e8eef6;
+  border: 3px solid #0b0e15;
+  border-radius: 4px;
+  box-shadow:
+    0 0 0 2px #4b5b78 inset,
+    0 4px 0 rgba(0, 0, 0, 0.35);
+  font-family: 'Press Start 2P', ui-monospace, monospace;
+  image-rendering: pixelated;
+  text-align: center;
+  animation:
+    room-toast-in 0.22s ease-out both,
+    room-toast-out 0.4s ease-in 2s both;
+}
+
+.room-toast__label {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: #a7b4c7;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.room-toast__room {
+  font-size: 12px;
+  letter-spacing: 0.03em;
+}
+
+@keyframes room-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes room-toast-out {
+  to {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+@media (max-width: 640px) {
+  .room-toast {
+    padding: 8px 14px;
+    min-width: 160px;
+  }
+  .room-toast__label {
+    font-size: 8px;
+  }
+  .room-toast__room {
+    font-size: 10px;
+  }
+}

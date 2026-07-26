@@ -14,6 +14,7 @@ import { CabinetRow } from './CabinetRow'
 import { Chair } from './Chair'
 import { Desk } from './Desk'
 import { Employee } from './Employee'
+import { KitchenStation } from './KitchenStation'
 import { Laptop } from './Laptop'
 import { Monitor } from './Monitor'
 import { Paper } from './Paper'
@@ -197,10 +198,14 @@ export function TheLab() {
         )
       })}
 
+      {/* Bay A gets a smoking kitchen station against its east (back)
+          wall, facing west toward the alcove doorway. Station is 1.2 m
+          wide × 0.7 m deep — back face flush at X ≈ 9.8. */}
+      <KitchenStation position={[9.45, -27]} rotationY={-Math.PI / 2} smoke />
+
       {/* Bay B and C furnishings: desk + chair against the east wall,
           chair facing west (toward the doorway), monitor at the desk's
-          back edge, laptop nearer the chair. Bay A intentionally left
-          empty for now. */}
+          back edge, laptop nearer the chair. */}
       {bays
         .filter((b) => b.id === 'b' || b.id === 'c')
         .map((b) => {
@@ -409,6 +414,15 @@ export function TheLab() {
         )
       })}
       <CabinetRow config={THE_LAB_CABINETS} />
+
+      {/* Two kitchen holding stations against TheLab's north wall
+          (Z = northZ = -32), facing south into the room. Placed east
+          of the north desk clusters, west of Alcove A's west wall at
+          X=5. Each station is 1.2 m wide × 0.7 m deep; back face flush
+          with the wall's interior at Z ≈ -31.8. */}
+      <KitchenStation position={[1, -31.45]} rotationY={0} />
+      <KitchenStation position={[2.8, -31.45]} rotationY={0} />
+
 
       {/* Juan — greeter in TheLab's main lobby, near the L's inner
           corner between the west doorway and the south desk clusters.

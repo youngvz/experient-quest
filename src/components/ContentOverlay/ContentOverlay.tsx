@@ -3,6 +3,7 @@ import { gameEvents } from '../../game/events/GameEventBus'
 import { useGameEvent } from '../../hooks/useGameEvents'
 import type { InteractionTriggeredPayload } from '../../game/events/gameEvents'
 import { findStop, type PresentationStop } from '../../game/interactions/interactionTypes'
+import { getQuest } from '../../game/quests/quests'
 import { useGameStore } from '../../game/state/gameStore'
 import { usePaginatedChildren } from '../../hooks/usePaginatedChildren'
 import './ContentOverlay.css'
@@ -11,6 +12,7 @@ export function ContentOverlay() {
   const activeStopId = useGameStore((s) => s.activeStopId)
   const setActiveStop = useGameStore((s) => s.setActiveStop)
   const markCompleted = useGameStore((s) => s.markCompleted)
+  const resetProgress = useGameStore((s) => s.resetProgress)
   const closeButtonRef = useRef<HTMLButtonElement | null>(null)
   const previouslyFocusedRef = useRef<HTMLElement | null>(null)
   const viewportRef = useRef<HTMLDivElement | null>(null)
@@ -27,10 +29,17 @@ export function ContentOverlay() {
     ),
   )
 
-  const handleClose = useCallback(() => {
-    if (activeStopId) markCompleted(activeStopId)
-    setActiveStop(null)
-    gameEvents.emit('overlay:closed', undefined)
+  const stop = activeStopId ? findStop(activeStopId) : null
+  const shouldRender = stop && stop.content.type !== 'dialogue'
+
+  const completedTaskIds = useGameStore((s) => s.completedTaskIds)
+  // Meeting stops with any incomplete task are a "fail" — the close button
+  // becomes a "Try Again" that resets progression and respawns the player.
+  const isFailedMeeting =
+    stop?.content.type === 'meeting' &&
+    !isMeetingSuccess(stop.content.questId, completedTaskIds)
+
+  const restoreFocus = useCallback(() => {
     const previous = previouslyFocusedRef.current
     if (previous && typeof previous.focus === 'function') {
       previous.focus()
@@ -38,15 +47,25 @@ export function ContentOverlay() {
       document.getElementById('game-container')?.focus()
     }
     previouslyFocusedRef.current = null
-  }, [activeStopId, markCompleted, setActiveStop])
+  }, [])
 
-  const stop = activeStopId ? findStop(activeStopId) : null
-  const shouldRender = stop && stop.content.type !== 'dialogue'
-
+  const handleClose = useCallback(() => {
+    if (isFailedMeeting) {
+      // Try Again: wipe quest progression, snap the player back to spawn.
+      // The stop is NOT marked completed — the player has to redo the run.
+      resetProgress()
+      gameEvents.emit('player:respawn', undefined)
+    } else if (activeStopId) {
+      markCompleted(activeStopId)
+    }
+    setActiveStop(null)
+    gameEvents.emit('overlay:closed', undefined)
+    restoreFocus()
+  }, [activeStopId, isFailedMeeting, markCompleted, resetProgress, restoreFocus, setActiveStop])
   const bodyChildren = useMemo(() => {
     if (!shouldRender || !stop) return []
-    return Children.toArray(renderStopBody(stop))
-  }, [shouldRender, stop])
+    return Children.toArray(renderStopBody(stop, completedTaskIds))
+  }, [shouldRender, stop, completedTaskIds])
 
   const { pages, pageIndex, pageCount, hasNext, hasPrev, next, prev } = usePaginatedChildren({
     viewportRef,
@@ -158,7 +177,11 @@ export function ContentOverlay() {
             className="content-overlay__close"
             onClick={handleClose}
           >
-            {hasNext ? 'Skip (Esc)' : 'Close (Esc)'}
+            {isFailedMeeting && !hasNext
+              ? 'Try Again'
+              : hasNext
+                ? 'Skip (Esc)'
+                : 'Close (Esc)'}
           </button>
         </div>
       </div>
@@ -169,7 +192,7 @@ export function ContentOverlay() {
 // Returns a fragment whose top-level children are the block units the
 // paginator groups. Kept flat (no wrapper element around intro + list) so
 // each paragraph and list can spill onto its own page independently.
-function renderStopBody(stop: PresentationStop) {
+function renderStopBody(stop: PresentationStop, completedTaskIds: ReadonlySet<string>) {
   const introParas = stop.intro
     ? stop.intro.split('\n\n').map((paragraph, index) => (
         <p key={`intro-${index}`}>{paragraph}</p>
@@ -249,8 +272,63 @@ function renderStopBody(stop: PresentationStop) {
           {stop.content.caption ? <p>{stop.content.caption}</p> : null}
         </>
       )
+    case 'meeting': {
+      const outcome = describeMeetingOutcome(stop.content.questId, completedTaskIds)
+      return (
+        <>
+          {introParas}
+          <p>{outcome}</p>
+        </>
+      )
+    }
     case 'dialogue':
       // Handled by <DialogueOverlay>; parent returns before we get here.
       return null
   }
+}
+
+// True iff every task on the given quest is complete. Used to switch the
+// content-overlay close button between "Close" and "Try Again".
+export function isMeetingSuccess(
+  questId: string,
+  completedTaskIds: ReadonlySet<string>,
+): boolean {
+  let quest
+  try {
+    quest = getQuest(questId)
+  } catch {
+    return false
+  }
+  return quest.tasks.every((t) => completedTaskIds.has(`${questId}:${t.id}`))
+}
+
+// Picks the meeting-outcome text based on which of the quest's tasks are
+// unchecked. Priority: all-missing > joke > updates > demo. If everything
+// is done, we don't have a "success" copy yet — surface a placeholder so
+// the overlay never renders blank.
+function describeMeetingOutcome(
+  questId: string,
+  completedTaskIds: ReadonlySet<string>,
+): string {
+  let quest
+  try {
+    quest = getQuest(questId)
+  } catch {
+    return 'The meeting happened.'
+  }
+  const missing = quest.tasks.filter((t) => !completedTaskIds.has(`${questId}:${t.id}`))
+  if (missing.length === quest.tasks.length) {
+    return 'The meeting was a complete failure, no jokes, no updates and no demo. youngvz was fired shortly after'
+  }
+  const missingIds = new Set(missing.map((t) => t.id))
+  if (missingIds.has('joke-of-week')) {
+    return "The meeting was a complete failure. There wasn't a joke of the week so nobody cared to listen. youngvz was put on a PIP plan"
+  }
+  if (missingIds.has('company-updates')) {
+    return 'The meeting was a complete failure. youngvz forgot to tell the team about the happy hour event and everyone left early.'
+  }
+  if (missingIds.has('download-demo')) {
+    return 'The meeting was a complete failure. Nobody learned anything! youngvz was put on a PIP plan'
+  }
+  return 'The meeting went off without a hitch. Nice work, youngvz.'
 }

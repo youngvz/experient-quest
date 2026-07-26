@@ -8,13 +8,14 @@ import './QuestLog.css'
 // `toggleTask()` on the store.
 export function QuestLog() {
   const unlockedQuestIds = useGameStore((s) => s.unlockedQuestIds)
-  // Hide the log while the "New Quest Unlocked!" modal is up. The modal
-  // has two exits: accept (Got it / Enter / Space — commits and shows the
-  // log) or dismiss (Escape / backdrop click — nothing is unlocked, so
-  // the log stays hidden until the player re-approaches and accepts).
+  // Hide the log while any quest modal is up — the modal already renders
+  // the task list, so we'd double up. Unlock modal: accept commits and
+  // reveals the log. Ready modal: dismiss stamps the quest and reveals it.
   const pendingUnlockQuestId = useGameStore((s) => s.pendingUnlockQuestId)
+  const pendingReadyQuestId = useGameStore((s) => s.pendingReadyQuestId)
   if (unlockedQuestIds.length === 0) return null
   if (pendingUnlockQuestId !== null) return null
+  if (pendingReadyQuestId !== null) return null
   return (
     <aside className="quest-log" aria-label="Quest log">
       {unlockedQuestIds.map((questId) => (

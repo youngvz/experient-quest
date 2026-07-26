@@ -118,6 +118,7 @@ function segmentedWall({
 }
 
 export function TheBakery() {
+  const laptopUsed = useGameStore((s) => s.completedStopIds.has('bakery-laptop'))
   const y = WALL_HEIGHT / 2
   const halfW = THE_BAKERY.width / 2
   const northZ = ROOM_DEPTH / 2
@@ -325,6 +326,7 @@ export function TheBakery() {
               position={[pos[0] + frontX + lj.dx, pos[1] + lj.dz]}
               deskTopY={THE_BAKERY_DESK_SIZE[1]}
               rotationY={facingSitter + lj.dr}
+              flashing={i === 0 && !laptopUsed}
             />
             <Monitor
               position={[pos[0] + backX, pos[1] + mj.dz]}

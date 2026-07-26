@@ -1,3 +1,7 @@
+import { useFrame } from '@react-three/fiber'
+import { useEffect, useRef } from 'react'
+import type { MeshStandardMaterial } from 'three'
+
 interface LaptopProps {
   // World XZ position where the laptop base sits.
   position: [number, number]
@@ -8,11 +12,23 @@ interface LaptopProps {
   rotationY?: number
   // Optional scale multiplier (default 1).
   scale?: number
+  // When true, the screen flashes between black and the default blue.
+  flashing?: boolean
+  // Half-period of the flash in seconds (time spent on each color).
+  // Only used when `flashing` is true. Defaults to 0.5s.
+  flashInterval?: number
 }
 
 // A stylized open laptop, shaped like a side-profile "L": a shallow horizontal
 // base with a tall vertical screen hinged at the back edge and leaning ~8° back.
-export function Laptop({ position, deskTopY, rotationY = 0, scale = 1 }: LaptopProps) {
+export function Laptop({
+  position,
+  deskTopY,
+  rotationY = 0,
+  scale = 1,
+  flashing = false,
+  flashInterval = 0.5,
+}: LaptopProps) {
   const baseW = 0.38 * scale
   const baseD = 0.26 * scale
   const baseH = 0.02 * scale
@@ -24,6 +40,43 @@ export function Laptop({ position, deskTopY, rotationY = 0, scale = 1 }: LaptopP
   const hingeTilt = -0.15
 
   const [x, z] = position
+
+  const screenMatRef = useRef<MeshStandardMaterial>(null)
+  const flashElapsed = useRef(0)
+  const flashOn = useRef(true)
+
+  useFrame((_, delta) => {
+    if (!flashing) return
+    const mat = screenMatRef.current
+    if (!mat) return
+    flashElapsed.current += delta
+    if (flashElapsed.current >= flashInterval) {
+      flashElapsed.current = 0
+      flashOn.current = !flashOn.current
+      if (flashOn.current) {
+        mat.color.set('#2b6cb0')
+        mat.emissive.set('#3fa4ff')
+        mat.emissiveIntensity = 0.35
+      } else {
+        mat.color.set('#000000')
+        mat.emissive.set('#000000')
+        mat.emissiveIntensity = 0
+      }
+    }
+  })
+
+  // When flashing turns off, restore the default lit-blue screen so we
+  // don't leave the material stuck on the black half of the cycle.
+  useEffect(() => {
+    if (flashing) return
+    const mat = screenMatRef.current
+    if (!mat) return
+    mat.color.set('#2b6cb0')
+    mat.emissive.set('#3fa4ff')
+    mat.emissiveIntensity = 0.35
+    flashElapsed.current = 0
+    flashOn.current = true
+  }, [flashing])
 
   return (
     <group position={[x, deskTopY, z]} rotation={[0, rotationY, 0]}>
@@ -46,6 +99,7 @@ export function Laptop({ position, deskTopY, rotationY = 0, scale = 1 }: LaptopP
         <mesh position={[0, screenH / 2, screenT + 0.001]}>
           <planeGeometry args={[screenW - 0.025 * scale, screenH - 0.025 * scale]} />
           <meshStandardMaterial
+            ref={screenMatRef}
             color="#2b6cb0"
             emissive="#3fa4ff"
             emissiveIntensity={0.35}

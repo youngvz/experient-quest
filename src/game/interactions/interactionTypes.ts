@@ -43,6 +43,9 @@ export type StopContent =
       // again every time.
       repeatScript?: DialogueLine[]
     }
+  // Meeting outcome — text picked at overlay-open time from the given
+  // quest's task-completion state. See ContentOverlay.renderStopBody.
+  | { type: 'meeting'; questId: string }
 
 export interface PresentationStop {
   id: string
@@ -54,6 +57,10 @@ export interface PresentationStop {
   facing?: number
   interactionZone: { size: [number, number] }
   content: StopContent
+  // If present, the stop is only interactable once the given quest is
+  // unlocked. Consulted by InteractionManager via the gating predicate
+  // wired up in Player.tsx.
+  requiresQuest?: string
   // If present, the given quest is unlocked the first time the player
   // finishes this stop's overlay. Handled by the overlay's close path.
   questUnlock?: string
@@ -69,14 +76,12 @@ export const presentationStops: PresentationStop[] = [
   {
     id: 'events-tv',
     label: 'Events Television',
-    prompt: 'Press E to view meeting information',
+    prompt: 'Press Enter to Start the Meeting',
     overlayTitle: 'Technology Status Meeting',
-    intro:
-      'Welcome to the interactive office prototype.\n\n' +
-      'This screen will eventually display upcoming events, team updates, new hires, and other meeting content.',
     position: INTERACTION_ZONE.center,
     interactionZone: { size: INTERACTION_ZONE.size },
-    content: { type: 'events', events: [] },
+    content: { type: 'meeting', questId: 'weekly-status-meeting' },
+    requiresQuest: 'weekly-status-meeting',
   },
   {
     id: 'jacquelyn',
@@ -208,6 +213,31 @@ export const presentationStops: PresentationStop[] = [
           speakerId: 'youngvz',
           text: "...",
         }
+      ],
+    },
+  },
+  {
+    id: 'bakery-laptop',
+    label: 'Laptop',
+    prompt: 'Press Enter to use the laptop',
+    overlayTitle: 'Laptop',
+    questTaskComplete: {
+      questId: 'weekly-status-meeting',
+      taskId: 'download-demo',
+    },
+    // The NW desk laptop in The Bakery (desk at [-6.5, 10], sitter chair on
+    // the west side). Zone covers the west approach to the desk so the
+    // prompt fires as the player walks up to the chair.
+    // Zone rect: X ∈ [-9, -5.5], Z ∈ [8.5, 11.5].
+    position: [-7.25, 0, 10],
+    interactionZone: { size: [3.5, 3] },
+    content: {
+      type: 'dialogue',
+      script: [
+        {
+          speakerId: 'youngvz',
+          text: 'Alright, I just need to download\nthe demo from OneDrive...',
+        },
       ],
     },
   },

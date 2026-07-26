@@ -184,7 +184,7 @@ export function TheLibrary() {
       <Suspense fallback={null}>
         <Employee
           url={CHARACTERS.tenant.glbUrl}
-          position={[-16, 0, -20]}
+          position={[-15, 0, -20]}
           rotationY={Math.PI}
           clipPatterns={TENANT_IDLE}
         />

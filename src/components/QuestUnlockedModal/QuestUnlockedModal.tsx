@@ -3,12 +3,26 @@ import { getQuest } from '../../game/quests/quests'
 import { useGameStore, useIsTaskComplete } from '../../game/state/gameStore'
 import './QuestUnlockedModal.css'
 
+// Renders one of two modal states — both reuse the same visual chrome:
+//   1. Pending unlock: player just triggered a quest-giver; accept commits.
+//   2. Pending ready: every task on an active quest just ticked to done;
+//      prompt the player to start the meeting.
+// The unlock state takes priority when both are pending.
 export function QuestUnlockedModal() {
   const pendingUnlockQuestId = useGameStore((s) => s.pendingUnlockQuestId)
+  const pendingReadyQuestId = useGameStore((s) => s.pendingReadyQuestId)
   const acceptQuestUnlock = useGameStore((s) => s.acceptQuestUnlock)
   const dismissUnlock = useGameStore((s) => s.dismissUnlock)
+  const dismissReady = useGameStore((s) => s.dismissReady)
   const closeButtonRef = useRef<HTMLButtonElement | null>(null)
   const previouslyFocusedRef = useRef<HTMLElement | null>(null)
+
+  const mode: 'unlock' | 'ready' | null = pendingUnlockQuestId
+    ? 'unlock'
+    : pendingReadyQuestId
+      ? 'ready'
+      : null
+  const questId = pendingUnlockQuestId ?? pendingReadyQuestId
 
   const restoreFocus = useCallback(() => {
     const previous = previouslyFocusedRef.current
@@ -20,31 +34,29 @@ export function QuestUnlockedModal() {
     previouslyFocusedRef.current = null
   }, [])
 
-  // Accept commits the quest: adds it to unlockedQuestIds AND marks the
-  // triggering stop completed. This is the only path that flips state — the
-  // preceding dialogue no longer does so, so re-approaching an un-accepted
-  // stop replays the original script.
-  const handleAccept = useCallback(() => {
-    acceptQuestUnlock()
+  // Unlock: accept commits (unlockedQuestIds + source stop completed).
+  // Ready: dismiss stamps the quest in readyQuestIds so the modal doesn't
+  // re-fire. Both close paths converge on restoreFocus.
+  const handlePrimary = useCallback(() => {
+    if (mode === 'unlock') acceptQuestUnlock()
+    else if (mode === 'ready') dismissReady()
     restoreFocus()
-  }, [acceptQuestUnlock, restoreFocus])
+  }, [mode, acceptQuestUnlock, dismissReady, restoreFocus])
 
-  // Dismiss (Escape) leaves the quest un-accepted: nothing is added to
-  // unlockedQuestIds and the source stop stays uncompleted, so the intro
-  // dialogue replays next time the player re-approaches the NPC.
   const handleDismiss = useCallback(() => {
-    dismissUnlock()
+    if (mode === 'unlock') dismissUnlock()
+    else if (mode === 'ready') dismissReady()
     restoreFocus()
-  }, [dismissUnlock, restoreFocus])
+  }, [mode, dismissUnlock, dismissReady, restoreFocus])
 
   useEffect(() => {
-    if (!pendingUnlockQuestId) return
+    if (!mode) return
     previouslyFocusedRef.current = document.activeElement as HTMLElement | null
     closeButtonRef.current?.focus()
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault()
-        handleAccept()
+        handlePrimary()
       } else if (event.key === 'Escape') {
         event.preventDefault()
         handleDismiss()
@@ -52,14 +64,18 @@ export function QuestUnlockedModal() {
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [pendingUnlockQuestId, handleAccept, handleDismiss])
+  }, [mode, handlePrimary, handleDismiss])
 
-  if (!pendingUnlockQuestId) return null
-  const quest = getQuest(pendingUnlockQuestId)
+  if (!mode || !questId) return null
+  const quest = getQuest(questId)
+  const title = mode === 'unlock' ? 'New Quest Unlocked!' : 'Objectives Complete!'
+  const subtitle =
+    mode === 'unlock'
+      ? quest.title
+      : 'Head to the conference room in The Bakery to start the meeting.'
+  const primaryLabel = mode === 'unlock' ? 'Got it' : 'On my way'
 
   return (
-    // Backdrop click dismisses without accepting — same semantics as
-    // Escape. The player must press "Got it" (or Enter/Space) to commit.
     <div className="quest-unlocked" role="presentation" onClick={handleDismiss}>
       <div
         className="quest-unlocked__panel"
@@ -69,9 +85,9 @@ export function QuestUnlockedModal() {
         onClick={(event) => event.stopPropagation()}
       >
         <div id="quest-unlocked-title" className="quest-unlocked__title">
-          New Quest Unlocked!
+          {title}
         </div>
-        <div className="quest-unlocked__subtitle">{quest.title}</div>
+        <div className="quest-unlocked__subtitle">{subtitle}</div>
         <ul className="quest-unlocked__task-list">
           {quest.tasks.map((task) => (
             <QuestTaskRow key={task.id} questId={quest.id} taskId={task.id} label={task.label} />
@@ -82,9 +98,9 @@ export function QuestUnlockedModal() {
             ref={closeButtonRef}
             type="button"
             className="quest-unlocked__close"
-            onClick={handleAccept}
+            onClick={handlePrimary}
           >
-            Got it
+            {primaryLabel}
           </button>
         </div>
       </div>
