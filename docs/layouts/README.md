@@ -47,7 +47,25 @@ adjacent desk.
 
 ## Index
 
-- **The Garage** — [floor](./the-garage-floor.md) · [furniture](./the-garage-furniture.md)
+Rooms (floor + furniture):
+
+- **ConferenceRoom** — [floor](./conference-room-floor.md) · [furniture](./conference-room-furniture.md)
+- **TheBakery** — [floor](./the-bakery-floor.md) · [furniture](./the-bakery-furniture.md)
+- **TheLab** — [floor](./the-lab-floor.md) · [furniture](./the-lab-furniture.md)
+- **TheStation** (incl. Boardroom sub-room) — [floor](./the-station-floor.md) · [furniture](./the-station-furniture.md)
+- **TheGarage** — [floor](./the-garage-floor.md) · [furniture](./the-garage-furniture.md)
+- **TheArchive** — [floor](./the-archive-floor.md) · [furniture](./the-archive-furniture.md)
+- **TheCommons** — [floor](./the-commons-floor.md) · [furniture](./the-commons-furniture.md)
+- **TheLibrary** — [floor](./the-library-floor.md) · [furniture](./the-library-furniture.md)
+- **TheAtrium** — [floor](./the-atrium-floor.md) · [furniture](./the-atrium-furniture.md)
+
+Corridors (floor only — no furniture):
+
+- **CentralCorridor** — [floor](./central-corridor-floor.md)
+- **EastCorridor** — [floor](./east-corridor-floor.md)
+- **CorridorPocket** — [floor](./corridor-pocket-floor.md)
+- **NorthEastCorridor** — [floor](./north-east-corridor-floor.md)
+- **NorthEastPocket** — [floor](./north-east-pocket-floor.md)
 
 Add other rooms here as they're documented. Keep filenames
 `<kebab-name>-{floor,furniture}.md` so tooling can pair them.
