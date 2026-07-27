@@ -66,9 +66,10 @@ footprint is tiny.
   (`useGLTF.preload`). Today's list omits `logan`; multiplayer needs
   all 8.
 
-### Server (new `server/` folder)
+### Server (new `server/` folder, containerized)
 
-- Node.js 20 LTS + `ws` + `@msgpack/msgpack`. ~200 lines total.
+- Node.js 20 LTS + `ws` + `@msgpack/msgpack`. ~200 lines total, shipped
+  as a Docker image built from `server/Dockerfile`.
 - Message protocol (msgpack-encoded):
   - **Client → Server**: `hello { name, characterId }`,
     `input { x, z, yaw, vx, vz, action, actionRemaining, activeZone }`
@@ -92,34 +93,83 @@ footprint is tiny.
   ```
   server/
     src/
-      index.ts         # boot: ws.Server, message router, tick loop
-      session.ts       # Session/PlayerState classes
-      protocol.ts      # msgpack encode/decode + wire types
-      aoi.ts           # zone adjacency + visible-peers filter
-    package.json       # ws, @msgpack/msgpack, tsx (dev), pino (logs)
-    systemd/experient-server.service
+      index.ts           # boot: ws.Server, message router, tick loop
+      session.ts         # Session/PlayerState classes
+      protocol.ts        # msgpack encode/decode + wire types
+      aoi.ts             # zone adjacency + visible-peers filter
+    package.json         # ws, @msgpack/msgpack, tsx (dev), pino (logs)
+    Dockerfile           # multi-stage (build → node:20-alpine runtime)
+    docker-compose.yml   # game-server + caddy TLS proxy stack
+    Caddyfile            # reverse-proxies wss://…/game → ws://game:8080
+    Makefile             # local docker-build / docker-run / docker-down
+    scripts/
+      bootstrap.sh       # idempotent EC2 first-boot Docker install
   ```
 - **Shared types**: `shared/protocol-types.ts` referenced by both
   `server/` and `src/game/net/` so wire messages can't drift.
 
-### AWS infrastructure
+### AWS infrastructure — Terraform + Docker + Makefile (no click-ops)
 
-- **EC2** `t3.small` (or `t3.micro`) in one region, Amazon Linux 2023
-  or Ubuntu 22.04. Elastic IP attached so restarts don't rotate the
-  address.
-- **Route53** A-record `mmo.<domain>` → the Elastic IP.
-- **On the box**: Node 20 via `nvm`; Caddy 2 reverse-proxying
-  `wss://mmo.<domain>/game` → `ws://127.0.0.1:8080` with auto-issued
-  Let's Encrypt certs; systemd unit `experient-server.service` running
-  `node dist/index.js` with auto-restart; optional CloudWatch Agent for
-  `journalctl` shipping.
-- **Static frontend**: S3 (`experient-quest-web`) + CloudFront. Vite
-  build → `aws s3 sync dist/ …` on release; CloudFront invalidation
-  after.
-- Security group: 443 (WSS) + 80 (ACME) + 22 (SSH from your IP).
+Everything below is authored as code so an environment can be created,
+torn down, or rebuilt with a single `terraform apply`. The only one-time
+console steps are creating the Terraform IAM user and the SSH key pair.
+
+- **Terraform** (`infra/terraform/`, modular):
+  - `modules/network/` — default-VPC lookup + one security group
+    (443 WSS, 80 ACME, 22 SSH restricted to a `my_ip` `/32`).
+  - `modules/compute/` — EC2 (`t3.small` default, `t3.micro` for free
+    tier), Elastic IP, IAM instance profile (read-only SSM +
+    CloudWatch Logs write), `user_data` pointing at
+    `user-data/cloud-init.sh`. Tagged `Name = experient-mmo-server`
+    so the Makefile can look it up without hardcoding an id.
+  - `modules/dns/` — Route53 A-record for `mmo.<domain>` → EIP.
+    Gated by `create_dns` bool so a first apply can proceed on an IP
+    before you own a domain.
+  - `modules/static-site/` — S3 (block public, versioned) + CloudFront
+    with OAC + ACM cert in `us-east-1` for the web frontend.
+  - Local Terraform state for solo MVP; documented (not scaffolded)
+    S3 + DynamoDB backend for when a second dev joins.
+- **`user-data/cloud-init.sh`** — runs at first boot, idempotent so it
+  can also be re-run by hand. Installs Docker + compose plugin (Amazon
+  Linux 2023 via `dnf`), clones the repo to `/opt/experient-quest`,
+  writes `/etc/systemd/system/experient-server.service` that calls
+  `docker compose up -d --build`, and `systemctl enable --now`s it.
+- **Server image**: `server/Dockerfile` is a multi-stage build
+  (`node:20-alpine` builder runs `tsc`, `node:20-alpine` runtime runs
+  `node dist/index.js`).
+- **Compose stack** (`server/docker-compose.yml`): two services —
+  `game` (Node process on port 8080) and `caddy` (`caddy:2-alpine`
+  handling TLS termination + WSS reverse proxy). Persistent
+  `caddy_data` volume so Let's Encrypt certs survive restarts and
+  renewals happen automatically.
+- **Top-level `Makefile`** wraps every day-to-day operation. Reads
+  `REGION` from env and looks up the EC2 by `Name` tag:
+  - `make tf-init / tf-plan / tf-apply / tf-destroy` — Terraform lifecycle
+  - `make start / stop / status` — wraps `aws ec2 start-instances`
+    / `stop-instances` / `describe-instances`
+  - `make ssh / logs` — SSH into the EC2, tail `docker compose logs`
+  - `make deploy-server` — SSH pull + `docker compose up -d --build`
+  - `make deploy-web` — Vite build → S3 sync → CloudFront invalidation
+  - `make docker-build / docker-run / docker-down` — local prod-like dev
+- **Manual on/off (no cron, no Lambda).** By decision, the EC2 sits
+  `stopped` by default (~$1/mo for EBS + Elastic IP, $0 compute). Demo
+  workflow is `make start` → demo → `make stop`. Adding a scheduled
+  start/stop later is a ~30-line Terraform addition (one
+  `aws_scheduler_schedule` for each direction) gated behind a
+  `schedule_enabled` variable — deferred, not scaffolded.
+- **Static frontend**: same S3 (`experient-quest-web`) + CloudFront
+  distribution as before, created by `modules/static-site/`. `npm run
+  build && aws s3 sync dist/ s3://…` is one `make deploy-web` target.
+- **Security group**: 443 (WSS) + 80 (ACME) + 22 (SSH from your `my_ip`
+  `/32`).
+- **What Terraform does NOT create**:
+  - ACM for the WSS endpoint (Caddy issues Let's Encrypt on the box).
+  - SSH key pair (created once outside Terraform so the private key
+    never lands in state; `key_name` variable references it).
+  - The Terraform IAM user itself (bootstrap step).
 - **Not needed at 50 CCU**: ALB, ECS, Lambda, RDS/DynamoDB,
   ElastiCache. Introduce those only if we ever shard across multiple
-  EC2s.
+  EC2s (ALB + Redis Pub/Sub for cross-instance broadcast).
 
 ## Non-goals
 
@@ -164,11 +214,29 @@ footprint is tiny.
   prompts behave identically to today for the local player.
   `gameStore.ts` is unchanged.
 - Deployed to a real EC2 behind Caddy TLS; two devices on different
-  networks can join and see each other. CloudWatch shows no error
+  networks can join and see each other. `make logs` shows no error
   spam; Caddy log confirms cert issuance.
+- Terraform apply on a fresh workspace succeeds top-to-bottom
+  (`make tf-init && make tf-apply`) and `make tf-destroy` cleans up
+  the environment without manual console follow-up. Re-applying
+  reproduces the environment from scratch.
+- `make start` boots the EC2 and reaches "WSS reachable" within ~60s
+  (systemd re-runs `docker compose up -d --build` at instance start).
+  `make stop` transitions the instance to `stopped` and compute
+  billing pauses.
 
 ## Implementation notes
 
+- **Infra is code, not clicks.** `terraform apply` creates every AWS
+  resource; the Makefile wraps every day-to-day command. The one-time
+  console work is: create a Terraform IAM user, create an SSH key
+  pair, populate `infra/terraform/terraform.tfvars`. Documented in
+  a small `infra/README.md` alongside the modules.
+- **Systemd → Docker Compose, not bare Node.** The EC2's systemd unit
+  runs `docker compose up -d --build`; we don't hand-install Node,
+  nvm, or Caddy on the host. That keeps the box interchangeable
+  (`terraform taint` + `apply` reproduces it) and lets local dev use
+  the same image via `make docker-run`.
 - **Reuse `Employee.tsx`.** Its GLB-load / height-fit / skinned-mesh
   frustum-cull fix is exactly what a remote avatar needs. Only add
   what's different (kinematic body, interpolation loop, multi-clip
@@ -204,8 +272,10 @@ footprint is tiny.
   experient-server`.
 - **Docs to update on landing**: `docs/architecture.md` (new
   "Multiplayer" section), `CLAUDE.md` "Exists today" list (add
-  `src/game/net/` + network store + remote-player components),
-  potentially `docs/deployment-and-security.md` for the EC2 + Caddy
+  `src/game/net/` + network store + remote-player components + the
+  new `infra/terraform/` and top-level `Makefile`), and a new
+  `infra/README.md` covering the one-time bootstrap. Potentially
+  `docs/deployment-and-security.md` for the EC2 + Caddy + Terraform
   bits.
 
 ## Rough estimate
@@ -213,20 +283,27 @@ footprint is tiny.
 - Client wiring: character-select modal + `networkStore` +
   `NetworkClient` + `RemotePlayer` + `RemotePlayers`: 1–2 focused
   passes.
-- Server: ~200 lines, one afternoon.
-- AWS deploy: 2–4 hours end-to-end for someone comfortable with EC2
-  + Caddy + Route53.
+- Server + Docker/Compose/Caddyfile/Makefile: ~200 lines of TS + the
+  packaging bits, one afternoon.
+- Terraform (network / compute / dns / static-site modules +
+  cloud-init.sh + top-level Makefile): half a day to a full day for
+  someone comfortable with the AWS provider.
+- First `terraform apply` + Route53 wire-up + Caddy cert issuance:
+  1–2 hours.
 - Load test + Playwright spec: half a day.
 
-Bundle across one or two PRs (client vs server) rather than a single
-monolith — the client can ship first against a local dev server.
+Bundle across two PRs — one for client + shared types, one for
+`server/` + `infra/terraform/` + `Makefile`. The client can ship
+first against a local `make docker-run` server before the AWS side
+lands.
 
 ## Related
 
 - Plan doc:
   `~/.claude/plans/knowing-my-current-architecture-delightful-flame.md`
-  (2026-07-26) — full architecture rationale, protocol details, and
-  verification steps.
+  (2026-07-26, updated 2026-07-27) — full architecture rationale,
+  protocol details, Terraform module breakdown, Docker/Compose
+  configs, Makefile targets, and verification steps.
 - `src/game/scene/Player.tsx` — dynamic RigidBody, `setLinvel`
   movement, multi-clip weight-blend animation (lines
   47, 484, 529-555). Also `STANDING_ROLL_SPEED = 6` at line 73.
