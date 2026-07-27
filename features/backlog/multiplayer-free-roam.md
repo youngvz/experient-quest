@@ -9,33 +9,85 @@ owner: unassigned
 
 ## Progress (2026-07-27)
 
-**Done — server + infra ship it:**
+**Done — server + infra shipped and validated:**
 
-- `shared/protocol-types.ts` + `shared/package.json` (ESM) — wire types
-- `server/` — full Node ws server, msgpack protocol, session mgr, AOI, tick loop
-- Multi-stage Docker image + docker-compose + Caddyfile + bootstrap.sh
-- Terraform (network/compute/dns) + bootstrap workspace (S3 state)
-- Top-level Makefile — full AWS lifecycle wrapped
-- `src/game/net/config.ts` — `VITE_MMO_URL` plumbing
-- `.github/workflows/deploy.yml` passes `VITE_MMO_URL` through
-- Live smoke: two-client round-trip works on real EC2
+Client-facing plumbing:
+- `shared/protocol-types.ts` + `shared/package.json` (ESM) — msgpack
+  wire types shared between client and server
+- `src/game/net/config.ts` — `getMmoUrl()` reads
+  `import.meta.env.VITE_MMO_URL` with a `ws://localhost:8080` fallback
+- `.env.example` documents the three URL modes (localhost / IP / WSS)
+- `.github/workflows/deploy.yml` passes `VITE_MMO_URL` through to Vite
+  at build time; unset → falls back to localhost so Pages builds
+  succeed even without the variable
 
-**Blocked / deferred:**
+Server:
+- `server/src/{index,session,protocol,aoi}.ts` — Node ws server,
+  20Hz snapshot tick, AOI filter by zone adjacency, per-session name
+  uniqueness + input rate + speed + teleport clamps, backpressure
+  guard, graceful shutdown
+- `server/{Dockerfile,docker-compose.yml,Caddyfile}` — multi-stage
+  `node:20-alpine` image, game + Caddy stack, TLS-ready Caddyfile
+- `server/{Makefile,scripts/bootstrap.sh,scripts/smoke.mjs}` — local
+  build/run targets, idempotent EC2 bootstrap (Docker + buildx +
+  compose + systemd unit), two-client protocol round-trip test
 
-- EIP disabled (`create_eip = false`) until account EIP quota is
-  bumped (requested 5→10). Auto-assigned IP rotates on every
-  stop/start until then.
-- DNS deferred until a domain exists — Caddy can't issue Let's
-  Encrypt without one, so we stay on `ws://` + IP for now.
+Infra:
+- `infra/terraform/` — modules `network` (default VPC + SG),
+  `compute` (EC2 + optional EIP + IAM), `dns` (Route53 A-record,
+  gated)
+- `infra/terraform/bootstrap/` — one-time S3 state bucket + DynamoDB
+  lock table
+- `infra/terraform/user-data/cloud-init.sh` — first-boot: install
+  git, clone repo, exec bootstrap.sh
+- **Elastic IP allocated** (`create_eip = true`, quota bumped 5→10)
+  — public IP stable across `make stop` / `make start`
+- Top-level `Makefile` — `tf-*`, `start`/`stop`/`status`, `ssh`,
+  `logs`, `deploy-server`; uses `PublicIpAddress` (EIP-friendly)
+- `infra/README.md` — bootstrap sequence, restart workflow, common
+  failure modes, cost breakdown
+
+Validated live: two-client protocol round-trip against the real EC2
+at the stable EIP.
+
+**Deferred until we have a domain:**
+
+- DNS + Caddy Let's Encrypt cert. Today the client hits
+  `ws://<eip>:8080` directly through the exposed host port. When a
+  domain exists: flip `create_dns=true` + `hosted_zone_id` +
+  `mmo_hostname` in tfvars, drop the `ports:` mapping from
+  `docker-compose.yml`, and clients switch to `wss://mmo.<domain>/game`
+  through Caddy.
+- Mixed-content: GitHub Pages serves over HTTPS and blocks `ws://`
+  from HTTPS origins. During the IP-only phase, multiplayer works
+  only from `http://localhost` builds against the deployed server.
 
 **Not started — client wiring:**
 
-- `src/game/state/networkStore.ts` (Zustand slice for identity + peers)
-- `src/game/net/NetworkClient.ts` (WebSocket client + 20Hz uplink)
-- `src/components/CharacterSelect/` (name + character modal)
-- Parameterize `<Player>` to use the selected character
-- `src/game/scene/RemotePlayer.tsx` + `RemotePlayers.tsx`
-- Playwright multiplayer spec
+- `src/game/state/networkStore.ts` — Zustand slice for `selfName`,
+  `selfCharacterId`, `selfSessionId`, `connectionStatus`, and the
+  `remotePlayers` Map
+- `src/game/net/NetworkClient.ts` — WebSocket client, 20Hz uplink
+  reading from a Player.tsx-injected transform getter, snapshot
+  handler that writes into `networkStore`, auto-reconnect with
+  exponential backoff
+- `src/components/CharacterSelect/` — DOM overlay gating `<GameCanvas>`
+  until name + character are chosen (uses the 8 characters in
+  `characters.ts`)
+- `src/game/scene/Player.tsx` — read character id from `networkStore`
+  instead of the hardcoded `CHARACTERS.youngvz` at L47; expose a
+  transform getter for `NetworkClient` to sample
+- `src/game/scene/RemotePlayer.tsx` — kinematic body + interpolation
+  loop + multi-clip crossfade, adapts `Employee.tsx`'s GLB pattern
+- `src/game/scene/RemotePlayers.tsx` — collection sibling to
+  `<Player>` inside the single `<Physics>` world
+- Extend `useGLTF.preload` in `OfficeWorld.tsx` to include every
+  character GLB (add `logan`)
+- `tests/e2e/multiplayer.spec.ts` — Playwright spec asserting each
+  of two contexts renders the other's avatar within 2s
+- Load test (Node script; 50 headless clients firing synthetic 20Hz
+  input frames) confirming server CPU + bandwidth stay within
+  budget on the live EC2
 
 ## Why
 
