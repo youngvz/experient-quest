@@ -1,0 +1,37 @@
+# Local prod-like stack for the multiplayer server. `game` runs the
+# Node WebSocket process; `caddy` fronts it with TLS (auto Let's Encrypt
+# in production; localhost self-signed in dev — see the Caddyfile).
+#
+# Build context is the repo root so the image can copy both `server/`
+# and `shared/`.
+
+services:
+  game:
+    build:
+      context: ..
+      dockerfile: server/Dockerfile
+    container_name: experient-game
+    restart: unless-stopped
+    expose:
+      - "8080"
+    environment:
+      - PORT=8080
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: experient-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - game
+
+volumes:
+  caddy_data:
+  caddy_config:
