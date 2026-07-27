@@ -29,21 +29,38 @@ dnf -y install docker git
 systemctl enable --now docker
 usermod -aG docker ec2-user || true
 
-# 2. docker compose v2 plugin -------------------------------------------
+# 2. docker CLI plugins: buildx + compose -------------------------------
+# Amazon Linux 2023 ships an older buildx than the current compose plugin
+# requires (compose 2.x → buildx ≥ 0.17). Install both fresh from
+# upstream releases into the system CLI-plugin dir so `docker buildx`
+# and `docker compose` are both new enough to cooperate.
 
 DOCKER_PLUGIN_DIR=/usr/local/lib/docker/cli-plugins
 COMPOSE_BIN="$DOCKER_PLUGIN_DIR/docker-compose"
+BUILDX_BIN="$DOCKER_PLUGIN_DIR/docker-buildx"
+
+mkdir -p "$DOCKER_PLUGIN_DIR"
+
+# shellcheck disable=SC2312
+ARCH="$(uname -m)"
+case "$ARCH" in
+	x86_64)  COMPOSE_ARCH="x86_64";   BUILDX_ARCH="amd64" ;;
+	aarch64) COMPOSE_ARCH="aarch64";  BUILDX_ARCH="arm64" ;;
+	*) echo "unsupported arch $ARCH" >&2; exit 1 ;;
+esac
+
+if [ ! -x "$BUILDX_BIN" ]; then
+	log "installing docker buildx plugin"
+	# Pin to a known-good release. Bump when compose's minimum climbs.
+	BUILDX_VER="v0.19.0"
+	curl -fsSL \
+		"https://github.com/docker/buildx/releases/download/${BUILDX_VER}/buildx-${BUILDX_VER}.linux-${BUILDX_ARCH}" \
+		-o "$BUILDX_BIN"
+	chmod +x "$BUILDX_BIN"
+fi
 
 if [ ! -x "$COMPOSE_BIN" ]; then
 	log "installing docker compose plugin"
-	mkdir -p "$DOCKER_PLUGIN_DIR"
-	# shellcheck disable=SC2312
-	ARCH="$(uname -m)"
-	case "$ARCH" in
-		x86_64)  COMPOSE_ARCH="x86_64" ;;
-		aarch64) COMPOSE_ARCH="aarch64" ;;
-		*) echo "unsupported arch $ARCH" >&2; exit 1 ;;
-	esac
 	curl -fsSL \
 		"https://github.com/docker/compose/releases/latest/download/docker-compose-linux-${COMPOSE_ARCH}" \
 		-o "$COMPOSE_BIN"
