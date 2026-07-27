@@ -1,0 +1,30 @@
+// Copy this file to `terraform.tfvars` (git-ignored) and fill in the
+// blanks. Values you don't set fall back to the defaults in
+// variables.tf.
+
+region        = "us-east-1"
+instance_type = "t3.small"
+
+// Name of the EC2 key pair you created once via the console or
+// `aws ec2 create-key-pair --key-name experient-mmo`. The private key
+// never enters Terraform state.
+key_name = "experient-mmo"
+
+// Your current public IP as a /32. Refresh when your ISP rotates it.
+// $ echo "$(curl -s ifconfig.me)/32"
+my_ip = "203.0.113.1/32"
+
+// Your repo URL — cloud-init clones this on first boot. Public repo is
+// fine; a private repo needs a deploy key added to the AMI or SSM.
+repo_url = "https://github.com/youngvz/experient-quest.git"
+
+// DNS is off until you own a domain. Flip to true and set both fields
+// below once a hosted zone exists in this account.
+create_dns     = false
+hosted_zone_id = ""
+mmo_hostname   = "mmo.example.com"
+
+// Elastic IP is on by default. Set to false if the account has hit its
+// EIP quota (default 5 per region). Without it, the EC2 gets an
+// auto-assigned public IP that changes on every stop/start.
+create_eip = true

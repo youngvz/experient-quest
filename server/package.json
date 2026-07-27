@@ -1,0 +1,24 @@
+{
+  "name": "experient-quest-server",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Multiplayer WebSocket server for Experient Quest — 20Hz snapshot fanout, ephemeral sessions.",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/server/src/index.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@msgpack/msgpack": "^3.0.0",
+    "pino": "^9.4.0",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.2",
+    "@types/ws": "^8.5.13",
+    "tsx": "^4.19.2",
+    "typescript": "~6.0.2"
+  }
+}

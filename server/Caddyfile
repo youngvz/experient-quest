@@ -1,0 +1,29 @@
+# Production: replace {$MMO_HOSTNAME:mmo.example.com} with your real
+# hostname (Caddy will auto-issue a Let's Encrypt cert on first request
+# to port 443 from that hostname).
+#
+# Local development: run `MMO_HOSTNAME=localhost docker compose up`. On
+# localhost Caddy uses its internal CA (self-signed) — trust it once
+# via `caddy trust` if you want a green padlock, or ignore for wscat.
+
+{$MMO_HOSTNAME:mmo.example.com} {
+	# WebSocket endpoint. `handle` lets us keep the block extensible
+	# (add /health, static file serving, etc.) without disturbing the
+	# WSS path.
+	handle /game {
+		reverse_proxy game:8080
+	}
+
+	handle /health {
+		respond "ok" 200
+	}
+
+	# Compress non-WS responses. WS frames are excluded automatically.
+	encode zstd gzip
+
+	# Modest logging — the game server does the interesting logging.
+	log {
+		output stdout
+		format console
+	}
+}
