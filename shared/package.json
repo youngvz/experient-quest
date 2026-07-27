@@ -1,0 +1,6 @@
+{
+  "name": "@experient/shared",
+  "private": true,
+  "type": "module",
+  "sideEffects": false
+}
