@@ -1,11 +1,41 @@
 ---
 id: multiplayer-free-roam
-status: backlog
+status: in-progress
 created: 2026-07-27
 owner: unassigned
 ---
 
 # Multiplayer free-roam (≤50 CCU, self-hosted AWS)
+
+## Progress (2026-07-27)
+
+**Done — server + infra ship it:**
+
+- `shared/protocol-types.ts` + `shared/package.json` (ESM) — wire types
+- `server/` — full Node ws server, msgpack protocol, session mgr, AOI, tick loop
+- Multi-stage Docker image + docker-compose + Caddyfile + bootstrap.sh
+- Terraform (network/compute/dns) + bootstrap workspace (S3 state)
+- Top-level Makefile — full AWS lifecycle wrapped
+- `src/game/net/config.ts` — `VITE_MMO_URL` plumbing
+- `.github/workflows/deploy.yml` passes `VITE_MMO_URL` through
+- Live smoke: two-client round-trip works on real EC2
+
+**Blocked / deferred:**
+
+- EIP disabled (`create_eip = false`) until account EIP quota is
+  bumped (requested 5→10). Auto-assigned IP rotates on every
+  stop/start until then.
+- DNS deferred until a domain exists — Caddy can't issue Let's
+  Encrypt without one, so we stay on `ws://` + IP for now.
+
+**Not started — client wiring:**
+
+- `src/game/state/networkStore.ts` (Zustand slice for identity + peers)
+- `src/game/net/NetworkClient.ts` (WebSocket client + 20Hz uplink)
+- `src/components/CharacterSelect/` (name + character modal)
+- Parameterize `<Player>` to use the selected character
+- `src/game/scene/RemotePlayer.tsx` + `RemotePlayers.tsx`
+- Playwright multiplayer spec
 
 ## Why
 

@@ -56,7 +56,7 @@ Terraform will contact the S3 backend and set up its remote state.
 
 ```sh
 make tf-plan            # preview changes
-make tf-apply           # provision (or update) the EC2 + EIP + SG
+make tf-apply           # provision (or update) the EC2 + SG
 make status             # instance state + public IP
 make start              # boot the box for a demo
 make ssh                # jump onto it
@@ -66,6 +66,68 @@ make stop               # back to $0/hour compute
 make tf-destroy         # tear everything down
 ```
 
+## Restart workflow (every demo session)
+
+Once provisioned, the loop looks like:
+
+```sh
+make start              # ~30s, prints new public IP
+make status             # confirm running + copy the IP
+# → hit that IP with VITE_MMO_URL=ws://<ip>:8080
+# ... demo ...
+make stop               # $0/hr compute
+```
+
+What survives a stop/start:
+
+- Instance id, EBS volume, Docker images, git clone, systemd unit
+- The compose stack auto-starts on boot (systemd runs
+  `docker compose up -d --build`, ~30–60s after `instance-running`)
+
+What changes on every stop/start:
+
+- **The public IP.** Auto-assigned IPs rotate; nothing else does. Point
+  clients at the new address. Fix permanently by requesting an EIP
+  quota bump and setting `create_eip = true` in tfvars.
+
+What doesn't auto-happen:
+
+- **No `git pull` at boot.** If code changed between sessions, run
+  `make deploy-server` after `make start`.
+- **Cloud-init only runs on first boot.** Manual bootstrap changes
+  (buildx install, etc.) persist; they don't re-run on restart.
+
+## Common failure modes
+
+- **`make ssh` hangs.** Your ISP rotated your public IP; the SG rule
+  is now stale. Refresh `my_ip` in `terraform.tfvars`:
+  ```sh
+  echo "$(curl -s ifconfig.me)/32"
+  # edit tfvars → my_ip = "..."
+  make tf-apply    # touches only the SG, ~10s
+  ```
+
+- **`experient-game` in a restart loop.** Get logs:
+  ```sh
+  make ssh
+  sudo docker logs experient-game 2>&1 | tail -30
+  ```
+  Usually a code error (import path, missing dep). Fix locally, push,
+  `make deploy-server`.
+
+- **GitHub Pages clients can't connect.** `VITE_MMO_URL` in the repo's
+  Actions Variables points at the old IP. Settings → Secrets and
+  variables → Actions → Variables → update `VITE_MMO_URL` → re-run
+  the deploy workflow.
+
+- **Mixed-content error in the browser.** Pages serves over HTTPS;
+  `ws://` connections from HTTPS pages are blocked by every browser.
+  Either test from `http://localhost:5173` against the deployed
+  server, or wait until DNS + Caddy + a real domain give you `wss://`.
+
+- **EC2 marked `stopping` for >5 min.** Rare, but if a stop hangs,
+  force-stop from the console. Nothing on disk is affected.
+
 ## What Terraform creates
 
 - Security group (443, 80, 8080 open to the internet; 22 restricted to
@@ -74,7 +136,9 @@ make tf-destroy         # tear everything down
   `CloudWatchAgentServerPolicy` attached
 - EC2 instance (Amazon Linux 2023, `t3.small` by default) with an
   encrypted 20 GB gp3 root volume, IMDSv2 required
-- Elastic IP + association (stable public IP across stop/start)
+- Elastic IP + association — **off** by default (`create_eip = false`
+  in tfvars). Flip to `true` once your account's EIP quota allows it
+  to get a stable public IP across stop/start.
 - Route53 A-record — **off** until `create_dns=true` + you set
   `hosted_zone_id` + `mmo_hostname`
 

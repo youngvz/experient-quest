@@ -112,16 +112,16 @@ status: require-ec2
 ssh: require-ec2
 	ssh -i $(KEY_PATH) ec2-user@$$(aws ec2 describe-instances \
 		--region $(REGION) --instance-ids $(EC2_ID) \
-		--query 'Reservations[0].Instances[0].PublicDnsName' --output text)
+		--query 'Reservations[0].Instances[0].PublicIpAddress' --output text)
 
 logs: require-ec2
 	ssh -i $(KEY_PATH) ec2-user@$$(aws ec2 describe-instances \
 		--region $(REGION) --instance-ids $(EC2_ID) \
-		--query 'Reservations[0].Instances[0].PublicDnsName' --output text) \
+		--query 'Reservations[0].Instances[0].PublicIpAddress' --output text) \
 		"cd /opt/experient-quest/server && sudo docker compose logs -f --tail=200"
 
 deploy-server: require-ec2
 	ssh -i $(KEY_PATH) ec2-user@$$(aws ec2 describe-instances \
 		--region $(REGION) --instance-ids $(EC2_ID) \
-		--query 'Reservations[0].Instances[0].PublicDnsName' --output text) \
+		--query 'Reservations[0].Instances[0].PublicIpAddress' --output text) \
 		"cd /opt/experient-quest && git pull --ff-only && cd server && sudo docker compose up -d --build"

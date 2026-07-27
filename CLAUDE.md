@@ -113,6 +113,39 @@ before proposing a large migration.
   needed when the mode changes.
 - `tests/InteractionManager.test.ts` — Vitest unit
 - `tests/e2e/smoke.spec.ts` — Playwright smoke (canvas renders, no console errors)
+- `shared/protocol-types.ts` — msgpack wire format shared with the
+  multiplayer server (Hello / Input / Welcome / Snapshot / PlayerLeft
+  tags, `PROTOCOL` constants, `ACTION` enum). Marked `"type": "module"`
+  in `shared/package.json` so tsc emits ESM on both sides.
+- `src/game/net/config.ts` — `getMmoUrl()` reads
+  `import.meta.env.VITE_MMO_URL` with a `ws://localhost:8080` fallback.
+  The GH Pages workflow (`deploy.yml`) passes `${{ vars.VITE_MMO_URL }}`
+  through at build time; unset → falls back to localhost so Pages
+  builds still succeed. No other module should read `import.meta.env`
+  directly.
+- `server/` — Node 20 WebSocket multiplayer server (~200 lines of TS).
+  `src/index.ts` boots `ws.Server`, runs a 20Hz snapshot tick, applies
+  AOI filtering (`aoi.ts`) by zone adjacency, and enforces session
+  policy (`session.ts`: name uniqueness, uplink rate clamp, speed +
+  teleport sanity). `protocol.ts` decodes and validates inbound msgpack
+  frames. Runs as `experient-game` container behind `experient-caddy`
+  (Caddy 2 with auto Let's Encrypt) via `docker-compose.yml`. Local
+  smoke: `server/scripts/smoke.mjs` spawns the compiled server and
+  runs a two-client protocol round-trip. Bootstrap on EC2:
+  `scripts/bootstrap.sh` (idempotent — installs Docker + buildx +
+  compose, writes the systemd unit).
+- `infra/terraform/` — Terraform for the multiplayer server on AWS.
+  Modular (`network` = default VPC + SG; `compute` = EC2 + optional
+  EIP + IAM instance profile; `dns` = Route53 A-record, gated by
+  `create_dns`). `bootstrap/` sub-workspace creates the S3 remote-state
+  bucket + DynamoDB lock table (run once per account). `user-data/
+  cloud-init.sh` clones the repo and execs `server/scripts/bootstrap
+  .sh`. See `infra/README.md` for the bootstrap sequence, restart
+  workflow, and common failure modes.
+- Top-level `Makefile` — wraps `tf-init/plan/apply/destroy`,
+  `tf-bootstrap-*`, `start`, `stop`, `status`, `ssh`, `logs`,
+  `deploy-server`. Looks the EC2 up by `Name=experient-mmo-server`
+  tag, so instance ids don't need to be hardcoded.
 
 Naming conventions in `src/game/scene/`:
 
@@ -267,6 +300,8 @@ Load only the documents relevant to the current task.
 | FPS, draw calls, memory, mobile devices, quality settings | `docs/performance.md` |
 | Unit tests, E2E tests, acceptance criteria, regression coverage | `docs/testing.md` |
 | Hosting, CDN, headers, CORS, CSP, caching, release checks | `docs/deployment-and-security.md` |
+| Multiplayer server (Node/ws), wire protocol, AOI, sessions, load testing | `server/` source + `features/backlog/multiplayer-free-roam.md` |
+| AWS infra, Terraform, EC2 lifecycle, Docker/Compose, EIP, DNS, `make start`/`stop` | `infra/README.md` |
 | Planning a feature or deciding what belongs in the MVP | `docs/delivery-plan.md` |
 | Accessibility: focus, keyboard traversal, reduced motion, captions | `docs/accessibility.md` |
 | File naming, folder rules, import order, comment and commit style | `docs/conventions.md` |
