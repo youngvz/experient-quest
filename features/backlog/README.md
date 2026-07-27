@@ -10,6 +10,7 @@ README is the index.
 | Status | Item | Depends on |
 |---|---|---|
 | backlog | [Lazy-load Rapier behind the title screen](./lazy-load-rapier-behind-title-screen.md) | title-screen |
+| backlog | [Multiplayer free-roam (≤50 CCU, self-hosted AWS)](./multiplayer-free-roam.md) | — |
 | backlog | [Non-primitive decor props (GLBs + billboards)](./non-primitive-decor-props.md) | — |
 <!-- BACKLOG:END -->
 
