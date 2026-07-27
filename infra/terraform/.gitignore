@@ -1,0 +1,20 @@
+# Local state (S3 backend is configured, but bootstrap runs before the
+# backend exists — that pass emits a local tfstate before we migrate).
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+
+# Terraform working dirs and lockfiles per-workspace
+.terraform/
+.terraform.lock.hcl
+
+# Local overrides / variable files that may hold sensitive values
+terraform.tfvars
+*.auto.tfvars
+
+# Plan artifacts
+*.tfplan
+
+# Crash logs
+crash.log
+crash.*.log

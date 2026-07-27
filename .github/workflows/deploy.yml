@@ -24,7 +24,16 @@ jobs:
           node-version: '22'
           cache: 'npm'
       - run: npm ci
-      - run: npm run build
+      - name: Build
+        # VITE_MMO_URL is read by src/game/net/config.ts at build time.
+        # Set the `VITE_MMO_URL` repo variable (Settings → Secrets and
+        # variables → Actions → Variables) once the server has a
+        # public endpoint. Unset → the client falls back to
+        # ws://localhost:8080 (multiplayer won't work on Pages, but
+        # the build still succeeds).
+        env:
+          VITE_MMO_URL: ${{ vars.VITE_MMO_URL }}
+        run: npm run build
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:
