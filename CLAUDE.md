@@ -263,6 +263,7 @@ Load only the documents relevant to the current task.
 | Player movement, interactions, camera, input, NPCs, animations | `docs/gameplay-systems.md` |
 | Office maps, GLB files, Blender, sprites, billboards, asset imports, AI asset tools | `docs/assets-and-content.md` |
 | Building a new room, editing an existing room, placing furniture / walls / doors via ASCII grid | `docs/room-authoring.md` |
+| Current floor plan / furniture layout of an existing room (before editing it) | `docs/layouts/<room>-floor.md` + `docs/layouts/<room>-furniture.md` |
 | FPS, draw calls, memory, mobile devices, quality settings | `docs/performance.md` |
 | Unit tests, E2E tests, acceptance criteria, regression coverage | `docs/testing.md` |
 | Hosting, CDN, headers, CORS, CSP, caching, release checks | `docs/deployment-and-security.md` |
