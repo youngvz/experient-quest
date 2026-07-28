@@ -11,8 +11,8 @@ export const WALL_THICKNESS = 0.4
 // (see Employee.tsx), so bumping these grows every character uniformly.
 export const PLAYER_RADIUS = 0.4375
 export const PLAYER_HEIGHT = 2.0
-export const PLAYER_SPEED = 9
-export const PLAYER_RUN_SPEED = 14
+export const PLAYER_SPEED = 8
+export const PLAYER_RUN_SPEED = 12
 // Spawn at the south end of the South Apron sidewalk — the visitor's
 // approach to the building. `SOUTH_APRON.sidewalk` includes a south-running
 // strip at X ∈ [-13, -10.5], Z ∈ [+25, +32] that leads north to the

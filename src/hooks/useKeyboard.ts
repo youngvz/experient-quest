@@ -64,7 +64,9 @@ export function useKeyboard(): {
     back: false,
     left: false,
     right: false,
-    running: false,
+    // Run is the default gait. R toggles into a slower walk when the
+    // player wants finer control near NPCs or interaction zones.
+    running: true,
     interactPressed: false,
     interactConsumed: false,
     rollPressed: false,
