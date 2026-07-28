@@ -4,15 +4,9 @@ import { gameEvents } from '../../game/events/GameEventBus'
 import './TitleScreen.css'
 
 // User-supplied title art. Missing file just falls through to the CSS
-// fallback title (the <h1>).
+// fallback title (the <h1>). The bios splash preloads this URL so the
+// <img> below hits the browser cache on first paint.
 const TITLE_ART_URL = `${import.meta.env.BASE_URL}assets/title/title.webp`
-
-// Minimum time the title is visible before Enter unlocks. Keeps the flash
-// short on fast connections without making the screen feel cheap. Anything
-// still downloading (character GLBs, HDR, apron props) continues loading
-// behind the title art and behind gameplay after Start — Suspense at each
-// mount site fades those in as they arrive.
-const READY_MIN_DISPLAY_MS = 400
 
 // How long the mount hitch is allowed to run behind the still-opaque
 // title art before we start the fade. Long enough for Rapier's world
@@ -27,23 +21,8 @@ const FADE_MS = 420
 export function TitleScreen() {
   const setPhase = useGameStore((s) => s.setPhase)
   const phase = usePhase()
-  const [ready, setReady] = useState(false)
   const [fading, setFading] = useState(false)
-  const [artLoaded, setArtLoaded] = useState(false)
   const [artFailed, setArtFailed] = useState(false)
-
-  // Unlock Start after a fixed minimum display time. We intentionally do
-  // NOT wait on useProgress: with OfficeWorld mounted during title, the
-  // loader queue tracks every GLB the whole world needs. Blocking Start
-  // on all of that reintroduces the load-time wait we're trying to avoid.
-  // Rooms and NPCs Suspense-fade in as their assets arrive; they don't
-  // gate Start. Not gated on <img>'s onLoad either — cached images can
-  // fire onLoad before React attaches the handler, and the fallback <h1>
-  // is legible anyway.
-  useEffect(() => {
-    const t = window.setTimeout(() => setReady(true), READY_MIN_DISPLAY_MS)
-    return () => window.clearTimeout(t)
-  }, [])
 
   // Once we're in the 'starting' phase, OfficeScene has been swapped in
   // behind the still-opaque title. Give the mount + Rapier init a short
@@ -64,13 +43,14 @@ export function TitleScreen() {
 
   const startPlay = () => {
     if (phase !== 'title') return
-    // Flip to 'starting' — OfficeScene mounts under the still-opaque title.
-    // The effect above owns the fade + final commit.
-    setPhase('starting')
+    // Flip to 'character-select' — CharacterSelect mounts on top of the
+    // still-opaque title chrome. The picker owns the transition to
+    // 'starting' once the player confirms.
+    setPhase('character-select')
   }
 
   useEffect(() => {
-    if (!ready || fading || phase !== 'title') return
+    if (fading || phase !== 'title') return
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Enter' && e.key !== ' ') return
       e.preventDefault()
@@ -89,7 +69,7 @@ export function TitleScreen() {
     // over setPhase (referentially stable Zustand action). Rebinding on
     // every render would still be safe, just needless work.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready, fading, phase])
+  }, [fading, phase])
 
   return (
     <div
@@ -101,10 +81,9 @@ export function TitleScreen() {
       <div className="title-screen__content">
         {!artFailed && (
           <img
-            className={`title-screen__art${artLoaded ? ' title-screen__art--loaded' : ''}`}
+            className="title-screen__art title-screen__art--loaded"
             src={TITLE_ART_URL}
             alt=""
-            onLoad={() => setArtLoaded(true)}
             onError={() => setArtFailed(true)}
             draggable={false}
           />
@@ -112,14 +91,8 @@ export function TitleScreen() {
         {artFailed && (
           <h1 className="title-screen__title">Experient Quest</h1>
         )}
-        <p className={`title-screen__hint${ready ? ' title-screen__hint--ready' : ''}`}>
-          {ready ? (
-            <>
-              Press <kbd>Enter</kbd> to begin
-            </>
-          ) : (
-            'Preparing the office…'
-          )}
+        <p className="title-screen__hint title-screen__hint--ready">
+          Press <kbd>Enter</kbd> to begin
         </p>
       </div>
     </div>

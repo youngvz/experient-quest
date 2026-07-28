@@ -3,6 +3,7 @@ import { useEnvironment } from '@react-three/drei'
 import './BiosSplash.css'
 
 const CAT_URL = `${import.meta.env.BASE_URL}assets/title/bios-cat.webp`
+const TITLE_ART_URL = `${import.meta.env.BASE_URL}assets/title/title.webp`
 
 // Kick off the sunset HDR fetch as soon as the splash mounts. This is the
 // biggest external asset the game loads (~2 MB from drei's CDN) and pmrem
@@ -12,8 +13,20 @@ const CAT_URL = `${import.meta.env.BASE_URL}assets/title/bios-cat.webp`
 // pays the pmrem compile — and that runs behind the still-opaque title.
 useEnvironment.preload({ preset: 'sunset' })
 
+// Also warm the title art. `new Image()` triggers a browser fetch into
+// the memory + disk cache; when TitleScreen mounts, its own <img> hits
+// the cache and paints on the first frame instead of showing an empty
+// slot. Done at module scope so it starts the instant the splash's
+// module is imported (typically alongside the App's initial paint).
+if (typeof window !== 'undefined') {
+  const img = new Image()
+  img.src = TITLE_ART_URL
+}
+
 // Fixed on-screen time before the splash begins its exit sequence.
-const HOLD_MS = 1600
+// Long enough on typical connections for the title art fetch above to
+// resolve, so the title paints fully-formed when it fades in.
+const HOLD_MS = 1900
 // Phase 1 — cat + wordmark fade to a black card. Kept synced with the
 // transition on `.bios-splash__stack` in the CSS.
 const DIM_MS = 350

@@ -3,8 +3,12 @@ import { gameEvents } from '../../game/events/GameEventBus'
 import { useGameEvent } from '../../hooks/useGameEvents'
 import type { InteractionTriggeredPayload } from '../../game/events/gameEvents'
 import { findStop, type DialogueLine } from '../../game/interactions/interactionTypes'
-import { getCharacter } from '../../game/characters/characters'
-import { useGameStore } from '../../game/state/gameStore'
+import {
+  PLAYER_SPEAKER_ID,
+  resolveSpeaker,
+  substitutePlayerName,
+} from '../../game/characters/roster'
+import { useGameStore, useSelectedCharacter } from '../../game/state/gameStore'
 import { usePaginatedChildren } from '../../hooks/usePaginatedChildren'
 import './DialogueOverlay.css'
 
@@ -12,6 +16,7 @@ export function DialogueOverlay() {
   const activeStopId = useGameStore((s) => s.activeStopId)
   const setActiveStop = useGameStore((s) => s.setActiveStop)
   const markCompleted = useGameStore((s) => s.markCompleted)
+  const selectedCharacterId = useSelectedCharacter()
   const [lineIndex, setLineIndex] = useState(0)
   // Frozen at trigger time so `markCompleted` on close doesn't swap the
   // script under us on the last frame. Held in a ref because the reader
@@ -82,7 +87,23 @@ export function DialogueOverlay() {
     : null
 
   const line = script ? script[lineIndex] : null
-  const segments = useMemo(() => (line ? line.text.split('\n') : []), [line])
+  // Resolve the speaker against the picked character so PLAYER_SPEAKER_ID
+  // renders as the player's portrait / name, and NPC lines anchored to the
+  // picked character re-attribute to the youngvz stand-in. The line's raw
+  // text may contain {player} placeholders — substitute with the picked
+  // character's display name before splitting into segments.
+  const playerCharacter = useMemo(
+    () => resolveSpeaker(PLAYER_SPEAKER_ID, selectedCharacterId),
+    [selectedCharacterId],
+  )
+  const resolvedSpeaker = useMemo(
+    () => (line ? resolveSpeaker(line.speakerId, selectedCharacterId) : null),
+    [line, selectedCharacterId],
+  )
+  const segments = useMemo(() => {
+    if (!line) return []
+    return substitutePlayerName(line.text, playerCharacter.name).split('\n')
+  }, [line, playerCharacter])
 
   const contentKey = `${activeStopId ?? ''}:${lineIndex}`
   const { pages, pageIndex, pageCount, hasNext, hasPrev, next, prev } = usePaginatedChildren({
@@ -127,8 +148,8 @@ export function DialogueOverlay() {
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [script, advance, hasPrev, prev])
 
-  if (!script || !line) return null
-  const speaker = getCharacter(line.speakerId)
+  if (!script || !line || !resolvedSpeaker) return null
+  const speaker = resolvedSpeaker
   const isLastLine = lineIndex >= script.length - 1
   const hasMore = hasNext || !isLastLine
   const visibleIndexes = pages[pageIndex] ?? []

@@ -36,6 +36,11 @@ export function GameCanvas() {
     pendingUnlockQuestId !== null ||
     pendingReadyQuestId !== null
 
+  // Character-select is a title-side phase — the office is still behind
+  // fully opaque chrome, so the same warm background + TitlePreview
+  // overlay applies.
+  const isTitleLike = phase === 'title' || phase === 'character-select'
+
   return (
     <div className="game-canvas">
       <Canvas
@@ -61,14 +66,14 @@ export function GameCanvas() {
             while world geometry hydrates. Gameplay uses the sunset tint. */}
         <color
           attach="background"
-          args={[phase === 'title' ? '#3a2b22' : '#c78e5f']}
+          args={[isTitleLike ? '#3a2b22' : '#c78e5f']}
         />
-        {phase !== 'title' && <fog attach="fog" args={['#c78e5f', 55, 140]} />}
+        {!isTitleLike && <fog attach="fog" args={['#c78e5f', 55, 140]} />}
         {/* OfficeScene mounts unconditionally so Rapier + geometry + shaders
             are built during the title. TitlePreview is a camera-only overlay
             that renders on top during the title phase. */}
         <OfficeScene controlsDisabled={controlsDisabled} />
-        {phase === 'title' && (
+        {isTitleLike && (
           <Suspense fallback={null}>
             <TitlePreview />
           </Suspense>

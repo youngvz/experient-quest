@@ -1,4 +1,5 @@
 import { BiosSplash } from '../components/BiosSplash/BiosSplash'
+import { CharacterSelect } from '../components/CharacterSelect/CharacterSelect'
 import { ContentOverlay } from '../components/ContentOverlay/ContentOverlay'
 import { DialogueOverlay } from '../components/DialogueOverlay/DialogueOverlay'
 import { GameCanvas } from '../components/GameCanvas/GameCanvas'
@@ -36,10 +37,15 @@ function readSkipSplash(): boolean {
 export function App() {
   const isCoarse = useCoarsePointer()
   const phase = usePhase()
-  // Title stays mounted through 'title' AND 'starting' — during 'starting'
-  // it fades out while OfficeWorld mounts behind it, hiding the Physics /
-  // shader-compile hitch inside the fade window.
-  const showTitle = phase === 'title' || phase === 'starting'
+  // Title art stays mounted through 'title', 'character-select', AND
+  // 'starting' — the picker stacks on top of it, and during 'starting'
+  // the title art fades out while OfficeWorld mounts behind it, hiding
+  // the Physics / shader-compile hitch inside the fade window.
+  const showTitleArt =
+    phase === 'title' ||
+    phase === 'character-select' ||
+    phase === 'starting'
+  const showCharacterSelect = phase === 'character-select'
   const showGameplayUi = phase === 'playing'
   // splashLeaving flips when BiosSplash starts fading out — we use it to
   // mount TitleScreen so its fade-in runs in the SAME window, producing a
@@ -66,7 +72,8 @@ export function App() {
           {isCoarse && <TouchControls />}
         </>
       )}
-      {showTitle && splashLeaving && <TitleScreen />}
+      {showTitleArt && splashLeaving && <TitleScreen />}
+      {showCharacterSelect && splashLeaving && <CharacterSelect />}
       {!splashDone && (
         <BiosSplash onLeaving={handleSplashLeaving} onDone={handleSplashDone} />
       )}

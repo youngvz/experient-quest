@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import type { CharacterId } from '../characters/characters'
 import { gameEvents } from '../events/GameEventBus'
 import { DERIVED_TASK_COMPLETIONS, getQuest } from '../quests/quests'
 
@@ -14,13 +15,16 @@ export type ZoneId = 'office' | 'central-corridor' | (string & {})
 export type ArrowKeyMode = 'camera' | 'movement'
 
 // Top-level app phase.
-//   'title'    — intro screen backed by the bakery preview scene.
-//   'starting' — Start pressed: OfficeWorld mounts (paying Physics init +
-//                shader compile) while the title overlay finishes its fade
-//                so the mount hitch stays hidden behind fully opaque art.
-//   'playing'  — title unmounted, player controllable.
-// Future: 'game-select' between title and starting.
-export type Phase = 'title' | 'starting' | 'playing'
+//   'title'            — intro screen backed by the bakery preview scene.
+//   'character-select' — cycle-through picker sitting between title and
+//                        starting. Physics still paused, Player still
+//                        unmounted; TitlePreview continues to render.
+//   'starting'         — Start confirmed: OfficeWorld mounts (paying
+//                        Physics init + shader compile) while the title
+//                        overlay finishes its fade so the mount hitch
+//                        stays hidden behind fully opaque art.
+//   'playing'          — title unmounted, player controllable.
+export type Phase = 'title' | 'character-select' | 'starting' | 'playing'
 
 export interface GameState {
   phase: Phase
@@ -51,6 +55,10 @@ export interface GameState {
   // a task is un-checked then re-checked.
   readyQuestIds: ReadonlySet<string>
   arrowKeyMode: ArrowKeyMode
+  // Character the player picked on the CharacterSelect screen. Read by
+  // Player.tsx to swap its GLB, and by rooms via useEmployeeUrl() so
+  // youngvz stands in at the picked employee's original spot.
+  selectedCharacterId: CharacterId
   setPhase: (phase: Phase) => void
   setActiveStop: (id: string | null) => void
   markCompleted: (id: string) => void
@@ -63,6 +71,7 @@ export interface GameState {
   toggleTask: (questId: string, taskId: string) => void
   completeTask: (questId: string, taskId: string) => void
   setArrowKeyMode: (mode: ArrowKeyMode) => void
+  setSelectedCharacter: (id: CharacterId) => void
   // Wipe quest progression back to a fresh run (stops, tasks, unlocked
   // quests, ready-modal bookkeeping, and the active-stop overlay). Leaves
   // scene state (activeZone, nearbyRooms, arrowKeyMode) intact.
@@ -194,6 +203,7 @@ export const useGameStore = create<GameState>((set) => ({
   pendingReadyQuestId: null,
   readyQuestIds: new Set<string>(),
   arrowKeyMode: 'camera',
+  selectedCharacterId: 'youngvz',
   setPhase: (phase) =>
     set((state) => (state.phase === phase ? state : { phase })),
   setActiveStop: (id) => set({ activeStopId: id }),
@@ -312,6 +322,10 @@ export const useGameStore = create<GameState>((set) => ({
     }),
   setArrowKeyMode: (mode) =>
     set((state) => (state.arrowKeyMode === mode ? state : { arrowKeyMode: mode })),
+  setSelectedCharacter: (id) =>
+    set((state) =>
+      state.selectedCharacterId === id ? state : { selectedCharacterId: id },
+    ),
   resetProgress: () =>
     set({
       activeStopId: null,
@@ -338,6 +352,7 @@ export const useGameStore = create<GameState>((set) => ({
       pendingReadyQuestId: null,
       readyQuestIds: new Set<string>(),
       arrowKeyMode: 'camera',
+      selectedCharacterId: 'youngvz',
     })
   },
 }))
@@ -353,3 +368,5 @@ export const useIsTaskComplete = (questId: string, taskId: string) =>
   useGameStore((s) => s.completedTaskIds.has(taskKey(questId, taskId)))
 export const useArrowKeyMode = () => useGameStore((s) => s.arrowKeyMode)
 export const usePhase = () => useGameStore((s) => s.phase)
+export const useSelectedCharacter = () =>
+  useGameStore((s) => s.selectedCharacterId)

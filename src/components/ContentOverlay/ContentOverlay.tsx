@@ -3,8 +3,13 @@ import { gameEvents } from '../../game/events/GameEventBus'
 import { useGameEvent } from '../../hooks/useGameEvents'
 import type { InteractionTriggeredPayload } from '../../game/events/gameEvents'
 import { findStop, type PresentationStop } from '../../game/interactions/interactionTypes'
+import {
+  PLAYER_SPEAKER_ID,
+  resolveSpeaker,
+  substitutePlayerName,
+} from '../../game/characters/roster'
 import { getQuest } from '../../game/quests/quests'
-import { useGameStore } from '../../game/state/gameStore'
+import { useGameStore, useSelectedCharacter } from '../../game/state/gameStore'
 import { usePaginatedChildren } from '../../hooks/usePaginatedChildren'
 import './ContentOverlay.css'
 
@@ -33,6 +38,11 @@ export function ContentOverlay() {
   const shouldRender = stop && stop.content.type !== 'dialogue'
 
   const completedTaskIds = useGameStore((s) => s.completedTaskIds)
+  const selectedCharacterId = useSelectedCharacter()
+  const playerName = useMemo(
+    () => resolveSpeaker(PLAYER_SPEAKER_ID, selectedCharacterId).name,
+    [selectedCharacterId],
+  )
   // Meeting stops with any incomplete task are a "fail" — the close button
   // becomes a "Try Again" that resets progression and respawns the player.
   const isFailedMeeting =
@@ -64,8 +74,8 @@ export function ContentOverlay() {
   }, [activeStopId, isFailedMeeting, markCompleted, resetProgress, restoreFocus, setActiveStop])
   const bodyChildren = useMemo(() => {
     if (!shouldRender || !stop) return []
-    return Children.toArray(renderStopBody(stop, completedTaskIds))
-  }, [shouldRender, stop, completedTaskIds])
+    return Children.toArray(renderStopBody(stop, completedTaskIds, playerName))
+  }, [shouldRender, stop, completedTaskIds, playerName])
 
   const { pages, pageIndex, pageCount, hasNext, hasPrev, next, prev } = usePaginatedChildren({
     viewportRef,
@@ -192,10 +202,14 @@ export function ContentOverlay() {
 // Returns a fragment whose top-level children are the block units the
 // paginator groups. Kept flat (no wrapper element around intro + list) so
 // each paragraph and list can spill onto its own page independently.
-function renderStopBody(stop: PresentationStop, completedTaskIds: ReadonlySet<string>) {
+function renderStopBody(
+  stop: PresentationStop,
+  completedTaskIds: ReadonlySet<string>,
+  playerName: string,
+) {
   const introParas = stop.intro
     ? stop.intro.split('\n\n').map((paragraph, index) => (
-        <p key={`intro-${index}`}>{paragraph}</p>
+        <p key={`intro-${index}`}>{substitutePlayerName(paragraph, playerName)}</p>
       ))
     : []
 
@@ -273,7 +287,11 @@ function renderStopBody(stop: PresentationStop, completedTaskIds: ReadonlySet<st
         </>
       )
     case 'meeting': {
-      const outcome = describeMeetingOutcome(stop.content.questId, completedTaskIds)
+      const outcome = describeMeetingOutcome(
+        stop.content.questId,
+        completedTaskIds,
+        playerName,
+      )
       return (
         <>
           {introParas}
@@ -309,6 +327,7 @@ export function isMeetingSuccess(
 function describeMeetingOutcome(
   questId: string,
   completedTaskIds: ReadonlySet<string>,
+  playerName: string,
 ): string {
   let quest
   try {
@@ -317,18 +336,21 @@ function describeMeetingOutcome(
     return 'The meeting happened.'
   }
   const missing = quest.tasks.filter((t) => !completedTaskIds.has(`${questId}:${t.id}`))
-  if (missing.length === quest.tasks.length) {
-    return 'The meeting was a complete failure, no jokes, no updates and no demo. youngvz was fired shortly after'
-  }
-  const missingIds = new Set(missing.map((t) => t.id))
-  if (missingIds.has('joke-of-week')) {
-    return "The meeting was a complete failure. There wasn't a joke of the week so nobody cared to listen. youngvz was put on a PIP plan"
-  }
-  if (missingIds.has('company-updates')) {
-    return 'The meeting was a complete failure. youngvz forgot to tell the team about the happy hour event and everyone left early.'
-  }
-  if (missingIds.has('download-demo')) {
-    return 'The meeting was a complete failure. Nobody learned anything! youngvz was put on a PIP plan'
-  }
-  return 'The meeting went off without a hitch. Nice work, youngvz.'
+  const raw = (() => {
+    if (missing.length === quest.tasks.length) {
+      return 'The meeting was a complete failure, no jokes, no updates and no demo. {player} was fired shortly after'
+    }
+    const missingIds = new Set(missing.map((t) => t.id))
+    if (missingIds.has('joke-of-week')) {
+      return "The meeting was a complete failure. There wasn't a joke of the week so nobody cared to listen. {player} was put on a PIP plan"
+    }
+    if (missingIds.has('company-updates')) {
+      return 'The meeting was a complete failure. {player} forgot to tell the team about the happy hour event and everyone left early.'
+    }
+    if (missingIds.has('download-demo')) {
+      return 'The meeting was a complete failure. Nobody learned anything! {player} was put on a PIP plan'
+    }
+    return 'The meeting went off without a hitch. Nice work, {player}.'
+  })()
+  return substitutePlayerName(raw, playerName)
 }

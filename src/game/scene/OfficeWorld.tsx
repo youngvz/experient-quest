@@ -2,6 +2,7 @@ import { useGLTF } from '@react-three/drei'
 import { Physics } from '@react-three/rapier'
 import { Suspense, lazy, useEffect, useMemo } from 'react'
 import { CHARACTERS } from '../characters/characters'
+import { useEmployeeUrl } from '../characters/roster'
 import { useGameStore, usePhase } from '../state/gameStore'
 import { ConferenceChairs } from './ConferenceChairs'
 import { ConferenceFloor } from './ConferenceFloor'
@@ -41,9 +42,10 @@ function Jacquelyn() {
     () => (hasSpoken ? JACQUELYN_IDLE : JACQUELYN_WAVE),
     [hasSpoken],
   )
+  const url = useEmployeeUrl('jacquelyn')
   return (
     <Employee
-      url={CHARACTERS.jacquelyn.glbUrl}
+      url={url}
       position={[-9.5, 0, 22]}
       rotationY={0}
       clipPatterns={clipPatterns}
@@ -70,7 +72,9 @@ interface OfficeWorldProps {
 // as the only new node.
 export default function OfficeWorld({ controlsDisabled }: OfficeWorldProps) {
   const phase = usePhase()
-  const paused = phase === 'title'
+  // Character-select is a title-side phase; keep physics paused through it
+  // so the office doesn't tick while the picker is on top.
+  const paused = phase === 'title' || phase === 'character-select'
 
   // Split preloads by when they're needed.
   //   Title-visible NPCs (Sarah, Jacquelyn) load immediately — they render
@@ -174,12 +178,12 @@ export default function OfficeWorld({ controlsDisabled }: OfficeWorldProps) {
           <TheGarage />
         </FadeIn>
       </ProximityBranch>
-      {/* Player is the only node that stays unmounted during title: its
-          useFrame drives camera.position, which would fight the title's
-          CinematicCamera. Everything else — walls, props, NPCs — mounts
-          during title so Rapier world init + shader compiles are already
-          done by the time Start is pressed. */}
-      {phase !== 'title' && (
+      {/* Player is the only node that stays unmounted during title-side
+          phases: its useFrame drives camera.position, which would fight
+          the title's CinematicCamera. Everything else — walls, props,
+          NPCs — mounts during title so Rapier world init + shader compiles
+          are already done by the time Confirm is pressed. */}
+      {phase !== 'title' && phase !== 'character-select' && (
         <Suspense fallback={null}>
           <Player controlsDisabled={controlsDisabled} />
         </Suspense>

@@ -1,6 +1,6 @@
 import { RigidBody } from '@react-three/rapier'
 import { Suspense, useMemo } from 'react'
-import { CHARACTERS } from '../characters/characters'
+import { useEmployeeUrl } from '../characters/roster'
 import {
   COLORS,
   THE_LAB,
@@ -30,14 +30,20 @@ function Juan({ position }: { position: [number, number, number] }) {
     () => (hasSpoken ? JUAN_IDLE : JUAN_WAVE),
     [hasSpoken],
   )
+  const url = useEmployeeUrl('juan')
   return (
     <Employee
-      url={CHARACTERS.juan.glbUrl}
+      url={url}
       position={position}
       rotationY={(5 * Math.PI) / 4}
       clipPatterns={clipPatterns}
     />
   )
+}
+
+function Logan() {
+  const url = useEmployeeUrl('logan')
+  return <Employee url={url} position={[7.5, 0, -27]} rotationY={Math.PI / 2} />
 }
 
 // Alcove desk metrics — 3m wide (along Z) × 2m deep (along X). Placed
@@ -205,11 +211,7 @@ export function TheLab() {
 
       {/* Logan stands ~1.5 m west of the kitchen station, facing east
           (+X) so he's looking straight at the smoking cooktop. */}
-      <Employee
-        url={CHARACTERS.logan.glbUrl}
-        position={[7.5, 0, -27]}
-        rotationY={Math.PI / 2}
-      />
+      <Logan />
 
       {/* Bay B and C furnishings: desk + chair against the east wall,
           chair facing west (toward the doorway), monitor at the desk's

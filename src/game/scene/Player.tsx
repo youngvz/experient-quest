@@ -44,8 +44,6 @@ import { ZoneManager } from '../zones/ZoneManager'
 import { PROXIMITY_ANCHORS } from './proximity/anchors'
 import { ProximityManager } from './proximity/ProximityManager'
 
-const PLAYER_MODEL_URL = CHARACTERS.youngvz.glbUrl
-
 interface PlayerProps {
   controlsDisabled: boolean
 }
@@ -106,7 +104,13 @@ export function Player({ controlsDisabled }: PlayerProps) {
       : 1,
   )
 
-  const gltf = useGLTF(PLAYER_MODEL_URL)
+  // GLB URL is store-driven so the CharacterSelect screen can pick which
+  // character the player controls. Player mounts once phase leaves the
+  // title-side phases, so the id is stable by the time this reads it —
+  // but the pickClip regexes are generic enough to handle any employee
+  // GLB (missing clips fall through to null and lerp gracefully).
+  const selectedCharacterId = useGameStore((s) => s.selectedCharacterId)
+  const gltf = useGLTF(CHARACTERS[selectedCharacterId].glbUrl)
   const modelFit = useMemo(() => {
     // SkeletonUtils.clone rebinds skinned meshes to a cloned skeleton;
     // Object3D.clone() would leave them pointing at the original.

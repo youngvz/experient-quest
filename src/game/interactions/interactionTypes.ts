@@ -1,4 +1,5 @@
 import { INTERACTION_ZONE } from '../constants/gameConstants'
+import { PLAYER_SPEAKER_ID } from '../characters/roster'
 
 export interface EmployeeProfile {
   id: string
@@ -22,10 +23,16 @@ export interface CompanyEvent {
 }
 
 export interface DialogueLine {
-  // Character id from src/game/characters/characters.ts. The DialogueOverlay
-  // uses this to look up the portrait + display name.
+  // Character id from src/game/characters/characters.ts, or the sentinel
+  // PLAYER_SPEAKER_ID for lines spoken by the player-controlled character
+  // (resolved at render time to whichever character was picked on the
+  // CharacterSelect screen). The DialogueOverlay uses this to look up the
+  // portrait + display name.
   speakerId: string
   // One "screen" of text. Embedded '\n' is rendered as a line break.
+  // Supports the {player} / {Player} / {PLAYER} placeholder tokens,
+  // substituted with the picked character's display name at render time
+  // (see substitutePlayerName in characters/roster.ts).
   text: string
 }
 
@@ -99,7 +106,7 @@ export const presentationStops: PresentationStop[] = [
       script: [
         {
           speakerId: 'jacquelyn',
-          text: 'Hey youngvz! I think John was looking for you!',
+          text: 'Hey {Player}! I think John was looking for you!',
         },
       ],
     },
@@ -126,7 +133,7 @@ export const presentationStops: PresentationStop[] = [
           text: 'Because it had the drumsticks!',
         },
         {
-          speakerId: 'youngvz',
+          speakerId: PLAYER_SPEAKER_ID,
           text: "...",
         }
       ],
@@ -153,11 +160,11 @@ export const presentationStops: PresentationStop[] = [
       script: [
         {
           speakerId: 'catherine',
-          text: "Hey Youngvz! Here are the updates for the status meeting.",
+          text: "Hey {Player}! Here are the updates for the status meeting.",
         },
         {
-          speakerId: 'youngvz',
-          text: "Thanks Catherine! John will be happy to see these.",
+          speakerId: PLAYER_SPEAKER_ID,
+          text: "Thanks! John will be happy to see these.",
         }
       ],
     },
@@ -181,7 +188,7 @@ export const presentationStops: PresentationStop[] = [
           text: "I hate standing here trying to think of a good watercooler joke.",
         },
         {
-          speakerId: 'youngvz',
+          speakerId: PLAYER_SPEAKER_ID,
           text: "...",
         }
       ],
@@ -210,7 +217,7 @@ export const presentationStops: PresentationStop[] = [
           text: 'the whiteboard has to be the most re-MARKable.',
         },
         {
-          speakerId: 'youngvz',
+          speakerId: PLAYER_SPEAKER_ID,
           text: "...",
         }
       ],
@@ -257,7 +264,7 @@ export const presentationStops: PresentationStop[] = [
       type: 'dialogue',
       script: [
         {
-          speakerId: 'youngvz',
+          speakerId: PLAYER_SPEAKER_ID,
           text: 'Alright, I just need to download\nthe demo from OneDrive...',
         },
       ],
@@ -281,10 +288,10 @@ export const presentationStops: PresentationStop[] = [
       script: [
         {
           speakerId: 'distasi',
-          text: "Youngvz!! So glad you're here.\nWe need you to run this week's\nstatus meeting ASAP!",
+          text: "{Player}!! So glad you're here.\nWe need you to run this week's\nstatus meeting ASAP!",
         },
         {
-          speakerId: 'youngvz',
+          speakerId: PLAYER_SPEAKER_ID,
           text: "You got it John!",
         },
         {
@@ -296,7 +303,7 @@ export const presentationStops: PresentationStop[] = [
           text: "Your performance review\ndepends on it!",
         },
         {
-          speakerId: 'youngvz',
+          speakerId: PLAYER_SPEAKER_ID,
           text: "...",
         },
       ],

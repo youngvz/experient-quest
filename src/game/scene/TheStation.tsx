@@ -1,6 +1,6 @@
 import { RigidBody } from '@react-three/rapier'
 import { Suspense, useMemo } from 'react'
-import { CHARACTERS } from '../characters/characters'
+import { useEmployeeUrl } from '../characters/roster'
 import {
   COLORS,
   THE_BOARDROOM,
@@ -34,9 +34,10 @@ function Catherine({ position }: { position: [number, number, number] }) {
     () => (hasSpoken ? CATHERINE_IDLE : CATHERINE_WAVE),
     [hasSpoken],
   )
+  const url = useEmployeeUrl('catherine')
   return (
     <Employee
-      url={CHARACTERS.catherine.glbUrl}
+      url={url}
       position={position}
       rotationY={-Math.PI / 2}
       clipPatterns={clipPatterns}

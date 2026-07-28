@@ -1,6 +1,6 @@
 import { RigidBody } from '@react-three/rapier'
 import { Suspense, useMemo, type ReactElement } from 'react'
-import { CHARACTERS } from '../characters/characters'
+import { useEmployeeUrl } from '../characters/roster'
 import {
   THE_BAKERY_ALCOVE_DESKS,
   THE_BAKERY_ALCOVE_DESK_SIZE,
@@ -44,9 +44,10 @@ function Sarah({ position }: { position: [number, number, number] }) {
     () => (hasSpoken ? SARAH_IDLE : SARAH_WAVE),
     [hasSpoken],
   )
+  const url = useEmployeeUrl('sarah')
   return (
     <Employee
-      url={CHARACTERS.sarah.glbUrl}
+      url={url}
       position={position}
       rotationY={-Math.PI / 2}
       clipPatterns={clipPatterns}
