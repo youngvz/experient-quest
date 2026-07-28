@@ -59,11 +59,11 @@
     0 0 20px rgba(0, 0, 0, 0.6);
 }
 
-.character-select__stage {
+.character-select__cycle {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 20px;
+  gap: 24px;
 }
 
 .character-select__portrait-wrap {
@@ -111,11 +111,19 @@
   border: 3px solid #f9f0c8;
   background: rgba(10, 8, 6, 0.6);
   color: #f9f0c8;
-  font-family: inherit;
-  font-size: clamp(24px, 4vw, 34px);
+  /* Non-pixel font for the chevron so the glyph fits inside the button
+     at any size — 'Press Start 2P' inherits from the container and
+     renders the chevrons tall enough to clip against the border. */
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 32px;
+  font-weight: 700;
   line-height: 1;
-  width: 52px;
-  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  width: 56px;
+  height: 56px;
   cursor: pointer;
   transition: transform 120ms ease, background 120ms ease;
 }
@@ -152,23 +160,4 @@
 .character-select__confirm:disabled {
   opacity: 0.55;
   cursor: default;
-}
-
-.character-select__hint {
-  margin: 0;
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  color: #f2e9c8;
-  opacity: 0.75;
-  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.7);
-}
-
-.character-select__hint kbd {
-  display: inline-block;
-  padding: 2px 6px;
-  margin: 0 2px;
-  border: 2px solid #f2e9c8;
-  background: rgba(0, 0, 0, 0.4);
-  font-family: inherit;
-  font-size: 10px;
 }

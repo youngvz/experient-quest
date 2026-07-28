@@ -94,7 +94,16 @@ export function CharacterSelect() {
       <div className="character-select__scrim" aria-hidden="true" />
       <div className="character-select__content">
         <h2 className="character-select__heading">Choose your character</h2>
-        <div className="character-select__stage">
+        <div className="character-select__portrait-wrap" key={currentId}>
+          <img
+            className="character-select__portrait"
+            src={current.portraitUrl}
+            alt={current.name}
+            draggable={false}
+          />
+          <p className="character-select__name">{current.name}</p>
+        </div>
+        <div className="character-select__cycle">
           <button
             type="button"
             className="character-select__arrow character-select__arrow--prev"
@@ -103,15 +112,6 @@ export function CharacterSelect() {
           >
             ‹
           </button>
-          <div className="character-select__portrait-wrap" key={currentId}>
-            <img
-              className="character-select__portrait"
-              src={current.portraitUrl}
-              alt={current.name}
-              draggable={false}
-            />
-            <p className="character-select__name">{current.name}</p>
-          </div>
           <button
             type="button"
             className="character-select__arrow character-select__arrow--next"
@@ -129,9 +129,6 @@ export function CharacterSelect() {
         >
           Confirm
         </button>
-        <p className="character-select__hint">
-          <kbd>←</kbd> <kbd>→</kbd> cycle · <kbd>Enter</kbd> confirm
-        </p>
       </div>
     </div>
   )

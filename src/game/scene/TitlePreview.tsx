@@ -12,6 +12,17 @@ const CAMERA_END: [number, number, number] = [-4.5, 4.8, 19]
 const LOOK_TARGET: [number, number, number] = [0, 1.2, 13.5]
 const DOLLY_DURATION_S = 14
 
+// Coarse-pointer devices (phones / small tablets) start at a wider FOV
+// so the same shot fits the whole storefront on portrait viewports —
+// otherwise the title reads as an extreme close-up on the bakery glass.
+const FOV_DEFAULT = 45
+const FOV_COARSE = 62
+
+function isCoarsePointer(): boolean {
+  if (typeof window === 'undefined') return false
+  return window.matchMedia?.('(pointer: coarse)').matches ?? false
+}
+
 function easeOutCubic(t: number): number {
   const clamped = t < 0 ? 0 : t > 1 ? 1 : t
   const inv = 1 - clamped
@@ -22,6 +33,7 @@ function CinematicCamera() {
   const ref = useRef<ThreePerspectiveCamera>(null)
   const elapsed = useRef(0)
   const target = useRef(new Vector3(...LOOK_TARGET))
+  const fov = isCoarsePointer() ? FOV_COARSE : FOV_DEFAULT
 
   useFrame((_, delta) => {
     const cam = ref.current
@@ -41,7 +53,7 @@ function CinematicCamera() {
       ref={ref}
       makeDefault
       position={CAMERA_START}
-      fov={45}
+      fov={fov}
       near={0.1}
       far={200}
     />
