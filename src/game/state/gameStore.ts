@@ -13,7 +13,17 @@ export type ZoneId = 'office' | 'central-corridor' | (string & {})
 // Configurable at runtime so a future settings UI can flip it without code.
 export type ArrowKeyMode = 'camera' | 'movement'
 
+// Top-level app phase.
+//   'title'    — intro screen backed by the bakery preview scene.
+//   'starting' — Start pressed: OfficeWorld mounts (paying Physics init +
+//                shader compile) while the title overlay finishes its fade
+//                so the mount hitch stays hidden behind fully opaque art.
+//   'playing'  — title unmounted, player controllable.
+// Future: 'game-select' between title and starting.
+export type Phase = 'title' | 'starting' | 'playing'
+
 export interface GameState {
+  phase: Phase
   activeStopId: string | null
   completedStopIds: ReadonlySet<string>
   activeZone: ZoneId
@@ -41,6 +51,7 @@ export interface GameState {
   // a task is un-checked then re-checked.
   readyQuestIds: ReadonlySet<string>
   arrowKeyMode: ArrowKeyMode
+  setPhase: (phase: Phase) => void
   setActiveStop: (id: string | null) => void
   markCompleted: (id: string) => void
   setActiveZone: (zone: ZoneId) => void
@@ -171,6 +182,7 @@ function applyDerivedTaskCompletions(
 }
 
 export const useGameStore = create<GameState>((set) => ({
+  phase: 'title',
   activeStopId: null,
   completedStopIds: new Set<string>(),
   activeZone: 'office',
@@ -182,6 +194,8 @@ export const useGameStore = create<GameState>((set) => ({
   pendingReadyQuestId: null,
   readyQuestIds: new Set<string>(),
   arrowKeyMode: 'camera',
+  setPhase: (phase) =>
+    set((state) => (state.phase === phase ? state : { phase })),
   setActiveStop: (id) => set({ activeStopId: id }),
   markCompleted: (id) =>
     set((state) => {
@@ -312,6 +326,7 @@ export const useGameStore = create<GameState>((set) => ({
   reset: () => {
     firstZoneTransition = true
     set({
+      phase: 'title',
       activeStopId: null,
       completedStopIds: new Set<string>(),
       activeZone: 'office',
@@ -337,3 +352,4 @@ export const useIsRoomNearby = (id: string) =>
 export const useIsTaskComplete = (questId: string, taskId: string) =>
   useGameStore((s) => s.completedTaskIds.has(taskKey(questId, taskId)))
 export const useArrowKeyMode = () => useGameStore((s) => s.arrowKeyMode)
+export const usePhase = () => useGameStore((s) => s.phase)

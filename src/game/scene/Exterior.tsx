@@ -2,6 +2,7 @@ import { Suspense, lazy } from 'react'
 
 const ExteriorEnvironment = lazy(() => import('./ExteriorEnvironment'))
 import { ROOM_DEPTH, ROOM_WIDTH } from '../constants/gameConstants'
+import { usePhase } from '../state/gameStore'
 
 // Scenic exterior visible through the glass walls. Just a flat dark ground
 // disc and warm/cool fill lights — the authored SouthApron carries the
@@ -9,12 +10,18 @@ import { ROOM_DEPTH, ROOM_WIDTH } from '../constants/gameConstants'
 export function Exterior() {
   const groundY = -0.05
   const groundRadius = Math.max(ROOM_WIDTH, ROOM_DEPTH) * 6
+  // Skip the sunset HDR during the title so drei's ~2 MB CDN fetch
+  // doesn't compete with the title art + character GLBs for bandwidth.
+  // It fades in after Start via its existing Suspense fallback.
+  const phase = usePhase()
 
   return (
     <>
-      <Suspense fallback={null}>
-        <ExteriorEnvironment />
-      </Suspense>
+      {phase !== 'title' && (
+        <Suspense fallback={null}>
+          <ExteriorEnvironment />
+        </Suspense>
+      )}
 
       <mesh position={[0, groundY - 0.1, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <circleGeometry args={[groundRadius, 64]} />

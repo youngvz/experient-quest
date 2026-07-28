@@ -2,7 +2,7 @@ import { useGLTF } from '@react-three/drei'
 import { Physics } from '@react-three/rapier'
 import { Suspense, lazy, useEffect, useMemo } from 'react'
 import { CHARACTERS } from '../characters/characters'
-import { useGameStore } from '../state/gameStore'
+import { useGameStore, usePhase } from '../state/gameStore'
 import { ConferenceChairs } from './ConferenceChairs'
 import { ConferenceFloor } from './ConferenceFloor'
 import { ConferenceLaptops } from './ConferenceLaptops'
@@ -62,19 +62,42 @@ interface OfficeWorldProps {
   controlsDisabled: boolean
 }
 
+// Unified physics world spanning title + gameplay. During the title phase,
+// Physics is paused (colliders exist, no simulation runs) and the Player is
+// unmounted — everything else mounts identically to gameplay, so the
+// Rapier world init, geometry build, and shader compiles all happen while
+// the title screen is visible. On Start, Physics unpauses and Player mounts
+// as the only new node.
 export default function OfficeWorld({ controlsDisabled }: OfficeWorldProps) {
+  const phase = usePhase()
+  const paused = phase === 'title'
+
+  // Split preloads by when they're needed.
+  //   Title-visible NPCs (Sarah, Jacquelyn) load immediately — they render
+  //     during title and would pop in awkwardly otherwise.
+  //   Player GLB loads immediately — spawn happens the instant Start is
+  //     pressed, and we don't want a fetch stall there.
+  //   Everyone else (Distasi, Catherine, Juan, Tenant) lives inside
+  //     proximity-streamed rooms or non-visible zones; they load after
+  //     the title dismisses so they don't compete with title bandwidth.
+  //   Logan is inside TheLab (React.lazy behind ProximityBranch) — no
+  //     preload here, drei fetches him when the player walks near.
   useEffect(() => {
     useGLTF.preload(CHARACTERS.youngvz.glbUrl)
-    useGLTF.preload(CHARACTERS.distasi.glbUrl)
     useGLTF.preload(CHARACTERS.jacquelyn.glbUrl)
-    useGLTF.preload(CHARACTERS.catherine.glbUrl)
-    useGLTF.preload(CHARACTERS.juan.glbUrl)
-    useGLTF.preload(CHARACTERS.tenant.glbUrl)
     useGLTF.preload(CHARACTERS.sarah.glbUrl)
   }, [])
 
+  useEffect(() => {
+    if (phase === 'title') return
+    useGLTF.preload(CHARACTERS.distasi.glbUrl)
+    useGLTF.preload(CHARACTERS.catherine.glbUrl)
+    useGLTF.preload(CHARACTERS.juan.glbUrl)
+    useGLTF.preload(CHARACTERS.tenant.glbUrl)
+  }, [phase])
+
   return (
-    <Physics gravity={[0, -9.81, 0]} timeStep="vary">
+    <Physics gravity={[0, -9.81, 0]} timeStep="vary" paused={paused}>
       {/* Always-mounted shell: conference room + corridors are the spawn-side
           area and must be present from frame 1. */}
       <ConferenceFloor />
@@ -151,9 +174,16 @@ export default function OfficeWorld({ controlsDisabled }: OfficeWorldProps) {
           <TheGarage />
         </FadeIn>
       </ProximityBranch>
-      <Suspense fallback={null}>
-        <Player controlsDisabled={controlsDisabled} />
-      </Suspense>
+      {/* Player is the only node that stays unmounted during title: its
+          useFrame drives camera.position, which would fight the title's
+          CinematicCamera. Everything else — walls, props, NPCs — mounts
+          during title so Rapier world init + shader compiles are already
+          done by the time Start is pressed. */}
+      {phase !== 'title' && (
+        <Suspense fallback={null}>
+          <Player controlsDisabled={controlsDisabled} />
+        </Suspense>
+      )}
     </Physics>
   )
 }

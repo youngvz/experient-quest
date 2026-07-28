@@ -1,12 +1,16 @@
-# Production: replace {$MMO_HOSTNAME:mmo.example.com} with your real
-# hostname (Caddy will auto-issue a Let's Encrypt cert on first request
-# to port 443 from that hostname).
+# TLS-terminating reverse proxy for the multiplayer server.
 #
-# Local development: run `MMO_HOSTNAME=localhost docker compose up`. On
-# localhost Caddy uses its internal CA (self-signed) — trust it once
-# via `caddy trust` if you want a green padlock, or ignore for wscat.
+# MMO_HOSTNAME is set at container start (docker-compose.yml) from the
+# host env. Set it to whatever DNS name resolves to this box:
+#   - Production w/ EIP + sslip.io:  MMO_HOSTNAME=100-50-132-39.sslip.io
+#   - Local dev:                     MMO_HOSTNAME=localhost
+#   - Custom domain (later):         MMO_HOSTNAME=mmo.yourdomain.com
+#
+# Caddy auto-issues a Let's Encrypt cert on first HTTPS request from
+# that hostname. The cert lives in the caddy_data volume and survives
+# container restarts; only a fresh volume triggers re-issuance.
 
-{$MMO_HOSTNAME:mmo.example.com} {
+{$MMO_HOSTNAME:localhost} {
 	# WebSocket endpoint. `handle` lets us keep the block extensible
 	# (add /health, static file serving, etc.) without disturbing the
 	# WSS path.
