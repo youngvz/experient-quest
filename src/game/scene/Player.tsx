@@ -31,6 +31,7 @@ import {
   THE_STATION,
 } from '../constants/gameConstants'
 import { CHARACTERS } from '../characters/characters'
+import { resolveSpeaker } from '../characters/roster'
 import { useKeyboard } from '../../hooks/useKeyboard'
 import { useMouseLook } from '../../hooks/useMouseLook'
 import { touchInput } from '../input/touchInput'
@@ -228,7 +229,18 @@ export function Player({ controlsDisabled }: PlayerProps) {
     return new InteractionManager({
       onAvailable: (stop) => {
         if (import.meta.env.DEV) console.info('[interaction] available:', stop.id)
-        gameEvents.emit('interaction:available', { stopId: stop.id, prompt: stop.prompt })
+        // Stops anchored to a character (id === character id) get their
+        // NPC name swapped for the stand-in youngvz's when the player is
+        // playing as that character. Uses the same resolveSpeaker rule
+        // the DialogueOverlay applies to speaker portraits.
+        const selected = useGameStore.getState().selectedCharacterId
+        const original = (CHARACTERS as Record<string, { name: string }>)[stop.id]
+        const resolved = resolveSpeaker(stop.id, selected)
+        const prompt =
+          original && resolved.id !== stop.id
+            ? stop.prompt.replaceAll(original.name, resolved.name)
+            : stop.prompt
+        gameEvents.emit('interaction:available', { stopId: stop.id, prompt })
       },
       onUnavailable: () => {
         if (import.meta.env.DEV) console.info('[interaction] unavailable')

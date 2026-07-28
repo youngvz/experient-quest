@@ -3,47 +3,48 @@ import { useFrame } from '@react-three/fiber'
 import { useRef } from 'react'
 import { PerspectiveCamera as ThreePerspectiveCamera, Vector3 } from 'three'
 
-// Cinematic dolly-in from south of the building. Bakery center is
-// (0, 0, 13.5); we sit outside the south glass and drift toward it so
-// both the storefront and the outdoor apron read as one shot. Ease is
-// applied per-frame so the movement never fully settles — reads alive.
-const CAMERA_START: [number, number, number] = [-9, 7.5, 25]
-const CAMERA_END: [number, number, number] = [-4.5, 4.8, 19]
-const LOOK_TARGET: [number, number, number] = [0, 1.2, 13.5]
-const DOLLY_DURATION_S = 14
+// Slow 360° interior pan. Camera sits at a fixed point in the middle of
+// the bakery's open floor at eye height; only the look-target orbits
+// around a small horizontal circle around that same point, so the shot
+// reads as "standing still and turning your head" — no parallax, no
+// wall clipping. Full revolution takes ORBIT_PERIOD_S; well under the
+// ~30°/s VR-comfort threshold, so it should never feel disorienting.
+const CAMERA_POSITION: [number, number, number] = [0, 1.65, 13.5]
+const ORBIT_PERIOD_S = 45
+// Radius the look-target sweeps around the camera. Small — just enough
+// to give the gaze a defined focal distance instead of a mathematically
+// pure yaw pivot.
+const LOOK_RADIUS = 4
+// Start facing roughly toward the west desk cluster so the first frame
+// isn't staring at a blank wall.
+const START_ANGLE = Math.PI * 1.15
 
-// Coarse-pointer devices (phones / small tablets) start at a wider FOV
-// so the same shot fits the whole storefront on portrait viewports —
-// otherwise the title reads as an extreme close-up on the bakery glass.
-const FOV_DEFAULT = 45
-const FOV_COARSE = 62
+// Coarse-pointer devices (phones / small tablets) use a wider FOV so
+// the pan captures more of the room per glance on portrait viewports.
+const FOV_DEFAULT = 55
+const FOV_COARSE = 72
 
 function isCoarsePointer(): boolean {
   if (typeof window === 'undefined') return false
   return window.matchMedia?.('(pointer: coarse)').matches ?? false
 }
 
-function easeOutCubic(t: number): number {
-  const clamped = t < 0 ? 0 : t > 1 ? 1 : t
-  const inv = 1 - clamped
-  return 1 - inv * inv * inv
-}
-
 function CinematicCamera() {
   const ref = useRef<ThreePerspectiveCamera>(null)
   const elapsed = useRef(0)
-  const target = useRef(new Vector3(...LOOK_TARGET))
+  const target = useRef(new Vector3())
   const fov = isCoarsePointer() ? FOV_COARSE : FOV_DEFAULT
 
   useFrame((_, delta) => {
     const cam = ref.current
     if (!cam) return
     elapsed.current += delta
-    const t = easeOutCubic(elapsed.current / DOLLY_DURATION_S)
-    cam.position.set(
-      CAMERA_START[0] + (CAMERA_END[0] - CAMERA_START[0]) * t,
-      CAMERA_START[1] + (CAMERA_END[1] - CAMERA_START[1]) * t,
-      CAMERA_START[2] + (CAMERA_END[2] - CAMERA_START[2]) * t,
+    const angle =
+      START_ANGLE + (elapsed.current / ORBIT_PERIOD_S) * Math.PI * 2
+    target.current.set(
+      CAMERA_POSITION[0] + Math.sin(angle) * LOOK_RADIUS,
+      CAMERA_POSITION[1],
+      CAMERA_POSITION[2] + Math.cos(angle) * LOOK_RADIUS,
     )
     cam.lookAt(target.current)
   })
@@ -52,7 +53,7 @@ function CinematicCamera() {
     <PerspectiveCamera
       ref={ref}
       makeDefault
-      position={CAMERA_START}
+      position={CAMERA_POSITION}
       fov={fov}
       near={0.1}
       far={200}

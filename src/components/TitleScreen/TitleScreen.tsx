@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useGameStore, usePhase } from '../../game/state/gameStore'
 import { gameEvents } from '../../game/events/GameEventBus'
+import { useCoarsePointer } from '../../hooks/useCoarsePointer'
 import './TitleScreen.css'
 
 // User-supplied title art. Missing file just falls through to the CSS
@@ -21,6 +22,7 @@ const FADE_MS = 420
 export function TitleScreen() {
   const setPhase = useGameStore((s) => s.setPhase)
   const phase = usePhase()
+  const isCoarse = useCoarsePointer()
   const [fading, setFading] = useState(false)
   const [artFailed, setArtFailed] = useState(false)
 
@@ -92,7 +94,13 @@ export function TitleScreen() {
           <h1 className="title-screen__title">Experient Quest</h1>
         )}
         <p className="title-screen__hint title-screen__hint--ready">
-          Press <kbd>Enter</kbd> to begin
+          {isCoarse ? (
+            'Tap to begin'
+          ) : (
+            <>
+              Press <kbd>Enter</kbd> to begin
+            </>
+          )}
         </p>
       </div>
     </div>
