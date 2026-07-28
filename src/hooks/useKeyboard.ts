@@ -64,7 +64,7 @@ export function useKeyboard(): {
     back: false,
     left: false,
     right: false,
-    running: true,
+    running: false,
     interactPressed: false,
     interactConsumed: false,
     rollPressed: false,
