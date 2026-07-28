@@ -1,0 +1,69 @@
+.bios-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: #05070a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 1;
+  transition: opacity 500ms ease-out;
+  pointer-events: auto;
+  font-family: 'Press Start 2P', ui-monospace, monospace;
+}
+
+.bios-splash--out {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.bios-splash__stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: bios-splash-in 600ms ease-out both;
+  /* Phase 1 exit — the cat + wordmark fade to nothing against the
+     still-opaque black background. Transition kicks in when the parent
+     picks up the `bios-splash--dim` modifier. */
+  transition: opacity 350ms ease-out;
+}
+
+.bios-splash--dim .bios-splash__stack {
+  /* Overrides the mount animation's final opacity (which by now has
+     completed with `both` fill-mode). */
+  opacity: 0;
+  animation: none;
+}
+
+@keyframes bios-splash-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.bios-splash__cat {
+  width: clamp(140px, 22vw, 260px);
+  /* Cat asset ships as 1024×1536 (roughly 2:3) with the visible cat
+     occupying the top ~72%. Crop the transparent bottom via a fixed
+     aspect ratio + object-position so the wordmark sits close to the
+     paws instead of miles below. */
+  aspect-ratio: 1024 / 1100;
+  object-fit: cover;
+  object-position: top;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
+}
+
+.bios-splash__wordmark {
+  font-size: clamp(11px, 1.7vw, 16px);
+  letter-spacing: 0.14em;
+  color: #f2e9c8;
+  text-transform: lowercase;
+  text-shadow: 2px 2px 0 #2a2013;
+  margin-top: 14px;
+}

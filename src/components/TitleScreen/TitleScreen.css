@@ -10,6 +10,19 @@
   transition: opacity 400ms ease-out;
   pointer-events: auto;
   font-family: 'Press Start 2P', ui-monospace, monospace;
+  /* Fade in from black on mount so it crossfades with the BiosSplash's
+     fade-out (App unmounts the splash and mounts this at the same moment
+     the splash starts leaving). */
+  animation: title-screen-in 500ms ease-out both;
+}
+
+@keyframes title-screen-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .title-screen--fading {

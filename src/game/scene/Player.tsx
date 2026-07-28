@@ -97,8 +97,14 @@ export function Player({ controlsDisabled }: PlayerProps) {
   const cameraTarget = useMemo(() => new THREE.Vector3(), [])
   const cameraDesired = useMemo(() => new THREE.Vector3(), [])
   // Multiplicative zoom scale applied to CAMERA_DISTANCE and CAMERA_HEIGHT.
-  // Ref (not state) so useFrame mutations don't re-render.
-  const zoomRef = useRef(1)
+  // Ref (not state) so useFrame mutations don't re-render. Coarse-pointer
+  // devices (phones/tablets) start zoomed out — the smaller viewport is
+  // otherwise cramped and the pinch-to-zoom affordance is easy to miss.
+  const zoomRef = useRef(
+    typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches
+      ? 1.6
+      : 1,
+  )
 
   const gltf = useGLTF(PLAYER_MODEL_URL)
   const modelFit = useMemo(() => {
