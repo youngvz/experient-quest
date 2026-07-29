@@ -1,5 +1,5 @@
 import { CuboidCollider, RigidBody } from '@react-three/rapier'
-import { MeshStandardMaterial } from 'three'
+import { MeshPhysicalMaterial, MeshStandardMaterial } from 'three'
 import {
   COLORS,
   DOOR_HEIGHT,
@@ -7,17 +7,33 @@ import {
   WALL_THICKNESS,
 } from '../constants/gameConstants'
 
-// One shared material for all glass panes in the world. Was per-pane
-// MeshPhysicalMaterial with transmission=1 — that's Three's heaviest
-// fragment shader and it was compiled + evaluated for 25+ storefront
-// panes. Standard + transparent + low opacity reads almost the same
-// visually at a fraction of the fill cost.
-const GLASS_MATERIAL = new MeshStandardMaterial({
+// One shared material for all glass panes. Restores the original
+// transmission=1 look (screen-space refraction, subtle color tint with
+// distance) — the visual pop from that shader is worth its per-fragment
+// cost. The important perf win here is *sharing the instance* across
+// every WallPanel: previously each pane allocated its own physical
+// material inline in JSX, so 25+ storefront panels compiled distinct
+// shader/uniform pairings that couldn't batch. One module-scope
+// instance means one draw state for every glass pane in the world.
+const GLASS_MATERIAL = new MeshPhysicalMaterial({
   color: '#eaf3f9',
-  roughness: 0.15,
+  roughness: 0.05,
   metalness: 0,
+  transmission: 1,
+  thickness: 0.15,
+  ior: 1.05,
+  attenuationColor: '#cfe0ee',
+  attenuationDistance: 12,
   transparent: true,
-  opacity: 0.35,
+  opacity: 0.6,
+  // A crisp secondary specular layer on top of the transmissive base.
+  // Reads as the polished-glass highlight when the sunset HDR catches
+  // the pane at glancing angles — separates the surface from the
+  // refracted room behind it so the pane doesn't disappear.
+  clearcoat: 1,
+  clearcoatRoughness: 0.08,
+  // Bump the environment reflection so the HDR shows up on the surface.
+  envMapIntensity: 1.6,
 })
 // One shared opaque wall material — was allocated fresh at every
 // <WallPanel /> render (four rails + N mullions per glass panel × 25+
@@ -215,10 +231,10 @@ export function WallPanel({ position, size, glass = false, divisions }: WallPane
           </mesh>
         ))}
 
-        {/* Glass pane — shared translucent standard material. Was
-            MeshPhysicalMaterial with transmission=1 (one of Three's
-            heaviest fragment shaders); the transmission cost across 25+
-            storefront panes was a real drag on fill-rate. */}
+        {/* Glass pane — shared physical material with transmission.
+            Same shader as the original per-pane implementation, but
+            one instance across every storefront so material state
+            batches instead of compiling a distinct pipeline per pane. */}
         <mesh material={GLASS_MATERIAL}>
           <boxGeometry args={orientSize(isXFace, paneFaceW, paneHeight, paneThickness)} />
         </mesh>
