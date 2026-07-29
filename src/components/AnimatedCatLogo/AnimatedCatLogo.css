@@ -16,29 +16,55 @@
   image-rendering: pixelated;
   image-rendering: crisp-edges;
 
-  animation: cat-glasses-shine 2.4s steps(1, end) infinite;
+  /* Two synchronized animations, same 2.6s cycle:
+       - shine-frames: discrete background-position jumps (steps(1)), so
+         each frame is shown pixel-perfect with no bleed.
+       - shine-glow: an eased brightness+drop-shadow accent that ramps up
+         as the shine enters and eases back down as it exits. This gives
+         the shine window a smooth continuous "glint" quality even though
+         the four underlying frames are hard steps. */
+  animation:
+    cat-glasses-shine-frames 2.6s steps(1, end) infinite,
+    cat-glasses-shine-glow 2.6s ease-in-out infinite;
 }
 
-/* Shine sweep lands ~700-1300ms into the cycle so it plays inside a
-   short-lived host like BiosSplash (visible ~1.9s before it dims).
-   Neutral still occupies the majority of the loop. */
-@keyframes cat-glasses-shine {
+/* Frame timing — neutral for most of the loop, then a paced 3-step sweep
+   (~155ms per shine frame at 2.6s cycle) so each shine pose is clearly
+   readable but the sweep still feels like a single traveling glint. */
+@keyframes cat-glasses-shine-frames {
   0%,
-  30% {
+  60% {
     background-position: 0% 0%;
   }
-  38% {
+  66% {
     background-position: 33.333% 0%;
   }
-  46% {
+  72% {
     background-position: 66.666% 0%;
   }
-  54% {
+  78% {
     background-position: 100% 0%;
   }
-  62%,
+  84%,
   100% {
     background-position: 0% 0%;
+  }
+}
+
+/* Glow ramp — brightness and a warm drop-shadow ease in as the sweep
+   starts and ease out after it exits, so the eye reads a smooth
+   crescendo even across the discrete frame jumps. */
+@keyframes cat-glasses-shine-glow {
+  0%,
+  55% {
+    filter: brightness(1) drop-shadow(0 0 0 rgba(255, 236, 170, 0));
+  }
+  72% {
+    filter: brightness(1.08) drop-shadow(0 0 14px rgba(255, 236, 170, 0.55));
+  }
+  90%,
+  100% {
+    filter: brightness(1) drop-shadow(0 0 0 rgba(255, 236, 170, 0));
   }
 }
 
@@ -46,5 +72,6 @@
   .animated-cat-logo {
     animation: none;
     background-position: 0% 0%;
+    filter: none;
   }
 }

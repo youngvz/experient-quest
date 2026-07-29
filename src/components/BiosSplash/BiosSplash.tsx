@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useEnvironment } from '@react-three/drei'
+import { useEnvironment, useProgress } from '@react-three/drei'
 import { AnimatedCatLogo } from '../AnimatedCatLogo/AnimatedCatLogo'
 import './BiosSplash.css'
 
@@ -38,10 +38,21 @@ const titleArtReady = preloadImage(TITLE_ART_URL)
 const spriteReady = preloadImage(SPRITE_URL)
 
 // Minimum on-screen time before the splash begins its exit. Sized to
-// let the shine animation (2.4s cycle in AnimatedCatLogo.css) play at
+// let the shine animation (2.6s cycle in AnimatedCatLogo.css) play at
 // least once end-to-end on fast connections. On slow connections the
 // load gate below dominates.
-const MIN_HOLD_MS = 2400
+const MIN_HOLD_MS = 2700
+// Upper bound so a stalled / failing loader (bad CDN, offline asset)
+// can't strand the user on the splash forever. Beyond this we dismiss
+// regardless of load state and let downstream Suspense handle whatever
+// hasn't arrived yet.
+const MAX_HOLD_MS = 12000
+// After a loader flips active=true at least once, we consider a period
+// of sustained inactivity ("no loader has fired in this long") to mean
+// the game-side preload queue has drained. This tolerates the tiny
+// idle gaps between overlapping loaders finishing at slightly different
+// times without prematurely dismissing.
+const IDLE_SETTLE_MS = 400
 // Phase 1 — cat + wordmark fade to a black card. Kept synced with the
 // transition on `.bios-splash__stack` in the CSS.
 const DIM_MS = 350
@@ -68,19 +79,69 @@ export function BiosSplash({ onLeaving, onDone }: BiosSplashProps) {
   const [leaving, setLeaving] = useState(false)
 
   useEffect(() => {
-    // Race a min-hold timer against the load gate; dismiss when both are
-    // done. Fast connection → min-hold dominates and the shine gets a
-    // full cycle. Slow connection → the load gate dominates and the cat
-    // keeps looping until title art + sprite are ready.
+    // Compose four gates. The splash dismisses when all the required
+    // gates resolve, OR when the hard cap fires — whichever comes first.
+    //
+    //   minHold       — floor, so fast connections still see a full
+    //                   shine cycle before dismissal.
+    //   splashAssets  — the splash's own images (title art + sprite)
+    //                   have decoded, so the crossfade won't reveal a
+    //                   half-loaded TitleScreen.
+    //   sceneIdle     — after at least one three.js loader has fired,
+    //                   wait for useProgress.active to stay false for
+    //                   IDLE_SETTLE_MS. This drains drei's queue: HDR,
+    //                   preloaded GLBs, textures, etc.
+    //   hardCap       — MAX_HOLD_MS backstop against a broken loader.
     let cancelled = false
-    const minHold = new Promise<void>((resolve) =>
-      window.setTimeout(resolve, MIN_HOLD_MS),
-    )
-    Promise.all([minHold, titleArtReady, spriteReady]).then(() => {
+    const cleanups: Array<() => void> = []
+
+    const minHold = new Promise<void>((resolve) => {
+      const id = window.setTimeout(resolve, MIN_HOLD_MS)
+      cleanups.push(() => window.clearTimeout(id))
+    })
+    const hardCap = new Promise<void>((resolve) => {
+      const id = window.setTimeout(resolve, MAX_HOLD_MS)
+      cleanups.push(() => window.clearTimeout(id))
+    })
+
+    // useProgress starts active=false before anything has queued, so a
+    // naive "not active" check would resolve immediately. Require at
+    // least one active=true edge first, then wait for active to stay
+    // false for IDLE_SETTLE_MS. That drains drei's loader queue.
+    const sceneIdle = new Promise<void>((resolve) => {
+      let hasLoadedSomething = useProgress.getState().active
+      let idleTimer: number | null = null
+      const check = () => {
+        const { active } = useProgress.getState()
+        if (active) hasLoadedSomething = true
+        if (idleTimer !== null) {
+          window.clearTimeout(idleTimer)
+          idleTimer = null
+        }
+        if (!active && hasLoadedSomething) {
+          idleTimer = window.setTimeout(() => resolve(), IDLE_SETTLE_MS)
+        }
+      }
+      const unsubscribe = useProgress.subscribe(check)
+      check()
+      cleanups.push(() => {
+        unsubscribe()
+        if (idleTimer !== null) window.clearTimeout(idleTimer)
+      })
+    })
+
+    const ready = Promise.all([
+      minHold,
+      titleArtReady,
+      spriteReady,
+      sceneIdle,
+    ])
+    Promise.race([ready, hardCap]).then(() => {
       if (!cancelled) setDimming(true)
     })
     return () => {
       cancelled = true
+      for (const fn of cleanups) fn()
     }
   }, [])
 
