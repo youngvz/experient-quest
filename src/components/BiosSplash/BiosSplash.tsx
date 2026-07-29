@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useEnvironment } from '@react-three/drei'
+import { AnimatedCatLogo } from '../AnimatedCatLogo/AnimatedCatLogo'
 import './BiosSplash.css'
 
-const CAT_URL = `${import.meta.env.BASE_URL}assets/title/bios-cat.webp`
 const TITLE_ART_URL = `${import.meta.env.BASE_URL}assets/title/title.webp`
 
 // Kick off the sunset HDR fetch as soon as the splash mounts. This is the
@@ -90,12 +90,7 @@ export function BiosSplash({ onLeaving, onDone }: BiosSplashProps) {
   return (
     <div className={cls} role="presentation" aria-hidden="true">
       <div className="bios-splash__stack">
-        <img
-          className="bios-splash__cat"
-          src={CAT_URL}
-          alt=""
-          draggable={false}
-        />
+        <AnimatedCatLogo className="bios-splash__cat" ariaLabel="" />
         <div className="bios-splash__wordmark">youngvz creations</div>
       </div>
     </div>

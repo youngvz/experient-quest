@@ -1,0 +1,47 @@
+.animated-cat-logo {
+  width: var(--cat-logo-size, min(256px, 100%));
+  /* Sprite frames are 1024×1536, but the cat occupies rows 0..1100 with
+     the rest being transparent tail padding. Match BiosSplash's original
+     crop so the wordmark can sit close to the paws. */
+  aspect-ratio: 1024 / 1100;
+
+  background-image: var(--cat-logo-sprite);
+  background-repeat: no-repeat;
+  /* 4 frames wide × the sprite's native aspect (1536/1100 ≈ 1.3963)
+     vertically, which crops the transparent bottom of each frame while
+     leaving the full 4-frame strip addressable via background-position. */
+  background-size: 400% 139.636%;
+  background-position: 0% 0%;
+
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+
+  animation: cat-glasses-shine 3.5s steps(1, end) infinite;
+}
+
+@keyframes cat-glasses-shine {
+  0%,
+  78% {
+    background-position: 0% 0%;
+  }
+  82% {
+    background-position: 33.333% 0%;
+  }
+  86% {
+    background-position: 66.666% 0%;
+  }
+  90% {
+    background-position: 100% 0%;
+  }
+  94%,
+  100% {
+    background-position: 0% 0%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animated-cat-logo {
+    animation: none;
+    background-position: 0% 0%;
+  }
+}

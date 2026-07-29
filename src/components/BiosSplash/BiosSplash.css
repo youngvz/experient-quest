@@ -47,15 +47,7 @@
 }
 
 .bios-splash__cat {
-  width: clamp(140px, 22vw, 260px);
-  /* Cat asset ships as 1024×1536 (roughly 2:3) with the visible cat
-     occupying the top ~72%. Crop the transparent bottom via a fixed
-     aspect ratio + object-position so the wordmark sits close to the
-     paws instead of miles below. */
-  aspect-ratio: 1024 / 1100;
-  object-fit: cover;
-  object-position: top;
-  image-rendering: pixelated;
+  --cat-logo-size: clamp(140px, 22vw, 260px);
   filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
 }
 
