@@ -2,6 +2,7 @@ import { useFrame } from '@react-three/fiber'
 import { CuboidCollider, RigidBody } from '@react-three/rapier'
 import { useMemo, useRef } from 'react'
 import { DoubleSide, type Mesh, type MeshStandardMaterial } from 'three'
+import { useActiveZone } from '../state/gameStore'
 
 // A rising column of translucent smoke puffs. Each puff cycles from
 // (spawnY, small, opaque-ish) → (spawnY + rise, large, transparent) over
@@ -390,45 +391,20 @@ export function KitchenStation({
           <meshStandardMaterial color={steel} roughness={0.4} metalness={0.7} />
         </mesh>
 
-        {/* --- Smoke plume rising from the chimney (opt-in) --- */}
+        {/* Smoke + fire effects. Only mount when the player is inside
+            TheLab — from anywhere else the station is 20+ m away behind
+            glass and the animated plumes aren't worth their per-frame
+            cost (4× useFrame per smoking station + ~32 transparent
+            spheres). Effects unmount cleanly and remount on re-entry. */}
         {smoke && (
-          <group position={[-w * 0.35, 0, -d / 2 + 0.18]}>
-            <SmokePlume originY={topShelfY + 0.62} />
-          </group>
-        )}
-
-        {/* --- Small flames licking up from the mid-shelf pans (only
-            when smoking — this variant is on fire, not just steamy) --- */}
-        {smoke && (
-          <Flames
-            positions={[
-              [-w * 0.24, midShelfY + midShelfH / 2 + 0.15, -0.04],
-              [-w * 0.12, midShelfY + midShelfH / 2 + 0.15, 0.06],
-              [w * 0.14, midShelfY + midShelfH / 2 + 0.15, -0.05],
-              [w * 0.22, midShelfY + midShelfH / 2 + 0.15, 0.08],
-              [w * 0.18, midShelfY + midShelfH / 2 + 0.15, -0.02],
-            ]}
+          <SmokeFireEffects
+            w={w}
+            d={d}
+            midShelfY={midShelfY}
+            midShelfH={midShelfH}
+            topShelfY={topShelfY}
           />
         )}
-
-        {/* --- Secondary plume rising straight from the flames on the
-            mid-shelf pans. Smaller radius and shorter rise than the
-            chimney plume — reads as smoke off the fire itself. */}
-        {smoke &&
-          [-w * 0.18, w * 0.18].map((px, i) => (
-            <group key={`fire-smoke-${i}`} position={[px, 0, 0.02]}>
-              <SmokePlume
-                originY={midShelfY + midShelfH / 2 + 0.22}
-                rise={1.0}
-                radius={0.1}
-                count={5}
-                period={1.8}
-                jitterX={0.06}
-                jitterZ={0.04}
-                peakOpacity={0.8}
-              />
-            </group>
-          ))}
 
         {/* --- KDS tablet on an arm (right side, above the warming rack) --- */}
         <group position={[w * 0.18, topShelfY + 0.28, 0.02]}>
@@ -480,5 +456,61 @@ export function KitchenStation({
         </group>
       </group>
     </RigidBody>
+  )
+}
+
+// Smoke + fire subtree — extracted so it can unmount entirely when the
+// player leaves TheLab. Unmounting kills the 4× useFrame per smoking
+// station (chimney plume, 2 fire-pan plumes, flames) and drops 32
+// transparent sphere meshes + 5 emissive cones out of the draw list.
+function SmokeFireEffects({
+  w,
+  d,
+  midShelfY,
+  midShelfH,
+  topShelfY,
+}: {
+  w: number
+  d: number
+  midShelfY: number
+  midShelfH: number
+  topShelfY: number
+}) {
+  const activeZone = useActiveZone()
+  if (activeZone !== 'the-lab') return null
+  return (
+    <>
+      {/* Chimney plume */}
+      <group position={[-w * 0.35, 0, -d / 2 + 0.18]}>
+        <SmokePlume originY={topShelfY + 0.62} />
+      </group>
+
+      {/* Flames on the mid-shelf pans */}
+      <Flames
+        positions={[
+          [-w * 0.24, midShelfY + midShelfH / 2 + 0.15, -0.04],
+          [-w * 0.12, midShelfY + midShelfH / 2 + 0.15, 0.06],
+          [w * 0.14, midShelfY + midShelfH / 2 + 0.15, -0.05],
+          [w * 0.22, midShelfY + midShelfH / 2 + 0.15, 0.08],
+          [w * 0.18, midShelfY + midShelfH / 2 + 0.15, -0.02],
+        ]}
+      />
+
+      {/* Secondary plumes rising from the flame pans */}
+      {[-w * 0.18, w * 0.18].map((px, i) => (
+        <group key={`fire-smoke-${i}`} position={[px, 0, 0.02]}>
+          <SmokePlume
+            originY={midShelfY + midShelfH / 2 + 0.22}
+            rise={1.0}
+            radius={0.1}
+            count={5}
+            period={1.8}
+            jitterX={0.06}
+            jitterZ={0.04}
+            peakOpacity={0.8}
+          />
+        </group>
+      ))}
+    </>
   )
 }

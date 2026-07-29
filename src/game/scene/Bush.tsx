@@ -26,7 +26,7 @@ export function Bush({ url, position, rotationY = 0, height = 0.9 }: BushProps) 
     clone.traverse((obj) => {
       const mesh = obj as THREE.Mesh
       if (!mesh.isMesh) return
-      mesh.castShadow = true
+      mesh.castShadow = false
       mesh.receiveShadow = true
     })
     clone.updateWorldMatrix(true, true)

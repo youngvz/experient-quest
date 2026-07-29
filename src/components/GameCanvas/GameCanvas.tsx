@@ -10,6 +10,7 @@ import {
 } from '../../game/constants/gameConstants'
 import { useGameEvent } from '../../hooks/useGameEvents'
 import { useGameStore, usePhase } from '../../game/state/gameStore'
+import { useCoarsePointer } from '../../hooks/useCoarsePointer'
 import './GameCanvas.css'
 
 export function GameCanvas() {
@@ -17,6 +18,7 @@ export function GameCanvas() {
   const pendingUnlockQuestId = useGameStore((s) => s.pendingUnlockQuestId)
   const pendingReadyQuestId = useGameStore((s) => s.pendingReadyQuestId)
   const phase = usePhase()
+  const isCoarse = useCoarsePointer()
 
   useGameEvent(
     'interaction:triggered',
@@ -45,7 +47,10 @@ export function GameCanvas() {
     <div className="game-canvas">
       <Canvas
         shadows
-        dpr={[1, 1.5]}
+        // Retina laptops with dpr=1.5 + MSAA push ~3× native fill-rate.
+        // Coarse-pointer devices (phones/tablets) get a tighter clamp and
+        // drop MSAA — the DPR alone is enough anti-aliasing at that scale.
+        dpr={isCoarse ? [1, 1.25] : [1, 1.5]}
         camera={{
           // Match the runtime polar-orbit math at CAMERA_INITIAL_YAW so the
           // first frame doesn't visibly snap into place. TitlePreview
@@ -59,7 +64,7 @@ export function GameCanvas() {
           near: 0.1,
           far: 200,
         }}
-        gl={{ antialias: true }}
+        gl={{ antialias: !isCoarse }}
       >
         {/* Title phase uses a warm neutral matching the title art palette
             so the pre-ready loading state doesn't read as a black void

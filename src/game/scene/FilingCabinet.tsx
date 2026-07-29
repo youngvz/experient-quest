@@ -44,7 +44,7 @@ export function FilingCabinet({
                   metalness={0.2}
                 />
               </mesh>
-              <mesh castShadow position={[0, centerY, depth / 2 + drawerFace + handleD / 2]}>
+              <mesh position={[0, centerY, depth / 2 + drawerFace + handleD / 2]}>
                 <boxGeometry args={[handleW, handleH, handleD]} />
                 <meshStandardMaterial
                   color={COLORS.filingCabinetHandle}

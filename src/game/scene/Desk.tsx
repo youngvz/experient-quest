@@ -37,7 +37,7 @@ export function Desk({
           [-legXOffset, legZOffset],
           [legXOffset, legZOffset],
         ].map(([lx, lz], i) => (
-          <mesh key={i} castShadow position={[lx, legHeight / 2, lz]}>
+          <mesh key={i} position={[lx, legHeight / 2, lz]}>
             <boxGeometry args={[legThickness, legHeight, legThickness]} />
             <meshStandardMaterial color={legColor} roughness={0.8} />
           </mesh>

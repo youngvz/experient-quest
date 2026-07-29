@@ -197,7 +197,6 @@ function FlowerVariant({
           range={placements.length}
           geometry={part.geometry}
           material={part.material}
-          castShadow
           receiveShadow
         >
           {placements.map((p, i) => {

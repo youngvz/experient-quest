@@ -190,7 +190,6 @@ function GrassVariant({
       range={placements.length}
       geometry={fit.geometry}
       material={fit.material}
-      castShadow
       receiveShadow
     >
       {placements.map((p, i) => {

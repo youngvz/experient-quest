@@ -26,7 +26,7 @@ export function Telephone({
   return (
     <group position={[x, deskTopY, z]} rotation={[0, rotationY, 0]}>
       {/* Base */}
-      <mesh castShadow position={[0, baseH / 2, 0]}>
+      <mesh position={[0, baseH / 2, 0]}>
         <boxGeometry args={[baseW, baseH, baseD]} />
         <meshStandardMaterial color={COLORS.telephoneBody} roughness={0.55} metalness={0.15} />
       </mesh>
@@ -36,16 +36,16 @@ export function Telephone({
         <meshStandardMaterial color={COLORS.telephoneAccent} roughness={0.7} />
       </mesh>
       {/* Handset body sitting on top */}
-      <mesh castShadow position={[0, baseH + handsetH / 2, -baseD * 0.15]}>
+      <mesh position={[0, baseH + handsetH / 2, -baseD * 0.15]}>
         <boxGeometry args={[handsetW, handsetH, handsetD]} />
         <meshStandardMaterial color={COLORS.telephoneBody} roughness={0.55} metalness={0.15} />
       </mesh>
       {/* Earpiece bump (mouthpiece is symmetrical on the other end) */}
-      <mesh castShadow position={[-handsetW / 2 + earpieceW / 2, baseH + handsetH / 2, -baseD * 0.15]}>
+      <mesh position={[-handsetW / 2 + earpieceW / 2, baseH + handsetH / 2, -baseD * 0.15]}>
         <boxGeometry args={[earpieceW, handsetH * 1.4, handsetD * 1.4]} />
         <meshStandardMaterial color={COLORS.telephoneBody} roughness={0.55} metalness={0.15} />
       </mesh>
-      <mesh castShadow position={[handsetW / 2 - earpieceW / 2, baseH + handsetH / 2, -baseD * 0.15]}>
+      <mesh position={[handsetW / 2 - earpieceW / 2, baseH + handsetH / 2, -baseD * 0.15]}>
         <boxGeometry args={[earpieceW, handsetH * 1.4, handsetD * 1.4]} />
         <meshStandardMaterial color={COLORS.telephoneBody} roughness={0.55} metalness={0.15} />
       </mesh>

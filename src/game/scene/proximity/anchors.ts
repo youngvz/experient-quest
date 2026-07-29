@@ -1,4 +1,12 @@
-import { THE_GARAGE, THE_LAB, THE_STATION } from '../../constants/gameConstants'
+import {
+  THE_ARCHIVE,
+  THE_ATRIUM,
+  THE_COMMONS,
+  THE_GARAGE,
+  THE_LAB,
+  THE_LIBRARY,
+  THE_STATION,
+} from '../../constants/gameConstants'
 import type { ProximityAnchor } from './ProximityManager'
 
 // Radii in meters: how far *outside* a room's bounding rect the player
@@ -12,6 +20,11 @@ import type { ProximityAnchor } from './ProximityManager'
 const LAB_RADIUS = 30
 const STATION_RADIUS = 30
 const GARAGE_RADIUS = 30
+// West-side storefronts are visible from the corridor at all times and
+// have no lazy chunk (they're bundled), so use a slightly smaller radius
+// — enough to render before the player enters the corridor's line of
+// sight to each room, without paying their cost from spawn.
+const STOREFRONT_RADIUS = 22
 
 // The Bakery is eagerly imported in OfficeWorld (spawn-adjacent, must be
 // present frame 1) so it has no proximity anchor here. Lab and Station
@@ -49,5 +62,37 @@ export const PROXIMITY_ANCHORS: readonly ProximityAnchor[] = [
     minZ: THE_GARAGE.northZ,
     maxZ: THE_GARAGE.southZ,
     radius: GARAGE_RADIUS,
+  },
+  {
+    id: 'the-commons',
+    minX: THE_COMMONS.westX,
+    maxX: THE_COMMONS.eastX,
+    minZ: THE_COMMONS.northZ,
+    maxZ: THE_COMMONS.southZ,
+    radius: STOREFRONT_RADIUS,
+  },
+  {
+    id: 'the-library',
+    minX: THE_LIBRARY.westX,
+    maxX: THE_LIBRARY.eastX,
+    minZ: THE_LIBRARY.northZ,
+    maxZ: THE_LIBRARY.southZ,
+    radius: STOREFRONT_RADIUS,
+  },
+  {
+    id: 'the-atrium',
+    minX: THE_ATRIUM.westX,
+    maxX: THE_ATRIUM.eastX,
+    minZ: THE_ATRIUM.northZ,
+    maxZ: THE_ATRIUM.southZ,
+    radius: STOREFRONT_RADIUS,
+  },
+  {
+    id: 'the-archive',
+    minX: THE_ARCHIVE.westX,
+    maxX: THE_ARCHIVE.eastX,
+    minZ: THE_ARCHIVE.northZ,
+    maxZ: THE_ARCHIVE.southZ,
+    radius: STOREFRONT_RADIUS,
   },
 ]

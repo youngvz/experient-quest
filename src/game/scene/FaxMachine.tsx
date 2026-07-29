@@ -27,12 +27,12 @@ export function FaxMachine({
   return (
     <group position={[x, deskTopY, z]} rotation={[0, rotationY, 0]}>
       {/* Main body */}
-      <mesh castShadow position={[0, bodyH / 2, 0]}>
+      <mesh position={[0, bodyH / 2, 0]}>
         <boxGeometry args={[w, bodyH, d]} />
         <meshStandardMaterial color={COLORS.faxBody} roughness={0.55} metalness={0.15} />
       </mesh>
       {/* Angled top control panel */}
-      <mesh castShadow position={[0, bodyH + controlH / 2, -d * 0.15]} rotation={[-0.35, 0, 0]}>
+      <mesh position={[0, bodyH + controlH / 2, -d * 0.15]} rotation={[-0.35, 0, 0]}>
         <boxGeometry args={[w * 0.92, controlH, d * 0.55]} />
         <meshStandardMaterial color={COLORS.faxAccent} roughness={0.55} metalness={0.15} />
       </mesh>
@@ -55,7 +55,7 @@ export function FaxMachine({
         <meshStandardMaterial color={COLORS.faxAccent} roughness={0.9} />
       </mesh>
       {/* Output paper tray protruding on +Z */}
-      <mesh castShadow position={[0, bodyH * 0.45, d / 2 + trayD / 2]}>
+      <mesh position={[0, bodyH * 0.45, d / 2 + trayD / 2]}>
         <boxGeometry args={[slotW, trayH, trayD]} />
         <meshStandardMaterial color={COLORS.faxBody} roughness={0.55} />
       </mesh>

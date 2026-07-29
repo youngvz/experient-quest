@@ -116,14 +116,22 @@ export default function OfficeWorld({ controlsDisabled }: OfficeWorldProps) {
       <ConferenceLaptops />
       <ConferenceChairs />
 
-      {/* West-side storefront rooms — always mounted so their glass
-          facades are visible from the moment the player enters the
-          corridor. Non-explorable (no doors) so their footprint is
-          fixed and small enough to justify skipping ProximityBranch. */}
-      <TheCommons />
-      <TheLibrary />
-      <TheAtrium />
-      <TheArchive />
+      {/* West-side storefront rooms — proximity-mounted. They're
+          non-explorable (no doors, glass-only), so their interiors only
+          matter when the player is near enough to actually see through
+          the storefront. Anchor radii are set in proximity/anchors.ts. */}
+      <ProximityBranch room="the-commons">
+        <TheCommons />
+      </ProximityBranch>
+      <ProximityBranch room="the-library">
+        <TheLibrary />
+      </ProximityBranch>
+      <ProximityBranch room="the-atrium">
+        <TheAtrium />
+      </ProximityBranch>
+      <ProximityBranch room="the-archive">
+        <TheArchive />
+      </ProximityBranch>
 
       {/* The Bakery is adjacent to the spawn point — eagerly imported
           so it's on-screen from frame 1 with no pop-in through the

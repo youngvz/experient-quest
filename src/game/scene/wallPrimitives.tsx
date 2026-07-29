@@ -1,10 +1,29 @@
 import { CuboidCollider, RigidBody } from '@react-three/rapier'
+import { MeshStandardMaterial } from 'three'
 import {
   COLORS,
   DOOR_HEIGHT,
   WALL_HEIGHT,
   WALL_THICKNESS,
 } from '../constants/gameConstants'
+
+// One shared material for all glass panes in the world. Was per-pane
+// MeshPhysicalMaterial with transmission=1 — that's Three's heaviest
+// fragment shader and it was compiled + evaluated for 25+ storefront
+// panes. Standard + transparent + low opacity reads almost the same
+// visually at a fraction of the fill cost.
+const GLASS_MATERIAL = new MeshStandardMaterial({
+  color: '#eaf3f9',
+  roughness: 0.15,
+  metalness: 0,
+  transparent: true,
+  opacity: 0.35,
+})
+// One shared opaque wall material — was allocated fresh at every
+// <WallPanel /> render (four rails + N mullions per glass panel × 25+
+// panels + every opaque wall in the world = hundreds of duplicate
+// materials). Sharing lets the renderer batch draw states.
+const WALL_MATERIAL = new MeshStandardMaterial({ color: COLORS.wall })
 
 // Invisible full-height physics blocker sized to a doorway opening. Used to
 // seal exterior doorways so the player can't leave the office. When a door
@@ -48,9 +67,13 @@ export function DoorHeader({
     ? [width, headerHeight, WALL_THICKNESS]
     : [WALL_THICKNESS, headerHeight, width]
   return (
-    <mesh castShadow receiveShadow position={[px, centerY, pz]}>
+    <mesh
+      castShadow
+      receiveShadow
+      position={[px, centerY, pz]}
+      material={WALL_MATERIAL}
+    >
       <boxGeometry args={size} />
-      <meshStandardMaterial color={COLORS.wall} />
     </mesh>
   )
 }
@@ -98,9 +121,13 @@ export function WallPanel({ position, size, glass = false, divisions }: WallPane
   if (!glass) {
     return (
       <RigidBody type="fixed" colliders="cuboid">
-        <mesh position={position} castShadow receiveShadow>
+        <mesh
+          position={position}
+          castShadow
+          receiveShadow
+          material={WALL_MATERIAL}
+        >
           <boxGeometry args={size} />
-          <meshStandardMaterial color={COLORS.wall} />
         </mesh>
       </RigidBody>
     )
@@ -135,77 +162,65 @@ export function WallPanel({ position, size, glass = false, divisions }: WallPane
         <CuboidCollider args={[size[0] / 2, size[1] / 2, size[2] / 2]} position={position} />
       </RigidBody>
 
-      {/* frame rails — opaque */}
+      {/* frame rails — opaque. Frame rails don't need to cast shadows (a
+          top-down light through window frames wouldn't cast readable
+          shadows against the walls they're mounted in); dropping cast
+          keeps each glass panel out of the shadow pass except the pane
+          itself, which is receive-only. */}
       <group position={[px, py, pz]}>
         {/* top */}
         <mesh
-          castShadow
           receiveShadow
           position={orient(isXFace, 0, height / 2 - F / 2, 0)}
+          material={WALL_MATERIAL}
         >
           <boxGeometry args={orientSize(isXFace, faceW, F, thickness)} />
-          <meshStandardMaterial color={COLORS.wall} />
         </mesh>
         {/* bottom */}
         <mesh
-          castShadow
           receiveShadow
           position={orient(isXFace, 0, -height / 2 + F / 2, 0)}
+          material={WALL_MATERIAL}
         >
           <boxGeometry args={orientSize(isXFace, faceW, F, thickness)} />
-          <meshStandardMaterial color={COLORS.wall} />
         </mesh>
         {/* left */}
         <mesh
-          castShadow
           receiveShadow
           position={orient(isXFace, -faceW / 2 + F / 2, 0, 0)}
+          material={WALL_MATERIAL}
         >
           <boxGeometry args={orientSize(isXFace, F, paneHeight, thickness)} />
-          <meshStandardMaterial color={COLORS.wall} />
         </mesh>
         {/* right */}
         <mesh
-          castShadow
           receiveShadow
           position={orient(isXFace, faceW / 2 - F / 2, 0, 0)}
+          material={WALL_MATERIAL}
         >
           <boxGeometry args={orientSize(isXFace, F, paneHeight, thickness)} />
-          <meshStandardMaterial color={COLORS.wall} />
         </mesh>
 
-        {/* vertical mullions (dividers) — sit inside the glass pane's depth so
-            the transmission material doesn't blur their edges */}
+        {/* vertical mullions (dividers) — thin, opaque */}
         {mullionOffsets.map((offset, i) => (
           <mesh
             key={`mullion-${i}`}
-            castShadow
             receiveShadow
             position={orient(isXFace, offset, 0, 0)}
+            material={WALL_MATERIAL}
           >
             <boxGeometry
               args={orientSize(isXFace, MULLION_THICKNESS, paneHeight, paneThickness * 1.02)}
             />
-            <meshStandardMaterial color={COLORS.wall} />
           </mesh>
         ))}
 
-        {/* glass pane — physical material w/ transmission. No scene re-render
-            per pane, unlike MeshTransmissionMaterial. */}
-        <mesh>
+        {/* Glass pane — shared translucent standard material. Was
+            MeshPhysicalMaterial with transmission=1 (one of Three's
+            heaviest fragment shaders); the transmission cost across 25+
+            storefront panes was a real drag on fill-rate. */}
+        <mesh material={GLASS_MATERIAL}>
           <boxGeometry args={orientSize(isXFace, paneFaceW, paneHeight, paneThickness)} />
-          <meshPhysicalMaterial
-            color="#eaf3f9"
-            roughness={0.05}
-            metalness={0}
-            transmission={1}
-            thickness={0.15}
-            ior={1.05}
-            attenuationColor="#cfe0ee"
-            attenuationDistance={12}
-            transparent
-            opacity={0.6}
-          />
         </mesh>
       </group>
     </>

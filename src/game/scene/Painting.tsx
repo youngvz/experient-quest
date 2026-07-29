@@ -67,8 +67,9 @@ export function Painting(props: PaintingProps) {
   return (
     <RigidBody type="fixed" colliders="cuboid">
       <group position={position} rotation={[0, rotationY, 0]}>
-        {/* Frame — thin box, canvas plane sits on its +Z face */}
-        <mesh castShadow>
+        {/* Frame — thin box, canvas plane sits on its +Z face. Wall-mounted
+            flat, no shadow contribution against a top-down light. */}
+        <mesh>
           <boxGeometry args={[w, h, FRAME_THICKNESS]} />
           <meshStandardMaterial color={frame} roughness={0.7} />
         </mesh>

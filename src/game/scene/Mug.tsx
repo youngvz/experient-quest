@@ -28,7 +28,7 @@ export function Mug({
   return (
     <group position={[x, deskTopY, z]} rotation={[0, rotationY, 0]}>
       {/* Body */}
-      <mesh castShadow position={[0, bodyH / 2, 0]}>
+      <mesh position={[0, bodyH / 2, 0]}>
         <cylinderGeometry args={[bodyR, bodyR * 0.92, bodyH, 18]} />
         <meshStandardMaterial color={bodyColor} roughness={0.55} />
       </mesh>
@@ -46,7 +46,6 @@ export function Mug({
           vertical axis. Attach points sit on the mug body surface at
           (bodyR, bodyH*0.55 ± handleR); arc peaks at bodyR + handleR. */}
       <mesh
-        castShadow
         position={[bodyR, bodyH * 0.55, 0]}
         rotation={[0, 0, -Math.PI / 2]}
       >

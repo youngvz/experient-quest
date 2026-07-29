@@ -1,5 +1,5 @@
 import { useFrame } from '@react-three/fiber'
-import { useEffect, useRef } from 'react'
+import { useRef } from 'react'
 import type { MeshStandardMaterial } from 'three'
 
 interface LaptopProps {
@@ -41,47 +41,10 @@ export function Laptop({
 
   const [x, z] = position
 
-  const screenMatRef = useRef<MeshStandardMaterial>(null)
-  const flashElapsed = useRef(0)
-  const flashOn = useRef(true)
-
-  useFrame((_, delta) => {
-    if (!flashing) return
-    const mat = screenMatRef.current
-    if (!mat) return
-    flashElapsed.current += delta
-    if (flashElapsed.current >= flashInterval) {
-      flashElapsed.current = 0
-      flashOn.current = !flashOn.current
-      if (flashOn.current) {
-        mat.color.set('#2b6cb0')
-        mat.emissive.set('#3fa4ff')
-        mat.emissiveIntensity = 0.35
-      } else {
-        mat.color.set('#000000')
-        mat.emissive.set('#000000')
-        mat.emissiveIntensity = 0
-      }
-    }
-  })
-
-  // When flashing turns off, restore the default lit-blue screen so we
-  // don't leave the material stuck on the black half of the cycle.
-  useEffect(() => {
-    if (flashing) return
-    const mat = screenMatRef.current
-    if (!mat) return
-    mat.color.set('#2b6cb0')
-    mat.emissive.set('#3fa4ff')
-    mat.emissiveIntensity = 0.35
-    flashElapsed.current = 0
-    flashOn.current = true
-  }, [flashing])
-
   return (
     <group position={[x, deskTopY, z]} rotation={[0, rotationY, 0]}>
       {/* base */}
-      <mesh castShadow position={[0, baseH / 2, 0]}>
+      <mesh position={[0, baseH / 2, 0]}>
         <boxGeometry args={[baseW, baseH, baseD]} />
         <meshStandardMaterial color="#1a1c22" roughness={0.5} metalness={0.4} />
       </mesh>
@@ -92,21 +55,79 @@ export function Laptop({
       </mesh>
       {/* screen — hinges at the back edge (local -Z) so the display faces +Z */}
       <group position={[0, baseH, -baseD / 2]} rotation={[hingeTilt, 0, 0]}>
-        <mesh castShadow position={[0, screenH / 2, screenT / 2]}>
+        <mesh position={[0, screenH / 2, screenT / 2]}>
           <boxGeometry args={[screenW, screenH, screenT]} />
           <meshStandardMaterial color="#1a1c22" roughness={0.5} metalness={0.4} />
         </mesh>
-        <mesh position={[0, screenH / 2, screenT + 0.001]}>
-          <planeGeometry args={[screenW - 0.025 * scale, screenH - 0.025 * scale]} />
-          <meshStandardMaterial
-            ref={screenMatRef}
-            color="#2b6cb0"
-            emissive="#3fa4ff"
-            emissiveIntensity={0.35}
-            roughness={0.3}
+        {flashing ? (
+          <FlashingScreen
+            position={[0, screenH / 2, screenT + 0.001]}
+            width={screenW - 0.025 * scale}
+            height={screenH - 0.025 * scale}
+            interval={flashInterval}
           />
-        </mesh>
+        ) : (
+          <mesh position={[0, screenH / 2, screenT + 0.001]}>
+            <planeGeometry args={[screenW - 0.025 * scale, screenH - 0.025 * scale]} />
+            <meshStandardMaterial
+              color="#2b6cb0"
+              emissive="#3fa4ff"
+              emissiveIntensity={0.35}
+              roughness={0.3}
+            />
+          </mesh>
+        )}
       </group>
     </group>
+  )
+}
+
+// Split so the useFrame + material animation only mount on the ~1 laptop
+// that's actually flashing. Previously every laptop in the world (20+
+// instances across the office) registered a useFrame that no-op'd every
+// tick.
+function FlashingScreen({
+  position,
+  width,
+  height,
+  interval,
+}: {
+  position: [number, number, number]
+  width: number
+  height: number
+  interval: number
+}) {
+  const matRef = useRef<MeshStandardMaterial>(null)
+  const elapsed = useRef(0)
+  const on = useRef(true)
+  useFrame((_, delta) => {
+    const mat = matRef.current
+    if (!mat) return
+    elapsed.current += delta
+    if (elapsed.current >= interval) {
+      elapsed.current = 0
+      on.current = !on.current
+      if (on.current) {
+        mat.color.set('#2b6cb0')
+        mat.emissive.set('#3fa4ff')
+        mat.emissiveIntensity = 0.35
+      } else {
+        mat.color.set('#000000')
+        mat.emissive.set('#000000')
+        mat.emissiveIntensity = 0
+      }
+    }
+  })
+  return (
+    <mesh position={position}>
+      <planeGeometry args={[width, height]} />
+      <meshStandardMaterial
+        ref={matRef}
+        color="#2b6cb0"
+        emissive="#3fa4ff"
+        emissiveIntensity={0.35}
+        roughness={0.3}
+      />
+    </mesh>
   )
 }

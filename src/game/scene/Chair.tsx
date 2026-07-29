@@ -21,11 +21,11 @@ export function Chair({
 
   return (
     <group position={position} rotation={[0, rotationY, 0]}>
-      <mesh castShadow receiveShadow position={[0, seatCenterY, 0]}>
+      <mesh receiveShadow position={[0, seatCenterY, 0]}>
         <boxGeometry args={[seat.width, seat.thickness, seat.depth]} />
         <meshStandardMaterial color={COLORS.chair} roughness={0.7} />
       </mesh>
-      <mesh castShadow receiveShadow position={[0, backCenterY, backZ]}>
+      <mesh receiveShadow position={[0, backCenterY, backZ]}>
         <boxGeometry args={[back.width, back.height, back.depth]} />
         <meshStandardMaterial color={COLORS.chair} roughness={0.7} />
       </mesh>
@@ -35,7 +35,7 @@ export function Chair({
         [-legX, legZ],
         [legX, legZ],
       ].map(([lx, lz], j) => (
-        <mesh key={j} castShadow position={[lx, legCenterY, lz]}>
+        <mesh key={j} position={[lx, legCenterY, lz]}>
           <boxGeometry args={[leg.thickness, legHeight, leg.thickness]} />
           <meshStandardMaterial color={COLORS.chair} roughness={0.7} />
         </mesh>

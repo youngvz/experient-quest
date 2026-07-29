@@ -27,18 +27,18 @@ export function Monitor({
   return (
     <group position={[x, deskTopY, z]} rotation={[0, rotationY, 0]}>
       {/* footprint base */}
-      <mesh castShadow position={[0, baseH / 2, 0]}>
+      <mesh position={[0, baseH / 2, 0]}>
         <boxGeometry args={[baseW, baseH, baseD]} />
         <meshStandardMaterial color="#1a1c22" roughness={0.5} metalness={0.4} />
       </mesh>
       {/* stalk */}
-      <mesh castShadow position={[0, baseH + stalkH / 2, 0]}>
+      <mesh position={[0, baseH + stalkH / 2, 0]}>
         <boxGeometry args={[stalkW, stalkH, stalkD]} />
         <meshStandardMaterial color="#1a1c22" roughness={0.5} metalness={0.4} />
       </mesh>
       {/* screen — top of stalk */}
       <group position={[0, baseH + stalkH + screenH / 2, 0]}>
-        <mesh castShadow>
+        <mesh>
           <boxGeometry args={[screenW, screenH, screenT]} />
           <meshStandardMaterial color="#1a1c22" roughness={0.5} metalness={0.4} />
         </mesh>

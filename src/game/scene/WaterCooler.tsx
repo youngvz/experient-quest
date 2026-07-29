@@ -32,12 +32,12 @@ export function WaterCooler({
           <meshStandardMaterial color={COLORS.waterCoolerBody} roughness={0.55} />
         </mesh>
         {/* Tapered shoulder that receives the bottle */}
-        <mesh castShadow position={[0, baseH + shoulderH / 2, 0]}>
+        <mesh position={[0, baseH + shoulderH / 2, 0]}>
           <cylinderGeometry args={[shoulderR, baseR, shoulderH, 20]} />
           <meshStandardMaterial color={COLORS.waterCoolerBody} roughness={0.55} />
         </mesh>
         {/* Water bottle (tinted, translucent-ish look via low roughness) */}
-        <mesh castShadow position={[0, baseH + shoulderH + bottleH / 2, 0]}>
+        <mesh position={[0, baseH + shoulderH + bottleH / 2, 0]}>
           <cylinderGeometry args={[bottleR, bottleR, bottleH, 20]} />
           <meshStandardMaterial
             color={COLORS.waterCoolerTank}
@@ -47,7 +47,6 @@ export function WaterCooler({
         </mesh>
         {/* Spigot horn on the +X face */}
         <mesh
-          castShadow
           position={[baseR + spigotLen / 2, baseH * 0.55, 0]}
           rotation={[0, 0, Math.PI / 2]}
         >

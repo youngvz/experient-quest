@@ -54,7 +54,7 @@ export function Whiteboard(
   return (
     <RigidBody type="fixed" colliders="cuboid">
       <group position={position} rotation={[0, rotationY, 0]}>
-        <mesh castShadow>
+        <mesh>
           <boxGeometry args={[width, height, depth]} />
           <meshStandardMaterial color={COLORS.whiteboardFrame} />
         </mesh>
