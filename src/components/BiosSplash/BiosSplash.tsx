@@ -4,6 +4,7 @@ import { AnimatedCatLogo } from '../AnimatedCatLogo/AnimatedCatLogo'
 import './BiosSplash.css'
 
 const TITLE_ART_URL = `${import.meta.env.BASE_URL}assets/title/title.webp`
+const SPRITE_URL = `${import.meta.env.BASE_URL}assets/title/spritesheet.webp`
 
 // Kick off the sunset HDR fetch as soon as the splash mounts. This is the
 // biggest external asset the game loads (~2 MB from drei's CDN) and pmrem
@@ -13,20 +14,34 @@ const TITLE_ART_URL = `${import.meta.env.BASE_URL}assets/title/title.webp`
 // pays the pmrem compile — and that runs behind the still-opaque title.
 useEnvironment.preload({ preset: 'sunset' })
 
-// Also warm the title art. `new Image()` triggers a browser fetch into
-// the memory + disk cache; when TitleScreen mounts, its own <img> hits
-// the cache and paints on the first frame instead of showing an empty
-// slot. Done at module scope so it starts the instant the splash's
-// module is imported (typically alongside the App's initial paint).
-if (typeof window !== 'undefined') {
+// Preload + decode the two images the splash / title depend on. We
+// resolve when decode() finishes (or falls back to the load event) so
+// dismissal actually waits for pixels-ready, not just headers. Decode
+// failure resolves too — we don't want to hang the splash on a 404.
+function preloadImage(src: string): Promise<void> {
+  if (typeof window === 'undefined') return Promise.resolve()
   const img = new Image()
-  img.src = TITLE_ART_URL
+  img.src = src
+  const decodePromise =
+    typeof img.decode === 'function'
+      ? img.decode().catch(() => undefined)
+      : new Promise<void>((resolve) => {
+          img.onload = () => resolve()
+          img.onerror = () => resolve()
+        })
+  return decodePromise.then(() => undefined)
 }
 
-// Fixed on-screen time before the splash begins its exit sequence.
-// Long enough on typical connections for the title art fetch above to
-// resolve, so the title paints fully-formed when it fades in.
-const HOLD_MS = 1900
+// Kicked off at module scope so the fetch starts alongside the app's
+// first paint, in parallel with the splash mounting.
+const titleArtReady = preloadImage(TITLE_ART_URL)
+const spriteReady = preloadImage(SPRITE_URL)
+
+// Minimum on-screen time before the splash begins its exit. Sized to
+// let the shine animation (2.4s cycle in AnimatedCatLogo.css) play at
+// least once end-to-end on fast connections. On slow connections the
+// load gate below dominates.
+const MIN_HOLD_MS = 2400
 // Phase 1 — cat + wordmark fade to a black card. Kept synced with the
 // transition on `.bios-splash__stack` in the CSS.
 const DIM_MS = 350
@@ -53,14 +68,19 @@ export function BiosSplash({ onLeaving, onDone }: BiosSplashProps) {
   const [leaving, setLeaving] = useState(false)
 
   useEffect(() => {
-    const holdTimer = window.setTimeout(() => setDimming(true), HOLD_MS)
-    const dismissAny = () => setDimming(true)
-    document.addEventListener('keydown', dismissAny)
-    document.addEventListener('pointerdown', dismissAny)
+    // Race a min-hold timer against the load gate; dismiss when both are
+    // done. Fast connection → min-hold dominates and the shine gets a
+    // full cycle. Slow connection → the load gate dominates and the cat
+    // keeps looping until title art + sprite are ready.
+    let cancelled = false
+    const minHold = new Promise<void>((resolve) =>
+      window.setTimeout(resolve, MIN_HOLD_MS),
+    )
+    Promise.all([minHold, titleArtReady, spriteReady]).then(() => {
+      if (!cancelled) setDimming(true)
+    })
     return () => {
-      window.clearTimeout(holdTimer)
-      document.removeEventListener('keydown', dismissAny)
-      document.removeEventListener('pointerdown', dismissAny)
+      cancelled = true
     }
   }, [])
 
