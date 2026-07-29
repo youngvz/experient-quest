@@ -38,9 +38,10 @@ const titleArtReady = preloadImage(TITLE_ART_URL)
 const spriteReady = preloadImage(SPRITE_URL)
 
 // Minimum on-screen time before the splash begins its exit. Sized to
-// let the shine animation (2.6s cycle in AnimatedCatLogo.css) play at
-// least once end-to-end on fast connections. On slow connections the
-// load gate below dominates.
+// fit two full shine cycles (1.3s each in AnimatedCatLogo.css) so the
+// animation has an obvious rhythm before the splash dismisses on fast
+// connections. On slow connections the load gate below dominates and
+// the cat keeps looping until the scene is idle.
 const MIN_HOLD_MS = 2700
 // Upper bound so a stalled / failing loader (bad CDN, offline asset)
 // can't strand the user on the splash forever. Beyond this we dismiss

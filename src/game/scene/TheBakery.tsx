@@ -26,6 +26,7 @@ import { Desk } from './Desk'
 import { Door } from './Door'
 import { Employee } from './Employee'
 import { FaxMachine } from './FaxMachine'
+import { InteractionMarker } from './InteractionMarker'
 import { Laptop } from './Laptop'
 import { Monitor } from './Monitor'
 import { Mug } from './Mug'
@@ -383,6 +384,14 @@ export function TheBakery() {
       ))}
       <CabinetRow config={THE_BAKERY_EAST_CABINETS} />
 
+      {/* Floating quest marker above the NW-desk laptop. Hides once the
+          player has interacted with it (stop completed). */}
+      <InteractionMarker
+        stopId="bakery-laptop"
+        position={[-6.65, 2.2, 10.4]}
+        requiresQuest="weekly-status-meeting"
+      />
+
       {/* Kitchen-area water cooler tucked against the south wall in
           the opaque strip between the two east glass panes, spigot
           facing north into the room. */}
@@ -433,6 +442,11 @@ export function TheBakery() {
       <Suspense fallback={null}>
         <Sarah position={[2.5, 0, 17]} />
       </Suspense>
+      <InteractionMarker
+        stopId="sarah"
+        position={[2.5, 2.6, 17]}
+        requiresQuest="weekly-status-meeting"
+      />
     </>
   )
 }

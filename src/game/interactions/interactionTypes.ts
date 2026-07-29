@@ -254,12 +254,15 @@ export const presentationStops: PresentationStop[] = [
       questId: 'weekly-status-meeting',
       taskId: 'download-demo',
     },
-    // The NW desk laptop in The Bakery (desk at [-6.5, 10], sitter chair on
-    // the west side). Zone covers the west approach to the desk so the
-    // prompt fires as the player walks up to the chair.
-    // Zone rect: X ∈ [-9, -5.5], Z ∈ [8.5, 11.5].
-    position: [-7.25, 0, 10],
-    interactionZone: { size: [3.5, 3] },
+    // The NW desk laptop in The Bakery (desk at [-6.5, 10], sitter chair
+    // on the west side). The desk itself is a solid cuboid collider, so
+    // the zone spans the walkable approaches around it — the south strip
+    // (main N–S bakery route) plus the west sliver at the chair (from
+    // the corridor door). Rect intentionally extends over the desk
+    // footprint; the desk collider keeps the player from standing there.
+    // Zone rect: X ∈ [-8.75, -4.25], Z ∈ [8.5, 13.5].
+    position: [-6.5, 0, 11],
+    interactionZone: { size: [4.5, 5] },
     content: {
       type: 'dialogue',
       script: [

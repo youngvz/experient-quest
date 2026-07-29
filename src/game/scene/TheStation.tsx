@@ -17,6 +17,7 @@ import { Chair } from './Chair'
 import { Desk } from './Desk'
 import { Door } from './Door'
 import { Employee } from './Employee'
+import { InteractionMarker } from './InteractionMarker'
 import { Laptop } from './Laptop'
 import { Monitor } from './Monitor'
 import { Paper } from './Paper'
@@ -713,6 +714,11 @@ export function TheStation() {
       <Suspense fallback={null}>
         <Catherine position={[-4, 0, -50]} />
       </Suspense>
+      <InteractionMarker
+        stopId="catherine"
+        position={[-4, 2.6, -50]}
+        requiresQuest="weekly-status-meeting"
+      />
     </>
   )
 }

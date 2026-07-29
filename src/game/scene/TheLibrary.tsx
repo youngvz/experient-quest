@@ -13,6 +13,7 @@ import { Chair } from './Chair'
 import { Desk } from './Desk'
 import { Employee } from './Employee'
 import { FilingCabinet } from './FilingCabinet'
+import { InteractionMarker } from './InteractionMarker'
 import { Laptop } from './Laptop'
 import { Monitor } from './Monitor'
 import { Mug } from './Mug'
@@ -196,6 +197,11 @@ export function TheLibrary() {
       <Suspense fallback={null}>
         <Tenant />
       </Suspense>
+      <InteractionMarker
+        stopId="tenant"
+        position={[-15, 2.6, -20]}
+        requiresQuest="weekly-status-meeting"
+      />
     </>
   )
 }

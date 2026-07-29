@@ -10,6 +10,7 @@ import {
 import { useGameStore } from '../state/gameStore'
 import { Desk } from './Desk'
 import { Employee } from './Employee'
+import { InteractionMarker } from './InteractionMarker'
 import { WallPanel } from './wallPrimitives'
 
 // Wave clips vs idle-only clips. Swapping the array identity re-runs the
@@ -147,6 +148,7 @@ export function CorridorPocket() {
       <Suspense fallback={null}>
         <Distasi position={[westX + 0.5, 0, centerZ + 1]} />
       </Suspense>
+      <InteractionMarker stopId="distasi" position={[westX + 0.5, 2.6, centerZ + 1]} />
     </>
   )
 }

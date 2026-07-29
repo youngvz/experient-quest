@@ -3,6 +3,7 @@ import {
   THE_BAKERY_NE_ALCOVE,
   TV,
 } from '../constants/gameConstants'
+import { InteractionMarker } from './InteractionMarker'
 import { Television } from './Television'
 
 // All TVs in the world: the main conference-room TV on the east wall and
@@ -41,6 +42,14 @@ export function Televisions() {
         width={Math.min(3, alcoveWidth - 1)}
         height={1.4}
         depth={0.12}
+      />
+      {/* Floating quest marker in front of the conference-room TV, slightly
+          off the wall so it's readable from the room. Hidden until
+          weekly-status-meeting is unlocked (matches events-tv's requiresQuest
+          gate). */}
+      <InteractionMarker
+        stopId="events-tv"
+        position={[eastWallX - 0.6, TV.centerY + TV.height / 2 + 0.5, TV.centerZ]}
       />
     </>
   )

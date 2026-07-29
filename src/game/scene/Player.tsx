@@ -231,15 +231,20 @@ export function Player({ controlsDisabled }: PlayerProps) {
         if (import.meta.env.DEV) console.info('[interaction] available:', stop.id)
         // Stops anchored to a character (id === character id) get their
         // NPC name swapped for the stand-in youngvz's when the player is
-        // playing as that character. Uses the same resolveSpeaker rule
-        // the DialogueOverlay applies to speaker portraits.
-        const selected = useGameStore.getState().selectedCharacterId
+        // playing as that character. resolveSpeaker throws on unknown
+        // ids, so gate the whole swap on `original` being defined —
+        // otherwise object stops (bakery-laptop, events-tv, …) crash
+        // this handler and never emit interaction:available, killing
+        // the pill.
         const original = (CHARACTERS as Record<string, { name: string }>)[stop.id]
-        const resolved = resolveSpeaker(stop.id, selected)
-        const prompt =
-          original && resolved.id !== stop.id
-            ? stop.prompt.replaceAll(original.name, resolved.name)
-            : stop.prompt
+        let prompt = stop.prompt
+        if (original) {
+          const selected = useGameStore.getState().selectedCharacterId
+          const resolved = resolveSpeaker(stop.id, selected)
+          if (resolved.id !== stop.id) {
+            prompt = stop.prompt.replaceAll(original.name, resolved.name)
+          }
+        }
         gameEvents.emit('interaction:available', { stopId: stop.id, prompt })
       },
       onUnavailable: () => {

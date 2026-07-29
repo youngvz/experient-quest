@@ -14,6 +14,7 @@ import { CabinetRow } from './CabinetRow'
 import { Chair } from './Chair'
 import { Desk } from './Desk'
 import { Employee } from './Employee'
+import { InteractionMarker } from './InteractionMarker'
 import { KitchenStation } from './KitchenStation'
 import { Laptop } from './Laptop'
 import { Monitor } from './Monitor'
@@ -440,6 +441,11 @@ export function TheLab() {
       <Suspense fallback={null}>
         <Juan position={[-3, 0, -20]} />
       </Suspense>
+      <InteractionMarker
+        stopId="juan"
+        position={[-3, 2.6, -20]}
+        requiresQuest="weekly-status-meeting"
+      />
     </>
   )
 }

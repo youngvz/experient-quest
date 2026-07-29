@@ -16,7 +16,9 @@
   image-rendering: pixelated;
   image-rendering: crisp-edges;
 
-  /* Two synchronized animations, same 2.6s cycle:
+  /* Two synchronized animations, same 1.3s cycle (so two full shines
+     fit inside BiosSplash's ~2.7s min-hold and the animation reads as
+     a clear rhythm rather than a single beat):
        - shine-frames: discrete background-position jumps (steps(1)), so
          each frame is shown pixel-perfect with no bleed.
        - shine-glow: an eased brightness+drop-shadow accent that ramps up
@@ -24,12 +26,12 @@
          the shine window a smooth continuous "glint" quality even though
          the four underlying frames are hard steps. */
   animation:
-    cat-glasses-shine-frames 2.6s steps(1, end) infinite,
-    cat-glasses-shine-glow 2.6s ease-in-out infinite;
+    cat-glasses-shine-frames 1.3s steps(1, end) infinite,
+    cat-glasses-shine-glow 1.3s ease-in-out infinite;
 }
 
 /* Frame timing — neutral for most of the loop, then a paced 3-step sweep
-   (~155ms per shine frame at 2.6s cycle) so each shine pose is clearly
+   (~78ms per shine frame at 1.3s cycle) so each shine pose is clearly
    readable but the sweep still feels like a single traveling glint. */
 @keyframes cat-glasses-shine-frames {
   0%,
