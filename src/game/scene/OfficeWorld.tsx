@@ -14,6 +14,7 @@ import { CorridorPocket } from './CorridorPocket'
 import { EastCorridor } from './EastCorridor'
 import { Employee } from './Employee'
 import { FadeIn } from './FadeIn'
+import { InteractionMarker } from './InteractionMarker'
 import { NorthEastCorridor } from './NorthEastCorridor'
 import { Player } from './Player'
 import { ProximityBranch } from './ProximityBranch'
@@ -149,6 +150,7 @@ export default function OfficeWorld({ controlsDisabled }: OfficeWorldProps) {
       <Suspense fallback={null}>
         <Jacquelyn />
       </Suspense>
+      <InteractionMarker stopId="jacquelyn" position={[-9.5, 2.6, 22]} />
       <Suspense fallback={null}>
         <SouthApronBushes />
       </Suspense>
