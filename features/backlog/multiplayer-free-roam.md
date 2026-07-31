@@ -100,7 +100,7 @@ picker on entry.
 
 Keeping this **ephemeral** (no accounts, no persisted progress) and
 **self-hosted on AWS** (company account, free-tier friendly) is the
-cheapest path to a real multiplayer prototype without dragging in an auth
+cheapest path to real multiplayer without dragging in an auth
 provider, a database, or a managed realtime service. Quest, interaction,
 and HUD state stays entirely client-local — the only shared state is
 "who's here, where are they, what are they doing" — so the server

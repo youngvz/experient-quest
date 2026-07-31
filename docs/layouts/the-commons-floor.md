@@ -35,7 +35,7 @@ Z=+18        ################    ← S wall (opaque)
 ```
 
 Note: E wall glass is duplicated coplanar with `CentralCorridor.tsx`'s
-west wall (an intentional prototype overlap). Door slab (closed
+west wall (an intentional overlap). Door slab (closed
 glass) is owned by CentralCorridor.
 
 ## Column ↔ X coordinate

@@ -61,7 +61,7 @@ export const THE_BAKERY_WEST_DOOR = {
 // The corridor's east wall sits at X = -ROOM_WIDTH/2 — coplanar with the
 // office/The Bakery west walls (glass). We render it as its own panels split
 // around the two doorways; the duplicate glass at the coplanar overlap is
-// invisible from either side and cheap enough for a prototype.
+// invisible from either side and cheap enough to leave in place.
 export const CENTRAL_CORRIDOR = {
   width: 3,
   eastX: -ROOM_WIDTH / 2, // -10

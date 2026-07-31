@@ -28,33 +28,33 @@ Then open the URL Vite prints and go take a walk around the office. 🚶
 
 ## Handy commands 📜
 
-```bash
-npm run dev             # start Vite dev server
-npm run build           # type-check + production build
-npm run preview         # preview the production build
-npm run test            # vitest once
-npm run test:watch      # vitest in watch mode
-npm run test:e2e        # playwright smoke (dev server auto-started)
-npm run test:e2e:install  # first-time: install Playwright browsers
-npm run lint            # oxlint
-npm run format          # prettier --write .
-```
+| Command                    | What it does                               |
+| -------------------------- | ------------------------------------------ |
+| `npm run dev`              | Start Vite dev server                      |
+| `npm run build`            | Type-check + production build              |
+| `npm run preview`          | Preview the production build               |
+| `npm run test`             | Run vitest once                            |
+| `npm run test:watch`       | Vitest in watch mode                       |
+| `npm run test:e2e`         | Playwright smoke (dev server auto-started) |
+| `npm run test:e2e:install` | First-time: install Playwright browsers    |
+| `npm run lint`             | oxlint                                     |
+| `npm run format`           | `prettier --write .`                       |
 
 ## Controls 🎮
 
-```text
-Move            WASD / Arrow keys
-Run (toggle)    R                — running is ON by default
-Roll            Space            — carries current velocity
-Wave            C
-Interact        F                — opens dialogue / overlay in range of a stop
-Orbit camera    Q / E            — rotate view left / right
-                Two-finger horizontal scroll (trackpad)
-                Right- or middle-mouse drag (external mouse)
-Zoom camera     + / -            — scales distance + height together
-Close overlay   Escape / Close button / Backdrop click
-Advance dialog  Space / Enter / click the panel
-```
+| Action         | Input                                  | Notes                                       |
+| -------------- | -------------------------------------- | ------------------------------------------- |
+| Move           | WASD / Arrow keys                      |                                             |
+| Run (toggle)   | R                                      | Running is ON by default                    |
+| Roll           | Space                                  | Carries current velocity                    |
+| Wave           | C                                      |                                             |
+| Interact       | F                                      | Opens dialogue / overlay in range of a stop |
+| Orbit camera   | Q / E                                  | Rotate view left / right                    |
+| Orbit camera   | Two-finger horizontal scroll           | Trackpad                                    |
+| Orbit camera   | Right- or middle-mouse drag            | External mouse                              |
+| Zoom camera    | + / -                                  | Scales distance + height together           |
+| Close overlay  | Escape / Close button / Backdrop click |                                             |
+| Advance dialog | Space / Enter / click the panel        |                                             |
 
 The camera is a third-person follow that orbits the player when you drag
 with the right (or middle) mouse button. Movement is **camera-relative**:
@@ -91,18 +91,18 @@ Events on the bus: `interaction:available` / `interaction:unavailable` /
 The `docs/` folder is the reference for detailed implementation, conventions,
 and design notes:
 
-| Task | Read first |
-| --- | --- |
-| Overall structure, new modules, refactors | [architecture.md](docs/architecture.md) |
-| Player movement, camera, interactions, animations, NPCs | [gameplay-systems.md](docs/gameplay-systems.md) |
-| Office layout, GLB imports, sprites, asset pipeline | [assets-and-content.md](docs/assets-and-content.md) |
-| **Building or editing a room via ASCII grid** | [room-authoring.md](docs/room-authoring.md) |
-| FPS, draw calls, mobile devices, quality profiles | [performance.md](docs/performance.md) |
-| Unit + E2E testing, acceptance criteria | [testing.md](docs/testing.md) |
-| Hosting, CDN, headers, CSP, releases | [deployment-and-security.md](docs/deployment-and-security.md) |
-| Planning a feature, deciding what belongs in the MVP | [delivery-plan.md](docs/delivery-plan.md) |
-| Accessibility: focus, keyboard, reduced motion, captions | [accessibility.md](docs/accessibility.md) |
-| File naming, folder rules, import order, commit style | [conventions.md](docs/conventions.md) |
+| Task                                                     | Read first                                                    |
+| -------------------------------------------------------- | ------------------------------------------------------------- |
+| Overall structure, new modules, refactors                | [architecture.md](docs/architecture.md)                       |
+| Player movement, camera, interactions, animations, NPCs  | [gameplay-systems.md](docs/gameplay-systems.md)               |
+| Office layout, GLB imports, sprites, asset pipeline      | [assets-and-content.md](docs/assets-and-content.md)           |
+| **Building or editing a room via ASCII grid**            | [room-authoring.md](docs/room-authoring.md)                   |
+| FPS, draw calls, mobile devices, quality profiles        | [performance.md](docs/performance.md)                         |
+| Unit + E2E testing, acceptance criteria                  | [testing.md](docs/testing.md)                                 |
+| Hosting, CDN, headers, CSP, releases                     | [deployment-and-security.md](docs/deployment-and-security.md) |
+| Planning a feature, deciding what belongs in the MVP     | [delivery-plan.md](docs/delivery-plan.md)                     |
+| Accessibility: focus, keyboard, reduced motion, captions | [accessibility.md](docs/accessibility.md)                     |
+| File naming, folder rules, import order, commit style    | [conventions.md](docs/conventions.md)                         |
 
 Working with an AI coding assistant? 🤖 Start from
 [CLAUDE.md](CLAUDE.md) — it's the routing document that points at the right
