@@ -5,7 +5,7 @@
 # Experient Quest 🕹️
 
 Wander the halls of Experient and help John pull off the weekly status
-meeting. 🎤
+meeting. 
 
 Chat with your coworkers, poke around the office, and make sure the whole
 thing goes off without a hitch. ✨
