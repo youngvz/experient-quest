@@ -1,21 +1,32 @@
-# Experient Quest — Office RPG Prototype (3D)
+<p align="center">
+  <img src="public/experient-quest-banner.png" alt="Experient Quest — Office MMORPG" />
+</p>
 
-A browser-based office RPG prototype. Walk around a small office, approach
-interactive objects like the wall TV, and see meeting content in a React
-overlay. Seed of an interactive technology status meeting.
+# Experient Quest 🕹️
 
-Stack: **React + TypeScript + Vite**, **@react-three/fiber** (three.js) for
-the 3D scene, **@react-three/rapier** for physics, **drei** for GLB/animation
-helpers.
+Wander the halls of Experient and help John pull off the weekly status
+meeting. 🎤
 
-## Setup
+Chat with your coworkers, poke around the office, and make sure the whole
+thing goes off without a hitch. ✨
+
+🛠️ Built with **React + TypeScript + Vite**, **@react-three/fiber**
+(three.js) for the scene, **@react-three/rapier** for physics, and
+**drei** for the glue that makes GLBs and animation blending pleasant to
+work with.
+
+## Get up and running 🚀
+
+Two commands, no ceremony:
 
 ```bash
 npm install
 npm run dev
 ```
 
-## Commands
+Then open the URL Vite prints and go take a walk around the office. 🚶
+
+## Handy commands 📜
 
 ```bash
 npm run dev             # start Vite dev server
@@ -29,7 +40,7 @@ npm run lint            # oxlint
 npm run format          # prettier --write .
 ```
 
-## Controls
+## Controls 🎮
 
 ```text
 Move            WASD / Arrow keys
@@ -45,15 +56,15 @@ Close overlay   Escape / Close button / Backdrop click
 Advance dialog  Space / Enter / click the panel
 ```
 
-The camera is a third-person follow that orbits the player when you drag with
-the right (or middle) mouse button. Movement is **camera-relative**: W always
-sends the player away from the camera, so the same key feels consistent as
-you rotate the view. Movement is locked during roll / wave and while an
-overlay or the quest-unlocked modal is open. Exterior doorways are either
-sealed by invisible `DoorBlocker` colliders or open glass doors (`<Door>`
-component); interior doorways stay open.
+The camera is a third-person follow that orbits the player when you drag
+with the right (or middle) mouse button. Movement is **camera-relative**:
+W always sends the player away from the camera, so the same key feels
+consistent as you rotate the view. 🎥 Movement is locked during roll / wave
+and while an overlay or the quest-unlocked modal is open. Exterior doorways
+are either sealed by invisible `DoorBlocker` colliders or open glass doors
+(`<Door>` component); interior doorways stay open. 🚪
 
-## Architecture at a glance
+## Architecture at a glance 🏗️
 
 React owns the app shell, prompt, and overlay. R3F owns the 3D scene, physics,
 and camera. They communicate through a typed event bus
@@ -73,9 +84,9 @@ React (HTML)                             R3F (canvas)
 ```
 
 Events on the bus: `interaction:available` / `interaction:unavailable` /
-`interaction:triggered` (R3F → React), `overlay:closed` (React → R3F).
+`interaction:triggered` (R3F → React), `overlay:closed` (React → R3F). 📡
 
-## Docs
+## Docs 📚
 
 The `docs/` folder is the reference for detailed implementation, conventions,
 and design notes:
@@ -93,13 +104,13 @@ and design notes:
 | Accessibility: focus, keyboard, reduced motion, captions | [accessibility.md](docs/accessibility.md) |
 | File naming, folder rules, import order, commit style | [conventions.md](docs/conventions.md) |
 
-Working with an AI coding assistant? Start from
+Working with an AI coding assistant? 🤖 Start from
 [CLAUDE.md](CLAUDE.md) — it's the routing document that points at the right
 doc per task.
 
-## What's in the box today
+## What's in the box today 🎁
 
-- **Layout**:
+- 🏢 **Layout**:
   - `ConferenceRoom` (20 × 14 m) with table, 10 chairs, wall TV, whiteboard.
   - `TheBakery` (south corridor) with desk clusters, kitchen counter + sink,
     and two NE alcove offices.
@@ -114,30 +125,30 @@ doc per task.
     north-side + 3 east-side alcoves, 2 west-wall workstations, and
     **The Boardroom** — enclosed sub-room with a wall-mounted TV and a
     4-seat meeting table.
-- **Player**: rigged GLB (`youngvz.glb`) with idle / walk / run / roll /
+- 🕺 **Player**: rigged GLB (`youngvz.glb`) with idle / walk / run / roll /
   wave animation blending, camera-relative movement.
-- **Rapier physics**: dynamic capsule player, static geometry, sealed +
+- ⚙️ **Rapier physics**: dynamic capsule player, static geometry, sealed +
   open glass doors via reusable `<Door>` component.
-- **Third-person camera** with mouse-drag / trackpad orbit and keyboard
+- 🎥 **Third-person camera** with mouse-drag / trackpad orbit and keyboard
   zoom, clamped multiplicative scale.
-- **NPCs**: reusable `<Employee>` static-NPC component; Distasi wired
+- 👥 **NPCs**: reusable `<Employee>` static-NPC component; Distasi wired
   with a multi-line dialogue script.
-- **Interactions**:
-  - TV in the conference room (React modal overlay).
-  - Distasi (retro pixel-art `<DialogueOverlay>` with portrait, first-
+- 💬 **Interactions**:
+  - 📺 TV in the conference room (React modal overlay).
+  - 🗨️ Distasi (retro pixel-art `<DialogueOverlay>` with portrait, first-
     encounter + repeat scripts).
-- **Quest system**: `weekly-status-meeting` quest unlocks after the
+- 📜 **Quest system**: `weekly-status-meeting` quest unlocks after the
   first Distasi chat, with a "New Quest Unlocked!" modal and a
   persistent top-right `QuestLog` HUD.
-- **Tests**: Vitest unit test for `InteractionManager`, Playwright
+- ✅ **Tests**: Vitest unit test for `InteractionManager`, Playwright
   smoke test.
 
-## Future
+## What's next 🔮
 
-- Level transitions on doorway exit (swap `DoorBlocker` for a sensor collider).
-- More NPCs (billboards + additional rigged presenters).
-- Camera modes: over-the-shoulder, first-person.
-- Additional interactables (new-hires, jokes, project rooms).
-- Wire quest-task completion to specific stops (`toggleTask` already
+- 🚪 Level transitions on doorway exit (swap `DoorBlocker` for a sensor collider).
+- 👥 More NPCs (billboards + additional rigged presenters).
+- 🎬 Camera modes: over-the-shoulder, first-person.
+- 🎯 Additional interactables (new-hires, jokes, project rooms).
+- 📋 Wire quest-task completion to specific stops (`toggleTask` already
   in the store).
-- Audio + captions, touch controls, localStorage save state.
+- 🔊 Audio + captions, touch controls, localStorage save state.
