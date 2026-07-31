@@ -272,6 +272,9 @@ export function Player({ controlsDisabled }: PlayerProps) {
   // the simulated unmount.
   useEffect(() => {
     for (const stop of presentationStops) {
+      // Auto-trigger stops don't have a floor rect — they fire via the
+      // AutoZoneDialogue listener on zone entry instead.
+      if (stop.autoTriggerOnZone) continue
       manager.registerZone(getStopZoneRect(stop), stop)
     }
     return () => manager.clearZones()

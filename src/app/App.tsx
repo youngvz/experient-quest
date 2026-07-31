@@ -1,3 +1,4 @@
+import { AutoZoneDialogue } from '../components/AutoZoneDialogue/AutoZoneDialogue'
 import { BiosSplash } from '../components/BiosSplash/BiosSplash'
 import { CharacterSelect } from '../components/CharacterSelect/CharacterSelect'
 import { ContentOverlay } from '../components/ContentOverlay/ContentOverlay'
@@ -68,6 +69,7 @@ export function App() {
           <RoomToast />
           <ContentOverlay />
           <DialogueOverlay />
+          <AutoZoneDialogue />
           <QuestUnlockedModal />
           {isCoarse && <TouchControls />}
         </>

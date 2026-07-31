@@ -77,6 +77,12 @@ export interface PresentationStop {
   // task completed pre-unlock will read as done the moment the player
   // accepts the quest.
   questTaskComplete?: { questId: string; taskId: string }
+  // If present, the stop auto-triggers the first time the player enters
+  // the given zone id (see setActiveZone / 'zone:entered'). Skipped by
+  // the InteractionManager registration — there's no floor rect and no
+  // Enter prompt. Fires once per session (the stop lands in
+  // completedStopIds via the normal overlay-close path).
+  autoTriggerOnZone?: string
 }
 
 export const presentationStops: PresentationStop[] = [
@@ -318,6 +324,27 @@ export const presentationStops: PresentationStop[] = [
         {
           speakerId: 'distasi',
           text: "We need to leave for Hopstix\nat 12pm!!",
+        },
+      ],
+    },
+  },
+  {
+    id: 'garage-empty',
+    label: 'The Garage',
+    prompt: '',
+    overlayTitle: 'The Garage',
+    autoTriggerOnZone: 'the-garage',
+    // Placeholder — the auto-trigger path doesn't use position/zone, but
+    // the shape requires it. Kept near the garage's centroid so any
+    // future manual-fallback prompt would still land in-room.
+    position: [17, 0, -68],
+    interactionZone: { size: [0, 0] },
+    content: {
+      type: 'dialogue',
+      script: [
+        {
+          speakerId: PLAYER_SPEAKER_ID,
+          text: 'Looks a bit empty..\nI think the devs got lazy',
         },
       ],
     },
