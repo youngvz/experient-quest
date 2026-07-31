@@ -268,7 +268,7 @@ export const presentationStops: PresentationStop[] = [
       script: [
         {
           speakerId: PLAYER_SPEAKER_ID,
-          text: 'Alright, I just need to download\nthe demo from OneDrive...',
+          text: 'Wait... I though this was the demo?\nWhat is the KudosBot?',
         },
       ],
     },

@@ -23,8 +23,8 @@ interface InteractionMarkerProps {
 // state, no per-instance allocations at module scope).
 const MARKER_GEOMETRY = new OctahedronGeometry(0.18, 0)
 const MARKER_MATERIAL = new MeshStandardMaterial({
-  color: '#ffd85a',
-  emissive: '#ffb020',
+  color: '#8fc78a',
+  emissive: '#4fa04c',
   emissiveIntensity: 0.85,
   roughness: 0.35,
   metalness: 0.1,
